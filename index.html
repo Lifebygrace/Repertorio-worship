@@ -7,12 +7,11 @@
   <style>
     body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; background-color: #f8f9fa; color: #333; }
     header { background-color: #0d1b2a; color: white; padding: 1rem; text-align: center; }
-    h1 { margin: 0; font-size: 2rem; }
     nav { background-color: #1b263b; display: flex; justify-content: center; gap: 1rem; padding: 0.5rem; }
     nav a { color: white; text-decoration: none; font-weight: bold; }
     nav a:hover { color: #ff6600; }
     .container { padding: 1.5rem; max-width: 900px; margin: auto; }
-    input[type="text"], textarea, input[type="file"] {
+    input[type="text"], textarea, input[type="file"], select {
       width: 100%; padding: 0.75rem; font-size: 1rem; border: 2px solid #ff6600; border-radius: 5px;
       margin-top: 0.5rem; box-sizing: border-box;
     }
@@ -27,8 +26,6 @@
     .add-section { margin-top: 2rem; }
     footer { background-color: #1b263b; color: white; text-align: center; padding: 1rem; margin-top: 3rem; }
     .logo { max-width: 200px; display: block; margin: 1rem auto; }
-
-    /* NUEVO: estilo para opciones avanzadas */
     .advanced-options { display: none; margin-top: 2rem; padding: 1rem; background-color: #fff5e6; border: 1px dashed #ff6600; }
     .youtube-link { margin-top: 1rem; display: block; color: #1b263b; font-weight: bold; }
   </style>
@@ -49,10 +46,12 @@
       <input type="text" id="search" placeholder="Escribe el nombre de una canción..." />
       <ul class="song-list" id="songList"></ul>
     </section>
+
     <section id="acordes" class="chords-section">
       <h2>Acordes de la canción</h2>
       <div id="chordsContent">Selecciona una canción para ver sus acordes.</div>
     </section>
+
     <section id="agregar" class="add-section">
       <h2>Agregar Nueva Canción</h2>
       <input type="text" id="newTitle" placeholder="Título de la canción" />
@@ -62,20 +61,18 @@
       <button onclick="addSong()">Agregar Canción</button>
     </section>
 
-    <!-- NUEVO: Opciones avanzadas -->
     <section>
-      <button onclick="toggleAdvanced()">Mostrar opciones avanzadas</button>
+      <button onclick="toggleAdvanced()">🔧 Herramientas administrativas</button>
       <div class="advanced-options" id="advancedOptions">
-        <h3>⚠️ Borrar todas las canciones</h3>
-        <button onclick="clearAllSongs()">Borrar TODO</button>
+        <h3>🔍 Eliminar Canción Específica</h3>
+        <select id="songToDelete"></select>
+        <button onclick="deleteSong()">Eliminar Seleccionada</button>
       </div>
     </section>
   </div>
-
   <footer>© 2025 Repertorio Worship - Grupo de Música</footer>
 
   <script>
-    const defaultSongs = [];
     const songList = document.getElementById('songList');
     const searchInput = document.getElementById('search');
     const chordsSection = document.querySelector('.chords-section');
@@ -85,7 +82,7 @@
 
     function getStoredSongs() {
       const stored = localStorage.getItem('songs');
-      return stored ? JSON.parse(stored) : defaultSongs;
+      return stored ? JSON.parse(stored) : [];
     }
 
     function saveSongs(songs) {
@@ -169,7 +166,6 @@
             iframe.allowFullscreen = true;
             chordsContent.appendChild(iframe);
           }
-
           const link = document.createElement('a');
           link.href = song.youtube;
           link.textContent = "Ver en YouTube";
@@ -184,14 +180,36 @@
     function toggleAdvanced() {
       const section = document.getElementById('advancedOptions');
       section.style.display = section.style.display === 'none' ? 'block' : 'none';
+      if (section.style.display === 'block') {
+        fillDeleteDropdown();
+      }
     }
 
-    function clearAllSongs() {
-      if (confirm("¿Estás seguro de que quieres borrar todas las canciones?")) {
-        localStorage.removeItem('songs');
-        renderSongs([]);
+    function fillDeleteDropdown() {
+      const dropdown = document.getElementById('songToDelete');
+      const songs = getStoredSongs();
+      dropdown.innerHTML = '';
+      songs.forEach((song, index) => {
+        const opt = document.createElement('option');
+        opt.value = index;
+        opt.textContent = song.title;
+        dropdown.appendChild(opt);
+      });
+    }
+
+    function deleteSong() {
+      const dropdown = document.getElementById('songToDelete');
+      const index = dropdown.value;
+      const songs = getStoredSongs();
+      const confirmDelete = confirm(`¿Seguro que quieres borrar la canción "${songs[index].title}"?`);
+      if (confirmDelete) {
+        songs.splice(index, 1);
+        saveSongs(songs);
+        renderSongs(songs);
         chordsContent.innerHTML = 'Selecciona una canción para ver sus acordes.';
         chordsSection.style.display = 'none';
+        fillDeleteDropdown();
+        alert('Canción eliminada.');
       }
     }
 
