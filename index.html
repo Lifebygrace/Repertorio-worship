@@ -27,6 +27,10 @@
     .add-section { margin-top: 2rem; }
     footer { background-color: #1b263b; color: white; text-align: center; padding: 1rem; margin-top: 3rem; }
     .logo { max-width: 200px; display: block; margin: 1rem auto; }
+
+    /* NUEVO: estilo para opciones avanzadas */
+    .advanced-options { display: none; margin-top: 2rem; padding: 1rem; background-color: #fff5e6; border: 1px dashed #ff6600; }
+    .youtube-link { margin-top: 1rem; display: block; color: #1b263b; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -57,8 +61,19 @@
       <input type="text" id="newYoutube" placeholder="Enlace de YouTube (opcional)" />
       <button onclick="addSong()">Agregar Canción</button>
     </section>
+
+    <!-- NUEVO: Opciones avanzadas -->
+    <section>
+      <button onclick="toggleAdvanced()">Mostrar opciones avanzadas</button>
+      <div class="advanced-options" id="advancedOptions">
+        <h3>⚠️ Borrar todas las canciones</h3>
+        <button onclick="clearAllSongs()">Borrar TODO</button>
+      </div>
+    </section>
   </div>
+
   <footer>© 2025 Repertorio Worship - Grupo de Música</footer>
+
   <script>
     const defaultSongs = [];
     const songList = document.getElementById('songList');
@@ -154,10 +169,31 @@
             iframe.allowFullscreen = true;
             chordsContent.appendChild(iframe);
           }
+
+          const link = document.createElement('a');
+          link.href = song.youtube;
+          link.textContent = "Ver en YouTube";
+          link.className = "youtube-link";
+          link.target = "_blank";
+          chordsContent.appendChild(link);
         }
         chordsSection.style.display = 'block';
       }
     });
+
+    function toggleAdvanced() {
+      const section = document.getElementById('advancedOptions');
+      section.style.display = section.style.display === 'none' ? 'block' : 'none';
+    }
+
+    function clearAllSongs() {
+      if (confirm("¿Estás seguro de que quieres borrar todas las canciones?")) {
+        localStorage.removeItem('songs');
+        renderSongs([]);
+        chordsContent.innerHTML = 'Selecciona una canción para ver sus acordes.';
+        chordsSection.style.display = 'none';
+      }
+    }
 
     renderSongs(getStoredSongs());
   </script>
