@@ -1,1 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Repertorio Worship</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <img src="logo.jpeg" alt="Logo">
+    <h1>Repertorio Worship</h1>
+    <button class="toggle-btn" onclick="toggleDark()">🌙/☀️</button>
+    <button id="login-btn" onclick="login()">Iniciar sesión</button>
+    <button id="logout-btn" onclick="logout()" style="display:none;">Cerrar sesión</button>
+  </header>
+  <main>
+    <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
 
+    <button onclick="toggleForm()">➕ Agregar canción</button>
+    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
+      <input type="text" id="titulo" placeholder="Título de la canción" required />
+      <textarea id="acordes" placeholder="Acordes..."></textarea>
+      <input type="file" id="imagenes" multiple accept="image/*" />
+      <input type="file" id="audio" accept="audio/*" />
+      <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
+      <button type="submit">Guardar canción</button>
+    </form>
+
+    <div id="lista-canciones"></div>
+  </main>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
