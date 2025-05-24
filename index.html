@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Repertorio Worship</title>
   <style>
     :root {
@@ -148,34 +148,30 @@
       });
     }
 
+    async function subirArchivo(inputFile) {
+      if (!inputFile || inputFile.files.length === 0) return null;
+      const file = inputFile.files[0];
+      const fileRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
+      await uploadBytes(fileRef, file);
+      return await getDownloadURL(fileRef);
+    }
+
     async function agregarCancion() {
       const titulo = document.getElementById("titulo").value;
       const acordes = document.getElementById("acordes").value;
       const youtube = document.getElementById("youtube").value;
-      const imagenFiles = document.getElementById("imagenFile").files;
-      const audioFile = document.getElementById("audioFile").files[0];
+      const imagenInput = document.getElementById("imagenFile");
+      const audioInput = document.getElementById("audioFile");
 
-      const imagenes = [];
-      for (let file of imagenFiles) {
-        const imgRef = ref(storage, `imagenes/${titulo}-${file.name}`);
-        await uploadBytes(imgRef, file);
-        const url = await getDownloadURL(imgRef);
-        imagenes.push(url);
-      }
+      if (titulo.trim() === "") return;
 
-      let audioUrl = "";
-      if (audioFile) {
-        const audioRef = ref(storage, `audios/${titulo}-${audioFile.name}`);
-        await uploadBytes(audioRef, audioFile);
-        audioUrl = await getDownloadURL(audioRef);
-      }
+      const imagenURL = await subirArchivo(imagenInput);
+      const audioURL = await subirArchivo(audioInput);
 
       await addDoc(collection(db, "canciones"), {
-        titulo,
-        acordes,
-        youtube,
-        imagenes,
-        audio: audioUrl
+        titulo, acordes, youtube,
+        imagenes: imagenURL ? [imagenURL] : [],
+        audio: audioURL || null
       });
 
       document.getElementById("formulario").reset();
@@ -201,8 +197,11 @@
       cargarCanciones();
       document.getElementById("search").addEventListener("input", cargarCanciones);
     };
-    window.eliminarCancion = eliminarCancion;
+
     window.agregarCancion = agregarCancion;
+    window.eliminarCancion = eliminarCancion;
+    window.toggleForm = toggleForm;
+    window.toggleDark = toggleDark;
   </script>
 </head>
 <body>
@@ -218,7 +217,7 @@
     <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
       <input type="text" id="titulo" placeholder="Título de la canción" required />
       <textarea id="acordes" placeholder="Acordes..."></textarea>
-      <input type="file" id="imagenFile" accept="image/*" multiple />
+      <input type="file" id="imagenFile" accept="image/*" />
       <input type="file" id="audioFile" accept="audio/*" />
       <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
       <button type="submit">Guardar canción</button>
