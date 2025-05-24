@@ -4,8 +4,81 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Repertorio Worship</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      margin: 0;
+      background: #f0f4f8;
+      color: #002244;
+    }
+    header {
+      text-align: center;
+      background: #002244;
+      color: white;
+      padding: 20px;
+    }
+    header img {
+      width: 100px;
+    }
+    main {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 30px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+    button {
+      background-color: #FF6F00;
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 1em;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    button:hover {
+      background-color: #e65c00;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    .card img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    details summary {
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    a {
+      color: #FF6F00;
+      text-decoration: none;
+    }
+    a:hover {
+      text-decoration: underline;
+    }
+  </style>
   <script type="module">
-    // Import Firebase modules from CDN
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
@@ -29,15 +102,15 @@
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
         const div = document.createElement("div");
+        div.className = "card";
         div.innerHTML = `
-          <h3>${data.titulo}</h3>
+          <h2>${data.titulo}</h2>
           <p>${data.acordes}</p>
-          ${data.imagen ? `<img src="${data.imagen}" width="200">` : ""}
-          ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">Ver en YouTube</a></p>` : ""}
-          <details style="margin-top:10px;"><summary>Más opciones</summary>
-            <button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar canción</button>
+          ${data.imagen ? `<img src="${data.imagen}" alt="Acordes">` : ""}
+          ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">🎵 Ver en YouTube</a></p>` : ""}
+          <details><summary>Opciones</summary>
+            <button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar</button>
           </details>
-          <hr>
         `;
         contenedor.appendChild(div);
       });
@@ -69,19 +142,19 @@
     window.agregarCancion = agregarCancion;
   </script>
 </head>
-<body style="font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;">
-  <div style="text-align: center;">
-    <img src="logo.jpeg" width="200" alt="Logo de la Iglesia" />
-    <h1 style="color: #002244;">Repertorio Worship</h1>
-  </div>
-  <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();" style="margin-bottom: 20px;">
-    <input type="text" id="titulo" placeholder="Título de la canción" required style="width: 100%; margin-bottom: 10px;" /><br>
-    <textarea id="acordes" placeholder="Acordes" style="width: 100%; height: 100px; margin-bottom: 10px;"></textarea><br>
-    <input type="text" id="imagen" placeholder="URL de imagen de acordes (opcional)" style="width: 100%; margin-bottom: 10px;" /><br>
-    <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" style="width: 100%; margin-bottom: 10px;" /><br>
-    <button type="submit" style="background-color: #FF6F00; color: white; border: none; padding: 10px 20px; cursor: pointer;">Agregar canción</button>
-  </form>
-  <hr>
-  <div id="lista-canciones"></div>
-</body>
-</html>
+<body>
+  <header>
+    <img src="logo.jpeg" alt="Logo" />
+    <h1>Repertorio Worship</h1>
+  </header>
+  <main>
+    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
+      <input type="text" id="titulo" placeholder="Título de la canción" required />
+      <textarea id="acordes" placeholder="Acordes..."></textarea>
+      <input type="text" id="imagen" placeholder="URL de imagen de acordes (opcional)" />
+      <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
+      <button type="submit">Agregar canción</button>
+    </form>
+
+    <div id="lista-canciones"></div>
+  </m
