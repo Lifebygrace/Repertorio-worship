@@ -24,19 +24,20 @@ header {
 header img {
   width: 100px;
 }
-.toggle-btn, #login-btn, #logout-btn {
-  margin: 10px 5px;
+main {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+.toggle-btn {
+  margin: 10px 0;
+  float: right;
   background: var(--accent);
   color: white;
   border: none;
   padding: 10px 14px;
   border-radius: 8px;
   cursor: pointer;
-}
-main {
-  max-width: 800px;
-  margin: auto;
-  padding: 20px;
 }
 .search {
   width: 100%;
@@ -61,12 +62,21 @@ body.dark .card {
   border-radius: 8px;
   margin-top: 10px;
 }
+details summary {
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 10px;
+}
+a {
+  color: var(--accent);
+}
 form {
-  display: none;
   background: white;
   padding: 20px;
-  border-radius: 12px;
   margin-bottom: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: none;
 }
 body.dark form {
   background: #1e1e1e;
@@ -77,6 +87,7 @@ input, textarea {
   margin-bottom: 12px;
   border: 1px solid #ccc;
   border-radius: 8px;
+  font-size: 1em;
 }
 button {
   background-color: var(--accent);
