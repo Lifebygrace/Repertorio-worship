@@ -183,8 +183,13 @@
       cargarCanciones();
       document.getElementById("search").addEventListener("input", cargarCanciones);
     };
+
+    // 🔑 Exponer funciones globales
     window.eliminarCancion = eliminarCancion;
     window.agregarCancion = agregarCancion;
+    window.toggleForm = toggleForm;
+    window.toggleDark = toggleDark;
+    window.cargarCanciones = cargarCanciones;
   </script>
 </head>
 <body>
