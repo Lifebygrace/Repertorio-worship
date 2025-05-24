@@ -1,0 +1,89 @@
+:root {
+  --primary: #002244;
+  --accent: #FF6F00;
+  --bg: #f0f4f8;
+  --text: #002244;
+}
+body.dark {
+  --bg: #121212;
+  --text: #f0f4f8;
+}
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  transition: background 0.3s, color 0.3s;
+}
+header {
+  background: var(--primary);
+  color: white;
+  text-align: center;
+  padding: 20px;
+}
+header img {
+  width: 100px;
+}
+.toggle-btn, #login-btn, #logout-btn {
+  margin: 10px 5px;
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+main {
+  max-width: 800px;
+  margin: auto;
+  padding: 20px;
+}
+.search {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1em;
+}
+.card {
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+body.dark .card {
+  background: #1e1e1e;
+}
+.card img {
+  max-width: 100%;
+  border-radius: 8px;
+  margin-top: 10px;
+}
+form {
+  display: none;
+  background: white;
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+body.dark form {
+  background: #1e1e1e;
+}
+input, textarea {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+}
+button {
+  background-color: var(--accent);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  font-size: 1em;
+  border-radius: 8px;
+  cursor: pointer;
+}
