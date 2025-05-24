@@ -109,6 +109,7 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
@@ -121,97 +122,30 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
 
-    async function cargarCanciones() {
-      const contenedor = document.getElementById("lista-canciones");
-      contenedor.innerHTML = "";
-      const search = document.getElementById("search").value.toLowerCase();
-      const querySnapshot = await getDocs(collection(db, "canciones"));
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (!data.titulo.toLowerCase().includes(search)) return;
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `
-          <h2>${data.titulo}</h2>
-          <p>${data.acordes}</p>
-          ${data.imagenes?.map(url => `<img src="${url}" alt="Acordes">`).join('') || ""}
-          ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar Audio</a></p>` : ""}
-          ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ Ver en YouTube</a></p>` : ""}
-          <details><summary>Opciones</summary>
-            <button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar</button>
-          </details>
-        `;
-        contenedor.appendChild(div);
-      });
-    }
+    let usuarioAutenticado = false;
 
-    async function agregarCancion() {
-      const titulo = document.getElementById("titulo").value;
-      const acordes = document.getElementById("acordes").value;
-      const youtube = document.getElementById("youtube").value;
-      const audio = document.getElementById("audio").value;
-      const imagenesRaw = document.getElementById("imagenes").value;
-      const imagenes = imagenesRaw.split(',').map(url => url.trim()).filter(url => url !== "");
-
-      if (titulo.trim() === "") return;
-
-      await addDoc(collection(db, "canciones"), {
-        titulo, acordes, youtube, audio, imagenes
-      });
-
-      document.getElementById("formulario").reset();
-      document.getElementById("formulario").style.display = "none";
+    onAuthStateChanged(auth, user => {
+      usuarioAutenticado = !!user;
+      document.getElementById("auth-box").style.display = usuarioAutenticado ? "none" : "block";
+      document.getElementById("logout").style.display = usuarioAutenticado ? "inline-block" : "none";
+      document.getElementById("agregar-btn").style.display = usuarioAutenticado ? "inline-block" : "none";
       cargarCanciones();
+    });
+
+    async function login() {
+      const email = document.getElementById("login-email").value;
+      const pass = document.getElementById("login-pass").value;
+      try {
+        await signInWithEmailAndPassword(auth, email, pass);
+      } catch (e) {
+        alert("Error al iniciar sesión.");
+      }
     }
 
-    async function eliminarCancion(id) {
-      await deleteDoc(doc(db, "canciones", id));
-      cargarCanciones();
+    function cerrarSesion() {
+      signOut(auth);
     }
 
-    function toggleForm() {
-      const form = document.getElementById("formulario");
-      form.style.display = form.style.display === "none" ? "block" : "none";
-    }
-
-    function toggleDark() {
-      document.body.classList.toggle("dark");
-    }
-
-    window.onload = () => {
-      cargarCanciones();
-      document.getElementById("search").addEventListener("input", cargarCanciones);
-    };
-
-    // 🔑 Exponer funciones globales
-    window.eliminarCancion = eliminarCancion;
-    window.agregarCancion = agregarCancion;
-    window.toggleForm = toggleForm;
-    window.toggleDark = toggleDark;
-    window.cargarCanciones = cargarCanciones;
-  </script>
-</head>
-<body>
-  <header>
-    <img src="logo.jpeg" alt="Logo">
-    <h1>Repertorio Worship</h1>
-    <button class="toggle-btn" onclick="toggleDark()">🌙/☀️</button>
-  </header>
-  <main>
-    <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
-
-    <button onclick="toggleForm()">➕ Agregar canción</button>
-    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
-      <input type="text" id="titulo" placeholder="Título de la canción" required />
-      <textarea id="acordes" placeholder="Acordes..."></textarea>
-      <input type="text" id="imagenes" placeholder="URLs de imágenes separadas por coma" />
-      <input type="text" id="audio" placeholder="Link de audio (opcional)" />
-      <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
-      <button type="submit">Guardar canción</button>
-    </form>
-
-    <div id="lista-canciones"></div>
-  </main>
-</body>
-</html>
+    async f
