@@ -109,7 +109,6 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
@@ -122,7 +121,6 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
     async function cargarCanciones() {
       const contenedor = document.getElementById("lista-canciones");
@@ -148,25 +146,14 @@
       });
     }
 
-    async function subirArchivo(inputFile) {
-      if (!inputFile || inputFile.files.length === 0) return null;
-      const file = inputFile.files[0];
-      const fileRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
-      await uploadBytes(fileRef, file);
-      return await getDownloadURL(fileRef);
-    }
-
     async function agregarCancion() {
       const titulo = document.getElementById("titulo").value;
       const acordes = document.getElementById("acordes").value;
       const youtube = document.getElementById("youtube").value;
-      const imagenInput = document.getElementById("imagenFile");
-      const audioInput = document.getElementById("audioFile");
+      const imagenURL = document.getElementById("imagenURL").value;
+      const audioURL = document.getElementById("audioURL").value;
 
       if (titulo.trim() === "") return;
-
-      const imagenURL = await subirArchivo(imagenInput);
-      const audioURL = await subirArchivo(audioInput);
 
       await addDoc(collection(db, "canciones"), {
         titulo, acordes, youtube,
@@ -217,8 +204,8 @@
     <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
       <input type="text" id="titulo" placeholder="Título de la canción" required />
       <textarea id="acordes" placeholder="Acordes..."></textarea>
-      <input type="file" id="imagenFile" accept="image/*" />
-      <input type="file" id="audioFile" accept="audio/*" />
+      <input type="text" id="imagenURL" placeholder="URL de imagen" />
+      <input type="text" id="audioURL" placeholder="URL de audio" />
       <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
       <button type="submit">Guardar canción</button>
     </form>
