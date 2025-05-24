@@ -4,15 +4,194 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Repertorio Worship</title>
-  <link rel="stylesheet" href="style.css">
+  <style>
+    :root {
+      --primary: #002244;
+      --accent: #FF6F00;
+      --bg: #f0f4f8;
+      --text: #002244;
+    }
+    body.dark {
+      --bg: #121212;
+      --text: #f0f4f8;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    header img {
+      width: 100px;
+    }
+    main {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    .toggle-btn {
+      margin: 10px 0;
+      float: right;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .search {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    body.dark .card {
+      background: #1e1e1e;
+    }
+    .card img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    details summary {
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    a {
+      color: var(--accent);
+    }
+    form {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: none;
+    }
+    body.dark form {
+      background: #1e1e1e;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+    button {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 1em;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+  </style>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
+      authDomain: "repertorioworship.firebaseapp.com",
+      projectId: "repertorioworship",
+      storageBucket: "repertorioworship.firebasestorage.app",
+      messagingSenderId: "493050453266",
+      appId: "1:493050453266:web:cf07ce9fbb471122f167cb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    async function cargarCanciones() {
+      const contenedor = document.getElementById("lista-canciones");
+      contenedor.innerHTML = "";
+      const search = document.getElementById("search").value.toLowerCase();
+      const querySnapshot = await getDocs(collection(db, "canciones"));
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (!data.titulo.toLowerCase().includes(search)) return;
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <h2>${data.titulo}</h2>
+          <p>${data.acordes}</p>
+          ${data.imagenes?.map(url => `<img src="${url}" alt="Acordes">`).join('') || ""}
+          ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar Audio</a></p>` : ""}
+          ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ Ver en YouTube</a></p>` : ""}
+          <details><summary>Opciones</summary>
+            <button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar</button>
+          </details>
+        `;
+        contenedor.appendChild(div);
+      });
+    }
+
+    async function agregarCancion() {
+      const titulo = document.getElementById("titulo").value;
+      const acordes = document.getElementById("acordes").value;
+      const youtube = document.getElementById("youtube").value;
+      const audio = document.getElementById("audio").value;
+      const imagenesRaw = document.getElementById("imagenes").value;
+      const imagenes = imagenesRaw.split(',').map(url => url.trim()).filter(url => url !== "");
+
+      if (titulo.trim() === "") return;
+
+      await addDoc(collection(db, "canciones"), {
+        titulo, acordes, youtube, audio, imagenes
+      });
+
+      document.getElementById("formulario").reset();
+      document.getElementById("formulario").style.display = "none";
+      cargarCanciones();
+    }
+
+    async function eliminarCancion(id) {
+      await deleteDoc(doc(db, "canciones", id));
+      cargarCanciones();
+    }
+
+    function toggleForm() {
+      const form = document.getElementById("formulario");
+      form.style.display = form.style.display === "none" ? "block" : "none";
+    }
+
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+    }
+
+    window.onload = () => {
+      cargarCanciones();
+      document.getElementById("search").addEventListener("input", cargarCanciones);
+    };
+    window.eliminarCancion = eliminarCancion;
+    window.agregarCancion = agregarCancion;
+  </script>
 </head>
 <body>
   <header>
     <img src="logo.jpeg" alt="Logo">
     <h1>Repertorio Worship</h1>
     <button class="toggle-btn" onclick="toggleDark()">🌙/☀️</button>
-    <button id="login-btn" onclick="login()">Iniciar sesión</button>
-    <button id="logout-btn" onclick="logout()" style="display:none;">Cerrar sesión</button>
   </header>
   <main>
     <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
@@ -21,14 +200,13 @@
     <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
       <input type="text" id="titulo" placeholder="Título de la canción" required />
       <textarea id="acordes" placeholder="Acordes..."></textarea>
-      <input type="file" id="imagenes" multiple accept="image/*" />
-      <input type="file" id="audio" accept="audio/*" />
+      <input type="text" id="imagenes" placeholder="URLs de imágenes separadas por coma" />
+      <input type="text" id="audio" placeholder="Link de audio (opcional)" />
       <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
       <button type="submit">Guardar canción</button>
     </form>
 
     <div id="lista-canciones"></div>
   </main>
-  <script type="module" src="app.js"></script>
 </body>
 </html>
