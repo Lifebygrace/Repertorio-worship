@@ -141,4 +141,99 @@
           ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ Ver en YouTube</a></p>` : ""}
           <details><summary>Opciones</summary>
             <button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar</button>
-            <button onclick="editarCancion('${docSnap.id}', '${data.titulo}', 
+            <button onclick="editarCancion('${docSnap.id}', '${data.titulo}', \`${data.acordes}\`, '${data.imagenes?.[0] || ""}', '${data.audio || ""}', '${data.youtube || ""}')">✏️ Editar</button>
+          </details>
+        `;
+        contenedor.appendChild(div);
+      });
+    }
+
+    async function agregarCancion() {
+      const titulo = document.getElementById("titulo").value;
+      const acordes = document.getElementById("acordes").value;
+      const youtube = document.getElementById("youtube").value;
+      const imagenURL = document.getElementById("imagenURL").value;
+      const audioURL = document.getElementById("audioURL").value;
+      const id = document.getElementById("cancionId").value;
+
+      if (titulo.trim() === "") return;
+
+      const nuevaCancion = {
+        titulo, acordes, youtube,
+        imagenes: imagenURL ? [imagenURL] : [],
+        audio: audioURL || null
+      };
+
+      if (id) {
+        await updateDoc(doc(db, "canciones", id), nuevaCancion);
+      } else {
+        await addDoc(collection(db, "canciones"), nuevaCancion);
+      }
+
+      document.getElementById("formulario").reset();
+      document.getElementById("formulario").style.display = "none";
+      document.getElementById("cancionId").value = "";
+      cargarCanciones();
+    }
+
+    async function eliminarCancion(id) {
+      await deleteDoc(doc(db, "canciones", id));
+      cargarCanciones();
+    }
+
+    function editarCancion(id, titulo, acordes, imagenURL, audioURL, youtube) {
+      document.getElementById("formulario").style.display = "block";
+      document.getElementById("titulo").value = titulo;
+      document.getElementById("acordes").value = acordes;
+      document.getElementById("imagenURL").value = imagenURL;
+      document.getElementById("audioURL").value = audioURL;
+      document.getElementById("youtube").value = youtube;
+      document.getElementById("cancionId").value = id;
+    }
+
+    function toggleForm() {
+      const form = document.getElementById("formulario");
+      form.style.display = form.style.display === "none" ? "block" : "none";
+    }
+
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+    }
+
+    window.onload = () => {
+      cargarCanciones();
+      document.getElementById("search").addEventListener("input", cargarCanciones);
+    };
+
+    window.agregarCancion = agregarCancion;
+    window.eliminarCancion = eliminarCancion;
+    window.toggleForm = toggleForm;
+    window.toggleDark = toggleDark;
+    window.editarCancion = editarCancion;
+  </script>
+</head>
+<body>
+  <header>
+    <img src="logo.jpeg" alt="Logo">
+    <h1>Repertorio Worship</h1>
+    <button class="toggle-btn" onclick="toggleDark()">🌙/☀️</button>
+  </header>
+  <main>
+    <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
+
+    <button onclick="toggleForm()">➕ Agregar canción</button>
+    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
+      <input type="hidden" id="cancionId" />
+      <input type="text" id="titulo" placeholder="Título de la canción" required />
+      <textarea id="acordes" placeholder="Acordes..."></textarea>
+      <input type="text" id="imagenURL" placeholder="URL de imagen" />
+      <input type="text" id="audioURL" placeholder="URL de audio" />
+      <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
+      <button type="submit">Guardar canción</button>
+    </form>
+
+    <p id="contador">Canciones totales: 0</p>
+    <div id="lista-canciones"></div>
+  </main>
+</body>
+</html>
