@@ -27,6 +27,7 @@
       color: white;
       text-align: center;
       padding: 20px;
+      position: relative;
     }
     header img {
       width: 100px;
@@ -46,13 +47,28 @@
       border-radius: 8px;
       cursor: pointer;
     }
+    #metronomo-link {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      color: white;
+      background: #0288d1;
+      padding: 6px 10px;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.9em;
+    }
     .search {
       width: 100%;
       padding: 10px;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
       font-size: 1em;
+    }
+    #contador-canciones {
+      font-weight: bold;
+      margin-bottom: 20px;
     }
     .card {
       background: white;
@@ -105,14 +121,20 @@
       border-radius: 8px;
       cursor: pointer;
     }
-    #proximo-servicio {
-      background: #fff8e1;
-      border-left: 5px solid var(--accent);
+    #proximo-servicio, #proximo-ensayo {
       padding: 15px;
       margin-bottom: 20px;
       border-radius: 8px;
     }
-    #modal-notas {
+    #proximo-servicio {
+      background: #fff8e1;
+      border-left: 5px solid var(--accent);
+    }
+    #proximo-ensayo {
+      background: #e1f5fe;
+      border-left: 5px solid #0288d1;
+    }
+    #modal-notas, #modal-ensayo {
       position: fixed;
       top: 0; left: 0; right: 0; bottom: 0;
       background: rgba(0,0,0,0.5);
@@ -149,6 +171,7 @@
       contenedor.innerHTML = "";
       const search = document.getElementById("search").value.toLowerCase();
       const querySnapshot = await getDocs(collection(db, "canciones"));
+      let total = 0;
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
         if (!data.titulo.toLowerCase().includes(search)) return;
@@ -165,7 +188,9 @@
           </details>
         `;
         contenedor.appendChild(div);
+        total++;
       });
+      document.getElementById("contador-canciones").innerText = `Total: ${total} canciones.`;
     }
 
     async function agregarCancion() {
@@ -210,6 +235,23 @@
       cargarNotas();
     }
 
+    async function cargarNotasEnsayo() {
+      const notaDoc = await getDocs(collection(db, "notas_ensayo"));
+      let notas = "";
+      notaDoc.forEach(doc => {
+        notas = doc.data().texto || "";
+      });
+      document.getElementById("texto-ensayo").value = notas;
+      document.getElementById("notas-ensayo-texto").innerText = notas || "No hay canciones programadas.";
+    }
+
+    async function guardarNotasEnsayo() {
+      const texto = document.getElementById("texto-ensayo").value;
+      await setDoc(doc(db, "notas_ensayo", "proximo"), { texto });
+      document.getElementById("modal-ensayo").style.display = "none";
+      cargarNotasEnsayo();
+    }
+
     function toggleForm() {
       const form = document.getElementById("formulario");
       form.style.display = form.style.display === "none" ? "block" : "none";
@@ -223,9 +265,14 @@
       document.getElementById("modal-notas").style.display = "flex";
     }
 
+    function abrirModalEnsayo() {
+      document.getElementById("modal-ensayo").style.display = "flex";
+    }
+
     window.onload = () => {
       cargarCanciones();
       cargarNotas();
+      cargarNotasEnsayo();
       document.getElementById("search").addEventListener("input", cargarCanciones);
     };
 
@@ -235,10 +282,13 @@
     window.toggleDark = toggleDark;
     window.abrirModalNotas = abrirModalNotas;
     window.guardarNotas = guardarNotas;
+    window.abrirModalEnsayo = abrirModalEnsayo;
+    window.guardarNotasEnsayo = guardarNotasEnsayo;
   </script>
 </head>
 <body>
   <header>
+    <a id="metronomo-link" href="https://www.metronomeonline.com/" target="_blank">🎵 Metrónomo</a>
     <img src="logo.jpeg" alt="Logo">
     <h1>Repertorio Worship</h1>
     <button class="toggle-btn" onclick="toggleDark()">🌙/☀️</button>
@@ -250,7 +300,14 @@
       <button onclick="abrirModalNotas()">📝 Editar notas</button>
     </div>
 
-    <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
+    <div id="proximo-ensayo">
+      <strong>Canciones para el próximo ensayo:</strong>
+      <p id="notas-ensayo-texto">Cargando...</p>
+      <button onclick="abrirModalEnsayo()">📝 Editar notas</button>
+    </div>
+
+    <input type="text" id="search" class="search" placeholder="Buscar canciones..." />
+    <p id="contador-canciones">Cargando cantidad de canciones...</p>
 
     <button onclick="toggleForm()">➕ Agregar canción</button>
     <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
@@ -272,6 +329,16 @@
       <br>
       <button onclick="guardarNotas()">💾 Guardar</button>
       <button onclick="document.getElementById('modal-notas').style.display='none'">Cancelar</button>
+    </div>
+  </div>
+
+  <div id="modal-ensayo">
+    <div id="modal-notas-content">
+      <h3>Editar notas del próximo ensayo</h3>
+      <textarea id="texto-ensayo" rows="6"></textarea>
+      <br>
+      <button onclick="guardarNotasEnsayo()">💾 Guardar</button>
+      <button onclick="document.getElementById('modal-ensayo').style.display='none'">Cancelar</button>
     </div>
   </div>
 </body>
