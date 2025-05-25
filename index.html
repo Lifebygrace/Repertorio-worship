@@ -4,46 +4,46 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Repertorio Worship</title>
-  <link rel="stylesheet" href="styles.css">
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="app.js"></script>
 </head>
 <body>
   <header>
     <img src="logo.jpeg" alt="Logo">
     <h1>Repertorio Worship</h1>
-    <button id="toggle-dark" class="toggle-btn">🌙/☀️</button>
+    <button class="toggle-btn" onclick="toggleDark()">🌙/☀️</button>
+    <button id="login-btn">🔐 Iniciar sesión</button>
+    <button id="logout-btn" style="display:none;">🚪 Cerrar sesión</button>
   </header>
 
   <main>
     <div id="proximo-servicio">
       <strong>Canciones para el próximo servicio:</strong>
       <p id="notas-texto">Cargando...</p>
-      <button id="btn-editar-notas">📝 Editar notas</button>
+      <button id="editar-notas" style="display: none;">📝 Editar notas</button>
     </div>
 
-    <div style="margin-bottom: 10px;">
-      <a href="https://www.imusic-school.com/es/tools/metronomo/" target="_blank">🕐 Abrir Metrónomo</a>
-    </div>
+    <input type="text" id="search" class="search" placeholder="Buscar canciones..." />
+    <button id="toggleFormBtn" style="display:none;">➕ Agregar canción</button>
 
-    <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
-
-    <button id="btn-agregar">➕ Agregar canción</button>
-    <form id="formulario">
+    <form id="formulario" style="display:none;">
       <input type="text" id="titulo" placeholder="Título de la canción" required />
       <textarea id="acordes" placeholder="Acordes..."></textarea>
-      <input type="file" id="imagenes" multiple accept="image/*" />
-      <input type="file" id="audio" accept="audio/*" />
+      <input type="file" id="imagenes" multiple accept="image/*"/>
+      <input type="file" id="audio" accept="audio/*"/>
       <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
       <button type="submit">Guardar canción</button>
     </form>
 
     <div id="lista-canciones"></div>
-
-    <div id="volver-arriba">
-      <button onclick="window.scrollTo({top: 0, behavior: 'smooth'});">⬆ Volver arriba</button>
+    <p id="contador-canciones"></p>
+    <div style="text-align: center; margin-top: 40px;">
+      <a href="https://www.imusic-school.com/es/herramientas/metronomo-online/" target="_blank">🕒 Abrir Metrónomo</a>
     </div>
+    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})">⬆ Volver al inicio</button>
   </main>
 
-  <div id="modal-notas">
+  <div id="modal-notas" style="display:none;">
     <div id="modal-notas-content">
       <h3>Editar notas del próximo servicio</h3>
       <textarea id="texto-notas" rows="6"></textarea>
@@ -52,12 +52,5 @@
       <button onclick="document.getElementById('modal-notas').style.display='none'">Cancelar</button>
     </div>
   </div>
-
-  <div style="text-align: center; padding: 20px;">
-    <button id="boton-login">🔑 Iniciar sesión</button>
-    <button id="boton-logout">🚪 Cerrar sesión</button>
-  </div>
-
-  <script type="module" src="app.js"></script>
 </body>
 </html>
