@@ -2,324 +2,45 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Repertorio Worship</title>
-  <style>
-    :root {
-      --primary: #002244;
-      --accent: #FF6F00;
-      --bg: #f0f4f8;
-      --text: #002244;
-    }
-    body.dark {
-      --bg: #121212;
-      --text: #f0f4f8;
-    }
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      transition: background 0.3s, color 0.3s;
-    }
-    header {
-      background: var(--primary);
-      color: white;
-      text-align: center;
-      padding: 20px;
-      position: relative;
-    }
-    header img {
-      width: 100px;
-    }
-    main {
-      max-width: 800px;
-      margin: auto;
-      padding: 20px;
-    }
-    .toggle-btn {
-      margin: 10px 0;
-      float: right;
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 10px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #metronomo-link {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      color: white;
-      background: #0288d1;
-      padding: 6px 10px;
-      border-radius: 6px;
-      text-decoration: none;
-      font-size: 0.9em;
-    }
-    .search {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-    }
-    #contador-canciones {
-      font-weight: bold;
-      margin-bottom: 20px;
-    }
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    body.dark .card {
-      background: #1e1e1e;
-    }
-    .card img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-    details summary {
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-    a {
-      color: var(--accent);
-    }
-    form {
-      background: white;
-      padding: 20px;
-      margin-bottom: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      display: none;
-    }
-    body.dark form {
-      background: #1e1e1e;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 10px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 1em;
-    }
-    button {
-      background-color: var(--accent);
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      font-size: 1em;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #proximo-servicio, #proximo-ensayo {
-      padding: 15px;
-      margin-bottom: 20px;
-      border-radius: 8px;
-    }
-    #proximo-servicio {
-      background: #fff8e1;
-      border-left: 5px solid var(--accent);
-    }
-    #proximo-ensayo {
-      background: #e1f5fe;
-      border-left: 5px solid #0288d1;
-    }
-    #modal-notas, #modal-ensayo {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: none;
-      justify-content: center;
-      align-items: center;
-    }
-    #modal-notas-content {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      width: 90%;
-      max-width: 600px;
-    }
-  </style>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
-      authDomain: "repertorioworship.firebaseapp.com",
-      projectId: "repertorioworship",
-      storageBucket: "repertorioworship.appspot.com",
-      messagingSenderId: "493050453266",
-      appId: "1:493050453266:web:cf07ce9fbb471122f167cb"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    async function cargarCanciones() {
-      const contenedor = document.getElementById("lista-canciones");
-      contenedor.innerHTML = "";
-      const search = document.getElementById("search").value.toLowerCase();
-      const querySnapshot = await getDocs(collection(db, "canciones"));
-      let total = 0;
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (!data.titulo.toLowerCase().includes(search)) return;
-        const div = document.createElement("div");
-        div.className = "card";
-        div.innerHTML = `
-          <h2>${data.titulo}</h2>
-          <p>${data.acordes}</p>
-          ${data.imagenes?.map(url => `<img src="${url}" alt="Acordes">`).join('') || ""}
-          ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar Audio</a></p>` : ""}
-          ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ Ver en YouTube</a></p>` : ""}
-          <details><summary>Opciones</summary>
-            <button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar</button>
-          </details>
-        `;
-        contenedor.appendChild(div);
-        total++;
-      });
-      document.getElementById("contador-canciones").innerText = `Total: ${total} canciones.`;
-    }
-
-    async function agregarCancion() {
-      const titulo = document.getElementById("titulo").value;
-      const acordes = document.getElementById("acordes").value;
-      const youtube = document.getElementById("youtube").value;
-      const imagenURL = document.getElementById("imagenURL").value;
-      const audioURL = document.getElementById("audioURL").value;
-
-      if (titulo.trim() === "") return;
-
-      await addDoc(collection(db, "canciones"), {
-        titulo, acordes, youtube,
-        imagenes: imagenURL ? [imagenURL] : [],
-        audio: audioURL || null
-      });
-
-      document.getElementById("formulario").reset();
-      document.getElementById("formulario").style.display = "none";
-      cargarCanciones();
-    }
-
-    async function eliminarCancion(id) {
-      await deleteDoc(doc(db, "canciones", id));
-      cargarCanciones();
-    }
-
-    async function cargarNotas() {
-      const notaDoc = await getDocs(collection(db, "notas"));
-      let notas = "";
-      notaDoc.forEach(doc => {
-        notas = doc.data().texto || "";
-      });
-      document.getElementById("texto-notas").value = notas;
-      document.getElementById("notas-texto").innerText = notas || "No hay canciones programadas.";
-    }
-
-    async function guardarNotas() {
-      const texto = document.getElementById("texto-notas").value;
-      await setDoc(doc(db, "notas", "proximo"), { texto });
-      document.getElementById("modal-notas").style.display = "none";
-      cargarNotas();
-    }
-
-    async function cargarNotasEnsayo() {
-      const notaDoc = await getDocs(collection(db, "notas_ensayo"));
-      let notas = "";
-      notaDoc.forEach(doc => {
-        notas = doc.data().texto || "";
-      });
-      document.getElementById("texto-ensayo").value = notas;
-      document.getElementById("notas-ensayo-texto").innerText = notas || "No hay canciones programadas.";
-    }
-
-    async function guardarNotasEnsayo() {
-      const texto = document.getElementById("texto-ensayo").value;
-      await setDoc(doc(db, "notas_ensayo", "proximo"), { texto });
-      document.getElementById("modal-ensayo").style.display = "none";
-      cargarNotasEnsayo();
-    }
-
-    function toggleForm() {
-      const form = document.getElementById("formulario");
-      form.style.display = form.style.display === "none" ? "block" : "none";
-    }
-
-    function toggleDark() {
-      document.body.classList.toggle("dark");
-    }
-
-    function abrirModalNotas() {
-      document.getElementById("modal-notas").style.display = "flex";
-    }
-
-    function abrirModalEnsayo() {
-      document.getElementById("modal-ensayo").style.display = "flex";
-    }
-
-    window.onload = () => {
-      cargarCanciones();
-      cargarNotas();
-      cargarNotasEnsayo();
-      document.getElementById("search").addEventListener("input", cargarCanciones);
-    };
-
-    window.agregarCancion = agregarCancion;
-    window.eliminarCancion = eliminarCancion;
-    window.toggleForm = toggleForm;
-    window.toggleDark = toggleDark;
-    window.abrirModalNotas = abrirModalNotas;
-    window.guardarNotas = guardarNotas;
-    window.abrirModalEnsayo = abrirModalEnsayo;
-    window.guardarNotasEnsayo = guardarNotasEnsayo;
-  </script>
+  <link rel="stylesheet" href="styles.css">
 </head>
 <body>
   <header>
-    <a id="metronomo-link" href="https://www.metronomeonline.com/" target="_blank">🎵 Metrónomo</a>
     <img src="logo.jpeg" alt="Logo">
     <h1>Repertorio Worship</h1>
-    <button class="toggle-btn" onclick="toggleDark()">🌙/☀️</button>
+    <button id="toggle-dark" class="toggle-btn">🌙/☀️</button>
   </header>
+
   <main>
     <div id="proximo-servicio">
       <strong>Canciones para el próximo servicio:</strong>
       <p id="notas-texto">Cargando...</p>
-      <button onclick="abrirModalNotas()">📝 Editar notas</button>
+      <button id="btn-editar-notas">📝 Editar notas</button>
     </div>
 
-    <div id="proximo-ensayo">
-      <strong>Canciones para el próximo ensayo:</strong>
-      <p id="notas-ensayo-texto">Cargando...</p>
-      <button onclick="abrirModalEnsayo()">📝 Editar notas</button>
+    <div style="margin-bottom: 10px;">
+      <a href="https://www.imusic-school.com/es/tools/metronomo/" target="_blank">🕐 Abrir Metrónomo</a>
     </div>
 
-    <input type="text" id="search" class="search" placeholder="Buscar canciones..." />
-    <p id="contador-canciones">Cargando cantidad de canciones...</p>
+    <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
 
-    <button onclick="toggleForm()">➕ Agregar canción</button>
-    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
+    <button id="btn-agregar">➕ Agregar canción</button>
+    <form id="formulario">
       <input type="text" id="titulo" placeholder="Título de la canción" required />
       <textarea id="acordes" placeholder="Acordes..."></textarea>
-      <input type="text" id="imagenURL" placeholder="URL de imagen" />
-      <input type="text" id="audioURL" placeholder="URL de audio" />
+      <input type="file" id="imagenes" multiple accept="image/*" />
+      <input type="file" id="audio" accept="audio/*" />
       <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
       <button type="submit">Guardar canción</button>
     </form>
 
     <div id="lista-canciones"></div>
+
+    <div id="volver-arriba">
+      <button onclick="window.scrollTo({top: 0, behavior: 'smooth'});">⬆ Volver arriba</button>
+    </div>
   </main>
 
   <div id="modal-notas">
@@ -327,19 +48,16 @@
       <h3>Editar notas del próximo servicio</h3>
       <textarea id="texto-notas" rows="6"></textarea>
       <br>
-      <button onclick="guardarNotas()">💾 Guardar</button>
+      <button id="guardar-notas">💾 Guardar</button>
       <button onclick="document.getElementById('modal-notas').style.display='none'">Cancelar</button>
     </div>
   </div>
 
-  <div id="modal-ensayo">
-    <div id="modal-notas-content">
-      <h3>Editar notas del próximo ensayo</h3>
-      <textarea id="texto-ensayo" rows="6"></textarea>
-      <br>
-      <button onclick="guardarNotasEnsayo()">💾 Guardar</button>
-      <button onclick="document.getElementById('modal-ensayo').style.display='none'">Cancelar</button>
-    </div>
+  <div style="text-align: center; padding: 20px;">
+    <button id="boton-login">🔑 Iniciar sesión</button>
+    <button id="boton-logout">🚪 Cerrar sesión</button>
   </div>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
