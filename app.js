@@ -1,67 +1,71 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import {
+  getStorage, ref, uploadBytes, getDownloadURL
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
+import {
+  getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+// ConfiguraciÃ³n Firebase
 const firebaseConfig = {
   apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
   authDomain: "repertorioworship.firebaseapp.com",
   projectId: "repertorioworship",
-  storageBucket: "repertorioworship.firebasestorage.app",
+  storageBucket: "repertorioworship.appspot.com",
   messagingSenderId: "493050453266",
   appId: "1:493050453266:web:cf07ce9fbb471122f167cb"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
+const auth = getAuth(app);
+const provider = new GoogleAuthProvider();
 
-async function cargarCanciones() {
-  const contenedor = document.getElementById("lista-canciones");
-  contenedor.innerHTML = "";
-  const search = document.getElementById("search").value.toLowerCase();
-  const querySnapshot = await getDocs(collection(db, "canciones"));
-  querySnapshot.forEach((docSnap) => {
-    const data = docSnap.data();
-    if (!data.titulo.toLowerCase().includes(search)) return;
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerHTML = `
-      <h2>${data.titulo}</h2>
-      <p>${data.acordes}</p>
-      ${data.imagenes?.map(url => `<img src="${url}" alt="Acordes">`).join('') || ""}
-      ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar Audio</a></p>` : ""}
-      ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ Ver en YouTube</a></p>` : ""}
-      <details><summary>Opciones</summary>
-        <button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar</button>
-      </details>
-    `;
-    contenedor.appendChild(div);
+// UID del administrador
+let adminUID = "Wac5yk1NUQNY1fSARyOxRjacLPV2";
+
+// Estado global
+let usuarioActual = null;
+
+// Iniciar sesiÃ³n
+export function iniciarSesion() {
+  signInWithPopup(auth, provider)
+    .then((result) => {
+      usuarioActual = result.user;
+      verificarAcceso();
+    });
+}
+
+// Cerrar sesiÃ³n
+export function cerrarSesion() {
+  signOut(auth).then(() => {
+    usuarioActual = null;
+    verificarAcceso();
   });
 }
 
-window.agregarCancion = async function () {
-  const titulo = document.getElementById("titulo").value;
-  const acordes = document.getElementById("acordes").value;
-  const youtube = document.getElementById("youtube").value;
-  const audio = document.getElementById("audio").value;
-  const imagenesRaw = document.getElementById("imagenes").value;
-  const imagenes = imagenesRaw.split(',').map(url => url.trim()).filter(url => url !== "");
-  if (titulo.trim() === "") return;
-  await addDoc(collection(db, "canciones"), { titulo, acordes, youtube, audio, imagenes });
-  document.getElementById("formulario").reset();
-  document.getElementById("formulario").style.display = "none";
-  cargarCanciones();
-};
+// Verificar si es admin
+function verificarAcceso() {
+  const esAdmin = usuarioActual?.uid === adminUID;
+  document.body.classList.toggle("admin", esAdmin);
 
-window.eliminarCancion = async function (id) {
-  await deleteDoc(doc(db, "canciones", id));
-  cargarCanciones();
-};
+  document.getElementById("btn-agregar").style.display = esAdmin ? "inline-block" : "none";
+  document.querySelectorAll(".btn-eliminar").forEach(btn => {
+    btn.style.display = esAdmin ? "inline-block" : "none";
+  });
+  document.getElementById("btn-editar-notas").style.display = esAdmin ? "inline-block" : "none";
 
-window.toggleForm = function () {
-  const form = document.getElementById("formulario");
-  form.style.display = form.style.display === "none" ? "block" : "none";
-};
+  document.getElementById("boton-login").style.display = usuarioActual ? "none" : "inline-block";
+  document.getElementById("boton-logout").style.display = usuarioActual ? "inline-block" : "none";
+}
 
-window.onload = () => {
-  cargarCanciones();
-  document.getElementById("search").addEventListener("input", cargarCanciones);
-};
+// Escuchar cambios de autenticaciÃ³n
+onAuthStateChanged(auth, (user) => {
+  usuarioActual = user;
+  verificarAcceso();
+});
