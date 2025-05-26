@@ -4,838 +4,535 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Repertorio Worship</title>
-
-<!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-
 <style>
-  /* ==== Variables de color ==== */
-  :root {
-    --primary: #1a237e;
-    --accent: #ff6f00;
-    --bg: #f9fafb;
-    --text: #121212;
-    --orange: #ff6f00;
-    --blue: #1565c0;
-    --white: #fff;
-    --dark-bg: #121212;
-    --dark-text: #e0e0e0;
-  }
-
-  /* ==== Reset y base ==== */
-  * {
-    box-sizing: border-box;
-  }
+  /* Básicos y diseño */
   body {
-    margin: 0; padding-top: 110px;
-    font-family: 'Poppins', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    transition: background 0.3s, color 0.3s;
+    font-family: Arial, sans-serif;
+    margin: 0; padding: 0 10px 30px;
+    background: white;
+    color: #222;
     min-height: 100vh;
   }
-  body.dark {
-    background: var(--dark-bg);
-    color: var(--dark-text);
-  }
   header {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    background: var(--primary);
-    height: 110px;
     display: flex;
     justify-content: center;
     align-items: center;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-    z-index: 1000;
+    border-bottom: 2px solid #ccc;
+    padding: 10px 0;
+    position: relative;
   }
   header img {
-    height: 110px; /* doble tamaño */
-    user-select:none;
+    height: 70px;
   }
-  #top-bar {
+  #btnMetro {
     position: fixed;
-    top: 10px; left: 15px; right: 15px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 1010;
-  }
-  #btn-metro {
-    background: var(--blue);
+    top: 10px;
+    left: 10px;
+    background: #007bff;
+    color: white;
     border: none;
-    color: var(--white);
-    padding: 10px 18px;
-    border-radius: 25px;
-    font-weight: 600;
-    font-size: 14px;
+    padding: 7px 12px;
+    border-radius: 5px;
     cursor: pointer;
-    box-shadow: 0 3px 8px rgba(21,101,192,.7);
-    transition: background 0.3s ease;
+    font-weight: bold;
+    z-index: 1000;
   }
-  #btn-metro:hover {
-    background: #0d47a1;
+  #btnArriba {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: none;
+    font-size: 18px;
+    z-index: 1000;
   }
-  #right-buttons {
+  #btnLogin, #btnLogout, #btnModo {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    margin-left: 10px;
+    background: transparent;
+    border: 1px solid #007bff;
+    color: #007bff;
+    padding: 6px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  #btnLogout {
+    right: 90px;
+  }
+  #btnModo {
+    right: 170px;
+  }
+
+  #buscador {
+    margin: 15px auto;
+    max-width: 400px;
+    display: block;
+    font-size: 16px;
+    padding: 8px;
+    width: 100%;
+    border: 2px solid #007bff;
+    border-radius: 5px;
+  }
+  #contador {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 20px;
+    color: #007bff;
+  }
+
+  .cancion {
+    border: 1px solid #ccc;
+    margin-bottom: 15px;
+    padding: 10px;
+    border-radius: 7px;
+    background: #f9f9f9;
+  }
+  .cancion h3 {
+    margin: 0 0 5px 0;
+  }
+  .imagenes {
     display: flex;
     gap: 10px;
-    align-items: center;
+    margin: 10px 0;
   }
-  button.top-btn {
-    border: none;
-    border-radius: 25px;
-    padding: 8px 16px;
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    box-shadow: 0 3px 8px rgba(255,111,0,0.7);
-    background: var(--accent);
-    color: var(--white);
-    user-select:none;
-    transition: background 0.3s ease;
-  }
-  button.top-btn:hover {
-    background: #cc5e00;
-  }
-  #btn-modo {
-    background: none;
-    box-shadow: none;
-    font-size: 22px;
-    padding: 0 10px 2px 10px;
-    color: var(--text);
-    user-select:none;
-  }
-  #btn-modo:hover {
-    color: var(--accent);
-  }
-  body.dark #btn-modo {
-    color: var(--dark-text);
-  }
-  main {
-    max-width: 900px;
-    margin: auto;
-    padding: 10px 20px 80px 20px;
-  }
-  #search {
-    width: 100%;
-    font-size: 16px;
-    padding: 12px 15px;
-    border-radius: 35px;
-    border: 2px solid var(--primary);
-    outline-offset: 3px;
-    transition: border-color 0.3s ease;
-  }
-  #search:focus {
-    border-color: var(--accent);
-  }
-  #contador-canciones {
-    margin-top: 10px;
-    margin-bottom: 20px;
-    font-weight: 700;
-    color: var(--primary);
-    font-size: 1.1em;
-  }
-  #lista-canciones {
-    display: grid;
-    gap: 20px;
-  }
-  .cancion-card {
-    background: var(--white);
-    padding: 20px;
-    border-radius: 18px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    position: relative;
-    transition: transform 0.2s ease;
-  }
-  body.dark .cancion-card {
-    background: #1e1e1e;
-    box-shadow: 0 4px 12px rgba(255,255,255,0.08);
-  }
-  .cancion-card:hover {
-    transform: scale(1.02);
-  }
-  .cancion-titulo {
-    font-weight: 700;
-    font-size: 1.3em;
-    margin-bottom: 6px;
-    color: var(--primary);
-  }
-  body.dark .cancion-titulo {
-    color: var(--accent);
-  }
-  .cancion-letra {
-    white-space: pre-wrap;
-    font-size: 1em;
-    margin-bottom: 10px;
-  }
-  .imagenes-acordes {
-    display: flex;
-    gap: 12px;
-    margin-top: 8px;
-    flex-wrap: wrap;
-  }
-  .imagenes-acordes img {
-    max-width: 45%;
-    border-radius: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  .imagenes img {
+    max-height: 100px;
+    max-width: 150px;
+    border-radius: 5px;
+    object-fit: contain;
   }
   audio {
     width: 100%;
-    margin-top: 10px;
-    border-radius: 12px;
-    outline-offset: -3px;
+    margin-top: 5px;
   }
-  button.btn-eliminar {
-    position: absolute;
-    top: 14px;
-    right: 14px;
-    background: #e53935;
-    color: white;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 2px 8px rgba(229,57,53,.8);
-    user-select:none;
-    transition: background 0.3s ease;
-  }
-  button.btn-eliminar:hover {
-    background: #b71c1c;
-  }
-  section.notas {
-    margin-top: 40px;
-    padding: 20px 25px;
-    border-radius: 20px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    font-size: 1em;
-    user-select:none;
-  }
-  #servicio {
-    background: #fff3e0;
-    border-left: 8px solid var(--orange);
-    color: #5d4037;
-  }
-  #ensayo {
-    background: #bbdefb;
-    border-left: 8px solid var(--blue);
-    color: #0d47a1;
-  }
-  .nota-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-  }
-  .nota-header strong {
-    font-size: 1.25em;
-  }
-  .nota-header input[type=date] {
-    border: none;
-    background: transparent;
-    font-weight: 600;
-    font-size: 1em;
-    color: inherit;
-    cursor: pointer;
-  }
-  textarea#notas-servicio, textarea#notas-ensayo {
-    width: 100%;
-    font-size: 1em;
-    padding: 10px 12px;
-    border-radius: 15px;
-    border: 1.8px solid #ccc;
-    resize: vertical;
-    min-height: 80px;
-    font-family: 'Poppins', sans-serif;
-  }
-  textarea[readonly] {
-    background: #f4f4f4;
-    cursor: default;
-  }
-  body.dark textarea[readonly] {
-    background: #2c2c2c;
-    color: var(--dark-text);
-  }
-  button.btn-editar {
-    background: var(--orange);
+  .btnEliminar {
+    background: #d9534f;
     border: none;
     color: white;
-    font-weight: 700;
-    padding: 6px 14px;
-    border-radius: 20px;
+    padding: 5px 9px;
+    border-radius: 4px;
     cursor: pointer;
-    box-shadow: 0 3px 8px rgba(255,111,0,0.8);
-    user-select:none;
-  }
-  button.btn-editar:hover {
-    background: #cc5e00;
-  }
-  #mensaje-efesios {
-    text-align: center;
-    margin: 50px 10px 60px 10px;
-    font-style: italic;
-    font-size: 1.1em;
-    color: var(--primary);
-  }
-  body.dark #mensaje-efesios {
-    color: var(--accent);
-  }
-  /* Formularios para agregar canción */
-  #form-agregar {
-    margin-top: 40px;
-    background: var(--white);
-    padding: 20px 25px;
-    border-radius: 18px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-  }
-  body.dark #form-agregar {
-    background: #1e1e1e;
-  }
-  #form-agregar label {
-    display: block;
-    margin-bottom: 6px;
-    font-weight: 600;
-  }
-  #form-agregar input[type=text], 
-  #form-agregar textarea, 
-  #form-agregar input[type=file] {
-    width: 100%;
-    padding: 8px 10px;
-    margin-bottom: 14px;
-    border-radius: 12px;
-    border: 2px solid #ccc;
-    font-size: 1em;
-    font-family: 'Poppins', sans-serif;
-  }
-  #form-agregar textarea {
-    resize: vertical;
-  }
-  #form-agregar input[type=file] {
-    padding: 5px 10px;
-    border-radius: 12px;
-  }
-  #form-agregar button {
-    background: var(--accent);
-    border: none;
-    color: var(--white);
-    padding: 12px 24px;
-    border-radius: 25px;
-    font-weight: 700;
-    font-size: 1em;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(255,111,0,0.8);
-    transition: background 0.3s ease;
-    user-select:none;
-  }
-  #form-agregar button:hover {
-    background: #cc5e00;
-  }
-  #form-agregar input[type=file]::-webkit-file-upload-button {
-    cursor: pointer;
-    border-radius: 12px;
-    padding: 5px 10px;
-    background: var(--primary);
-    color: white;
-    border: none;
-    font-weight: 600;
-  }
-  #form-agregar input[type=file]::-webkit-file-upload-button:hover {
-    background: #0d47a1;
-  }
-  /* Info usuario */
-  #info-usuario {
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--primary);
-    user-select:none;
-  }
-  /* Link volver arriba */
-  #btn-arriba {
-    position: fixed;
-    bottom: 25px;
-    right: 25px;
-    background: var(--accent);
-    color: white;
-    border: none;
-    padding: 14px 18px;
-    border-radius: 50%;
-    cursor: pointer;
-    font-size: 20px;
-    box-shadow: 0 5px 15px rgba(255,111,0,0.7);
-    user-select:none;
-    display: none;
-  }
-  #btn-arriba:hover {
-    background: #cc5e00;
+    font-weight: bold;
+    float: right;
   }
 
-  /* Scroll barra */
-  ::-webkit-scrollbar {
-    width: 9px;
+  .notas-section {
+    margin-top: 30px;
+    padding: 15px;
+    border: 2px solid #007bff;
+    border-radius: 7px;
+    background: #eef7ff;
   }
-  ::-webkit-scrollbar-track {
-    background: var(--bg);
+  .notas-section h4 {
+    margin-top: 0;
+    margin-bottom: 8px;
+    color: #004a99;
   }
-  ::-webkit-scrollbar-thumb {
-    background: var(--accent);
-    border-radius: 25px;
+  .notas-section textarea {
+    width: 100%;
+    height: 80px;
+    padding: 8px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 14px;
+    border: 1px solid #007bff;
+    border-radius: 4px;
   }
-  body.dark ::-webkit-scrollbar-track {
-    background: var(--dark-bg);
+  .notas-section input[type="date"] {
+    margin-top: 5px;
+    padding: 5px;
+    border: 1px solid #007bff;
+    border-radius: 4px;
   }
-  body.dark ::-webkit-scrollbar-thumb {
-    background: var(--primary);
+  .editarNotasBtn {
+    margin-top: 8px;
+    padding: 6px 12px;
+    border: none;
+    background: #007bff;
+    color: white;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  form#formAgregar {
+    margin-top: 30px;
+    border: 2px solid #007bff;
+    padding: 15px;
+    border-radius: 7px;
+    background: #f0f8ff;
+    max-width: 500px;
+  }
+  form#formAgregar h3 {
+    margin-top: 0;
+    color: #004a99;
+  }
+  form#formAgregar label {
+    display: block;
+    margin: 10px 0 5px 0;
+    font-weight: bold;
+  }
+  form#formAgregar input[type="text"],
+  form#formAgregar input[type="file"] {
+    width: 100%;
+    padding: 7px;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    font-size: 14px;
+  }
+  form#formAgregar button {
+    margin-top: 15px;
+    background: #007bff;
+    border: none;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+
+  footer {
+    margin-top: 50px;
+    text-align: center;
+    font-style: italic;
+    color: #666;
+    border-top: 1px solid #ccc;
+    padding-top: 15px;
+  }
+
+  /* Modo oscuro */
+  body.dark {
+    background: #222;
+    color: #eee;
+  }
+  body.dark header {
+    background: #111;
+    border-bottom-color: #444;
+  }
+  body.dark #btnMetro,
+  body.dark #btnArriba {
+    background: #005bb5;
+  }
+  body.dark .cancion {
+    background: #333;
+    border-color: #555;
+  }
+  body.dark .notas-section {
+    background: #333;
+  }
+  body.dark input, body.dark textarea {
+    background: #444;
+    color: #eee;
+    border-color: #555;
+  }
+  body.dark button {
+    color: white;
   }
 </style>
 </head>
 <body>
 
 <header>
-  <img src="logo.jpeg" alt="Logo LifebyGrace" />
+  <img src="logo.jpeg" alt="Logo Worship" />
 </header>
 
-<div id="top-bar">
-  <button id="btn-metro" title="Activar / Desactivar metrónomo">🎵 Metrónomo</button>
-  <div id="right-buttons">
-    <button id="btn-modo" title="Cambiar modo claro/oscuro">🌗</button>
-    <button id="btn-login" class="top-btn">Iniciar Sesión</button>
-    <button id="btn-logout" class="top-btn" style="display:none;">Cerrar Sesión</button>
-    <span id="info-usuario"></span>
-  </div>
+<button id="btnMetro" title="Metrónomo">Metro</button>
+<button id="btnArriba" title="Volver arriba">↑</button>
+
+<button id="btnModo" title="Modo Oscuro">🌙</button>
+<button id="btnLogin" title="Iniciar sesión">Login</button>
+<button id="btnLogout" title="Cerrar sesión" style="display:none;">Logout</button>
+
+<input type="text" id="buscador" placeholder="Buscar canción..." />
+<div id="contador">0 canciones</div>
+
+<div id="listaCanciones"></div>
+
+<div class="notas-section" id="notasServicioSection" style="display:none;">
+  <h4>Notas para el servicio</h4>
+  <textarea id="notasServicio" readonly></textarea>
+  <br />
+  <label>Fecha: <input type="date" id="fechaServicio" disabled /></label>
+  <br />
+  <button class="editarNotasBtn" id="editarServicio">Editar Notas</button>
 </div>
 
-<main>
-  <input type="text" id="search" placeholder="Buscar canción..." autocomplete="off" />
+<div class="notas-section" id="notasEnsayoSection" style="display:none;">
+  <h4>Canciones a ensayar</h4>
+  <textarea id="notasEnsayo" readonly></textarea>
+  <br />
+  <label>Fecha: <input type="date" id="fechaEnsayo" disabled /></label>
+  <br />
+  <button class="editarNotasBtn" id="editarEnsayo">Editar Notas</button>
+</div>
 
-  <div id="contador-canciones">Cargando canciones...</div>
+<form id="formAgregar" style="display:none;">
+  <h3>Agregar canción</h3>
+  <label for="nombre">Nombre de la canción *</label>
+  <input type="text" id="nombre" required />
+  <label for="urlImagen1">Imagen acorde 1 (máx 1 archivo)</label>
+  <input type="file" id="urlImagen1" accept="image/*" />
+  <label for="urlImagen2">Imagen acorde 2 (máx 1 archivo)</label>
+  <input type="file" id="urlImagen2" accept="image/*" />
+  <label for="urlAudio">Archivo de audio (máx 1 archivo)</label>
+  <input type="file" id="urlAudio" accept="audio/*" />
+  <button type="submit">Agregar canción</button>
+</form>
 
-  <div id="lista-canciones"></div>
+<footer>
+  Efesios 2:8 — Porque por gracia sois salvos por medio de la fe; y esto no de vosotros, pues es don de Dios.
+</footer>
 
-  <section class="notas" id="servicio">
-    <div class="nota-header">
-      <strong>Notas para el Servicio</strong>
-      <input type="date" id="fecha-servicio" />
-    </div>
-    <textarea id="notas-servicio" readonly placeholder="No hay notas guardadas..."></textarea>
-    <button id="editar-servicio" class="btn-editar" style="margin-top:10px;">Editar Notas</button>
-  </section>
-
-  <section class="notas" id="ensayo">
-    <div class="nota-header">
-      <strong>Notas para Ensayo</strong>
-      <input type="date" id="fecha-ensayo" />
-    </div>
-    <textarea id="notas-ensayo" readonly placeholder="No hay notas guardadas..."></textarea>
-    <button id="editar-ensayo" class="btn-editar" style="margin-top:10px;">Editar Notas</button>
-  </section>
-
-  <form id="form-agregar" style="display:none;">
-    <h3>Agregar Nueva Canción</h3>
-    <label for="titulo">Título:</label>
-    <input type="text" id="titulo" required />
-
-    <label for="letra">Letra / Acordes:</label>
-    <textarea id="letra" rows="4" required></textarea>
-
-    <label for="img1">Imagen Acorde 1 (jpg/png):</label>
-    <input type="file" id="img1" accept="image/png, image/jpeg" />
-
-    <label for="img2">Imagen Acorde 2 (jpg/png):</label>
-    <input type="file" id="img2" accept="image/png, image/jpeg" />
-
-    <label for="audio">Archivo de Audio (mp3/wav):</label>
-    <input type="file" id="audio" accept="audio/mpeg, audio/wav" />
-
-    <button type="submit">Agregar Canción</button>
-  </form>
-
-  <div id="mensaje-efesios">“Porque por gracia ustedes han sido salvados mediante la fe, y esto no procede de ustedes, sino que es el regalo de Dios.” — Efesios 2:8</div>
-
-</main>
-
-<button id="btn-arriba" title="Volver arriba">⬆️</button>
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
 <script>
-  // --- Configuración Firebase --- //
+  // CONFIGURA TU FIREBASE AQUÍ
   const firebaseConfig = {
     apiKey: "TU_API_KEY",
-    authDomain: "TU_PROYECTO.firebaseapp.com",
-    projectId: "TU_PROYECTO",
-    storageBucket: "TU_PROYECTO.appspot.com",
-    messagingSenderId: "TU_SENDER_ID",
+    authDomain: "TU_AUTH_DOMAIN",
+    projectId: "TU_PROJECT_ID",
+    storageBucket: "TU_STORAGE_BUCKET",
+    messagingSenderId: "TU_MESSAGING_SENDER_ID",
     appId: "TU_APP_ID"
   };
-
-  // Inicializar Firebase
   firebase.initializeApp(firebaseConfig);
+
   const auth = firebase.auth();
   const db = firebase.firestore();
   const storage = firebase.storage();
 
-  // --- Variables globales ---
-  let currentUser = null;
+  const ADMIN_UID = "Wac5yk1NUQNY1fSARyOxRjacLPV2";
+
+  // Elementos DOM
+  const btnLogin = document.getElementById('btnLogin');
+  const btnLogout = document.getElementById('btnLogout');
+  const btnModo = document.getElementById('btnModo');
+  const btnMetro = document.getElementById('btnMetro');
+  const btnArriba = document.getElementById('btnArriba');
+  const buscador = document.getElementById('buscador');
+  const contador = document.getElementById('contador');
+  const listaCanciones = document.getElementById('listaCanciones');
+  const formAgregar = document.getElementById('formAgregar');
+  const nombreInput = document.getElementById('nombre');
+  const urlImagen1Input = document.getElementById('urlImagen1');
+  const urlImagen2Input = document.getElementById('urlImagen2');
+  const urlAudioInput = document.getElementById('urlAudio');
+
+  const notasServicio = document.getElementById('notasServicio');
+  const fechaServicio = document.getElementById('fechaServicio');
+  const editarServicio = document.getElementById('editarServicio');
+  const notasEnsayo = document.getElementById('notasEnsayo');
+  const fechaEnsayo = document.getElementById('fechaEnsayo');
+  const editarEnsayo = document.getElementById('editarEnsayo');
+
   let canciones = [];
-  let metrónomoActivo = false;
-  let metroInterval = null;
+  let currentUser = null;
 
-  // --- Elementos DOM ---
-  const listaCanciones = document.getElementById('lista-canciones');
-  const contadorCanciones = document.getElementById('contador-canciones');
-  const searchInput = document.getElementById('search');
-  const btnModo = document.getElementById('btn-modo');
-  const btnLogin = document.getElementById('btn-login');
-  const btnLogout = document.getElementById('btn-logout');
-  const infoUsuario = document.getElementById('info-usuario');
-  const formAgregar = document.getElementById('form-agregar');
-  const btnMetro = document.getElementById('btn-metro');
-  const btnArriba = document.getElementById('btn-arriba');
-
-  const notasServicio = document.getElementById('notas-servicio');
-  const fechaServicio = document.getElementById('fecha-servicio');
-  const editarServicio = document.getElementById('editar-servicio');
-
-  const notasEnsayo = document.getElementById('notas-ensayo');
-  const fechaEnsayo = document.getElementById('fecha-ensayo');
-  const editarEnsayo = document.getElementById('editar-ensayo');
-
-  // --- Funciones ---
-
-  // Mostrar canciones filtradas
-  function mostrarCanciones(filtro = '') {
-    const filtroLower = filtro.toLowerCase();
-    const filtradas = canciones.filter(c => c.titulo.toLowerCase().includes(filtroLower));
-    contadorCanciones.textContent = `${filtradas.length} canción(es) encontradas`;
-
-    listaCanciones.innerHTML = '';
-
-    if (filtradas.length === 0) {
-      listaCanciones.innerHTML = '<p>No se encontraron canciones.</p>';
-      return;
+  // --- Modo Oscuro ---
+  function guardarModo(modo) {
+    localStorage.setItem('modoOscuro', modo);
+  }
+  function cargarModo() {
+    const modo = localStorage.getItem('modoOscuro') || 'claro';
+    if(modo === 'oscuro') {
+      document.body.classList.add('dark');
+      btnModo.textContent = '☀️';
+    } else {
+      document.body.classList.remove('dark');
+      btnModo.textContent = '🌙';
     }
+  }
+  btnModo.onclick = () => {
+    if(document.body.classList.contains('dark')) {
+      document.body.classList.remove('dark');
+      btnModo.textContent = '🌙';
+      guardarModo('claro');
+    } else {
+      document.body.classList.add('dark');
+      btnModo.textContent = '☀️';
+      guardarModo('oscuro');
+    }
+  }
 
-    filtradas.forEach(cancion => {
-      const card = document.createElement('article');
-      card.className = 'cancion-card';
+  // --- Mostrar canciones ---
+  function mostrarCanciones(filtro) {
+    const texto = filtro.toLowerCase();
+    const filtradas = canciones.filter(c => c.nombre.toLowerCase().includes(texto));
+    contador.textContent = `${filtradas.length} canción${filtradas.length !== 1 ? 'es' : ''}`;
+    listaCanciones.innerHTML = '';
+    for(const cancion of filtradas) {
+      const div = document.createElement('div');
+      div.classList.add('cancion');
+      div.innerHTML = `<h3>${cancion.nombre}</h3>`;
 
-      // Título
-      const titulo = document.createElement('h3');
-      titulo.className = 'cancion-titulo';
-      titulo.textContent = cancion.titulo;
-      card.appendChild(titulo);
-
-      // Letra/acordes
-      const letra = document.createElement('pre');
-      letra.className = 'cancion-letra';
-      letra.textContent = cancion.letra;
-      card.appendChild(letra);
-
-      // Imágenes acordes
-      if (cancion.imgUrls && cancion.imgUrls.length > 0) {
-        const divImgs = document.createElement('div');
-        divImgs.className = 'imagenes-acordes';
-        cancion.imgUrls.forEach(url => {
-          const img = document.createElement('img');
-          img.src = url;
-          img.alt = 'Acorde';
-          divImgs.appendChild(img);
-        });
-        card.appendChild(divImgs);
+      // Imágenes acorde
+      const imgs = document.createElement('div');
+      imgs.classList.add('imagenes');
+      if(cancion.urlImagen1) {
+        const img1 = document.createElement('img');
+        img1.src = cancion.urlImagen1;
+        img1.alt = `Acorde 1 ${cancion.nombre}`;
+        imgs.appendChild(img1);
       }
+      if(cancion.urlImagen2) {
+        const img2 = document.createElement('img');
+        img2.src = cancion.urlImagen2;
+        img2.alt = `Acorde 2 ${cancion.nombre}`;
+        imgs.appendChild(img2);
+      }
+      div.appendChild(imgs);
 
       // Audio
-      if (cancion.audioUrl) {
+      if(cancion.urlAudio) {
         const audio = document.createElement('audio');
         audio.controls = true;
-        audio.src = cancion.audioUrl;
-        card.appendChild(audio);
+        audio.src = cancion.urlAudio;
+        div.appendChild(audio);
       }
 
-      // Botón eliminar solo para admin
-      if (currentUser) {
+      // Botón eliminar solo admin
+      if(currentUser && currentUser.uid === ADMIN_UID) {
         const btnEliminar = document.createElement('button');
-        btnEliminar.className = 'btn-eliminar';
         btnEliminar.textContent = 'Eliminar';
-        btnEliminar.title = `Eliminar canción "${cancion.titulo}"`;
+        btnEliminar.classList.add('btnEliminar');
         btnEliminar.onclick = () => eliminarCancion(cancion.id);
-        card.appendChild(btnEliminar);
+        div.appendChild(btnEliminar);
       }
 
-      listaCanciones.appendChild(card);
-    });
+      listaCanciones.appendChild(div);
+    }
   }
 
-  // Cargar canciones desde Firestore
+  // --- Cargar canciones ---
   async function cargarCanciones() {
     try {
-      const snapshot = await db.collection('canciones').orderBy('titulo').get();
-      canciones = [];
-      snapshot.forEach(doc => {
-        canciones.push({ id: doc.id, ...doc.data() });
-      });
-      mostrarCanciones(searchInput.value);
-    } catch (error) {
-      console.error('Error cargando canciones:', error);
-      contadorCanciones.textContent = 'Error cargando canciones.';
+      const snapshot = await db.collection('canciones').orderBy('nombre').get();
+      canciones = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      mostrarCanciones(buscador.value);
+    } catch(e) {
+      console.error('Error al cargar canciones:', e);
     }
   }
 
-  // Eliminar canción
-  async function eliminarCancion(id) {
-    if (!confirm('¿Seguro que quieres eliminar esta canción?')) return;
-    try {
-      // Primero borrar imágenes y audio del Storage
-      const cancion = canciones.find(c => c.id === id);
-      if (cancion) {
-        if (cancion.imgUrls && cancion.imgUrls.length > 0) {
-          for (const url of cancion.imgUrls) {
-            try {
-              const ref = storage.refFromURL(url);
-              await ref.delete();
-            } catch {}
-          }
-        }
-        if (cancion.audioUrl) {
-          try {
-            const refAudio = storage.refFromURL(cancion.audioUrl);
-            await refAudio.delete();
-          } catch {}
-        }
+  // --- Agregar canción ---
+  async function agregarCancion(e) {
+    e.preventDefault();
+
+    if(!currentUser || currentUser.uid !== ADMIN_UID) {
+      alert('Solo el administrador puede agregar canciones.');
+      return;
+    }
+
+    const nombre = nombreInput.value.trim();
+    if(!nombre) {
+      alert('El nombre es obligatorio');
+      return;
+    }
+
+    // Subir imágenes si hay
+    const imagenesURLs = [];
+    for (const inputFile of [urlImagen1Input, urlImagen2Input]) {
+      if(inputFile.files.length > 0) {
+        const file = inputFile.files[0];
+        const ref = storage.ref(`imagenes/${Date.now()}_${file.name}`);
+        await ref.put(file);
+        const url = await ref.getDownloadURL();
+        imagenesURLs.push(url);
+      } else {
+        imagenesURLs.push('');
       }
-      // Luego borrar el documento
-      await db.collection('canciones').doc(id).delete();
-      alert('Canción eliminada correctamente.');
-      cargarCanciones();
-    } catch (error) {
-      alert('Error al eliminar canción: ' + error.message);
-    }
-  }
-
-  // Subir archivo a Storage y obtener URL
-  async function subirArchivo(file, carpeta) {
-    const nombreArchivo = Date.now() + '_' + file.name.replace(/\s/g, '_');
-    const ref = storage.ref().child(`${carpeta}/${nombreArchivo}`);
-    const snapshot = await ref.put(file);
-    return await snapshot.ref.getDownloadURL();
-  }
-
-  // Agregar nueva canción
-  async function agregarCancion(event) {
-    event.preventDefault();
-
-    if (!currentUser) {
-      alert('Debes iniciar sesión como administrador para agregar canciones.');
-      return;
     }
 
-    const titulo = document.getElementById('titulo').value.trim();
-    const letra = document.getElementById('letra').value.trim();
-    const img1 = document.getElementById('img1').files[0];
-    const img2 = document.getElementById('img2').files[0];
-    const audio = document.getElementById('audio').files[0];
-
-    if (!titulo || !letra) {
-      alert('Completa título y letra.');
-      return;
+    // Subir audio si hay
+    let urlAudio = '';
+    if(urlAudioInput.files.length > 0) {
+      const file = urlAudioInput.files[0];
+      const ref = storage.ref(`audios/${Date.now()}_${file.name}`);
+      await ref.put(file);
+      urlAudio = await ref.getDownloadURL();
     }
 
     try {
-      // Subir archivos si existen
-      const imgUrls = [];
-      if (img1) imgUrls.push(await subirArchivo(img1, 'imagenes'));
-      if (img2) imgUrls.push(await subirArchivo(img2, 'imagenes'));
-      let audioUrl = '';
-      if (audio) audioUrl = await subirArchivo(audio, 'audios');
-
-      // Guardar en Firestore
       await db.collection('canciones').add({
-        titulo,
-        letra,
-        imgUrls,
-        audioUrl
+        nombre,
+        urlImagen1: imagenesURLs[0],
+        urlImagen2: imagenesURLs[1],
+        urlAudio
       });
 
-      alert('Canción agregada con éxito!');
-      formAgregar.reset();
+      // Limpiar form
+      nombreInput.value = '';
+      urlImagen1Input.value = '';
+      urlImagen2Input.value = '';
+      urlAudioInput.value = '';
+
       cargarCanciones();
-    } catch (error) {
-      alert('Error agregando canción: ' + error.message);
+    } catch(e) {
+      alert('Error al agregar canción');
+      console.error(e);
     }
   }
 
-  // Mostrar / Ocultar formulario agregar canción según usuario logueado
-  function actualizarUI() {
-    if (currentUser) {
-      btnLogin.style.display = 'none';
-      btnLogout.style.display = 'inline-block';
-      infoUsuario.textContent = `Admin: ${currentUser.email}`;
-      formAgregar.style.display = 'block';
-    } else {
-      btnLogin.style.display = 'inline-block';
-      btnLogout.style.display = 'none';
-      infoUsuario.textContent = '';
-      formAgregar.style.display = 'none';
-    }
-    cargarCanciones();
-  }
-
-  // Iniciar sesión (simplificado email y contraseña hardcoded)
-  async function iniciarSesion() {
-    const email = prompt('Ingresa tu email de administrador');
-    if (!email) return;
-    const password = prompt('Ingresa tu contraseña');
-    if (!password) return;
-    try {
-      const cred = await auth.signInWithEmailAndPassword(email, password);
-      currentUser = cred.user;
-      alert(`Bienvenido ${currentUser.email}`);
-      actualizarUI();
-    } catch (error) {
-      alert('Error iniciando sesión: ' + error.message);
-    }
-  }
-
-  // Cerrar sesión
-  async function cerrarSesion() {
-    await auth.signOut();
-    currentUser = null;
-    alert('Sesión cerrada.');
-    actualizarUI();
-  }
-
-  // Guardar notas servicio o ensayo
-  async function guardarNotas(tipo) {
-    if (!currentUser) {
-      alert('Solo el administrador puede editar notas.');
+  // --- Eliminar canción ---
+  async function eliminarCancion(id) {
+    if(!confirm('¿Eliminar esta canción?')) return;
+    if(!currentUser || currentUser.uid !== ADMIN_UID) {
+      alert('Solo el administrador puede eliminar canciones.');
       return;
     }
-    const fecha = tipo === 'servicio' ? fechaServicio.value : fechaEnsayo.value;
-    const texto = tipo === 'servicio' ? notasServicio.value : notasEnsayo.value;
     try {
-      await db.collection('notas').doc(tipo).set({ fecha, texto });
-      alert('Notas guardadas!');
-      bloquearNotas(tipo);
-    } catch (error) {
-      alert('Error guardando notas: ' + error.message);
+      await db.collection('canciones').doc(id).delete();
+      cargarCanciones();
+    } catch(e) {
+      alert('Error al eliminar canción');
+      console.error(e);
     }
   }
 
-  // Cargar notas servicio y ensayo
+  // --- Notas servicio y ensayo ---
   async function cargarNotas() {
     try {
-      const docServ = await db.collection('notas').doc('servicio').get();
-      if (docServ.exists) {
-        const data = docServ.data();
-        fechaServicio.value = data.fecha || '';
-        notasServicio.value = data.texto || '';
+      const docServicio = await db.collection('notas').doc('servicio').get();
+      if(docServicio.exists) {
+        notasServicio.value = docServicio.data().texto || '';
+        fechaServicio.value = docServicio.data().fecha || '';
       }
       const docEnsayo = await db.collection('notas').doc('ensayo').get();
-      if (docEnsayo.exists) {
-        const data = docEnsayo.data();
-        fechaEnsayo.value = data.fecha || '';
-        notasEnsayo.value = data.texto || '';
+      if(docEnsayo.exists) {
+        notasEnsayo.value = docEnsayo.data().texto || '';
+        fechaEnsayo.value = docEnsayo.data().fecha || '';
       }
-    } catch (error) {
-      console.error('Error cargando notas:', error);
+    } catch(e) {
+      console.error('Error al cargar notas:', e);
     }
   }
-
-  // Bloquear/Desbloquear textarea notas
-  function bloquearNotas(tipo, desbloquear = false) {
-    if (tipo === 'servicio') {
-      notasServicio.readOnly = !desbloquear;
-      fechaServicio.disabled = !desbloquear;
-      editarServicio.textContent = desbloquear ? 'Guardar Notas' : 'Editar Notas';
-    } else if (tipo === 'ensayo') {
-      notasEnsayo.readOnly = !desbloquear;
-      fechaEnsayo.disabled = !desbloquear;
-      editarEnsayo.textContent = desbloquear ? 'Guardar Notas' : 'Editar Notas';
+  async function guardarNotas(tipo) {
+    if(!currentUser || currentUser.uid !== ADMIN_UID) {
+      alert('Solo el administrador puede guardar notas.');
+      return;
     }
-  }
-
-  // Modo oscuro toggle y guardar en localStorage
-  function cargarModo() {
-    const modo = localStorage.getItem('modo-oscuro');
-    if (modo === 'true') document.body.classList.add('dark');
-  }
-  function toggleModo() {
-    document.body.classList.toggle('dark');
-    localStorage.setItem('modo-oscuro', document.body.classList.contains('dark'));
-  }
-
-  // Metrónomo simple (clic cada segundo)
-  function toggleMetronomo() {
-    if (metrónomoActivo) {
-      clearInterval(metroInterval);
-      btnMetro.textContent = '🎵 Metrónomo';
+    let texto, fecha;
+    if(tipo === 'servicio') {
+      texto = notasServicio.value;
+      fecha = fechaServicio.value;
     } else {
-      metroInterval = setInterval(() => {
-        const audioCtx = new AudioContext();
-        const oscillator = audioCtx.createOscillator();
-        oscillator.type = 'square';
-        oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
-        oscillator.connect(audioCtx.destination);
-        oscillator.start();
-        oscillator.stop(audioCtx.currentTime + 0.1);
-      }, 1000);
-      btnMetro.textContent = '⏹️ Parar Metrónomo';
+      texto = notasEnsayo.value;
+      fecha = fechaEnsayo.value;
     }
-    metrónomoActivo = !metrónomoActivo;
-  }
-
-  // Volver arriba botón
-  window.addEventListener('scroll', () => {
-    if (window.scrollY > 200) {
-      btnArriba.style.display = 'block';
-    } else {
-      btnArriba.style.display = 'none';
-    }
-  });
-  btnArriba.addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
-
-  // Eventos
-  searchInput.addEventListener('input', () => mostrarCanciones(searchInput.value));
-  btnModo.addEventListener('click', toggleModo);
-  btnLogin.addEventListener('click', iniciarSesion);
-  btnLogout.addEventListener('click', cerrarSesion);
-  formAgregar.addEventListener('submit', agregarCancion);
-  btnMetro.addEventListener('click', toggleMetronomo);
-
-  editarServicio.addEventListener('click', async () => {
-    if (notasServicio.readOnly) {
-      bloquearNotas('servicio', true);
-    } else {
-      await guardarNotas('servicio');
-    }
-  });
-
-  editarEnsayo.addEventListener('click', async () => {
-    if (notasEnsayo.readOnly) {
-      bloquearNotas('ensayo', true);
-    } else {
-      await guardarNotas('ensayo');
-    }
-  });
-
-  // Estado autenticación
-  auth.onAuthStateChanged(user => {
-    currentUser = user;
-    actualizarUI();
-    cargarNotas();
-  });
-
-  // Al cargar página
-  cargarModo();
-  cargarCanciones();
-
-</script>
-
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-storage-compat.js"></script>
-
-</body>
-</html>
+    try {
+      await db.collection('notas').doc(tipo).set({ texto, fecha });
+      alert('Notas guardadas');
+    } catch(e) {
+      alert('
