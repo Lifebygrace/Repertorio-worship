@@ -1,17 +1,16 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Repertorio Worship</title>
   <style>
     :root {
       --primary: #002244;
       --accent: #FF6F00;
+      --lightblue: #e3f2fd;
       --bg: #f0f4f8;
       --text: #002244;
-      --blue: #2196F3;
-      --lightblue: #e3f2fd;
     }
     body.dark {
       --bg: #121212;
@@ -27,80 +26,146 @@
     header {
       background: var(--primary);
       color: white;
-      text-align: center;
       padding: 20px;
-      position: relative;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
     }
-    header img {
-      width: 300px;
+    #logo {
+      width: 200px; /* 2 veces más grande que 100px */
     }
-    #metronome-btn {
-      position: absolute;
-      left: 10px;
-      top: 10px;
-      background: var(--blue);
-      color: white;
-      border: none;
-      padding: 10px 14px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #login-btn {
-      position: absolute;
-      right: 10px;
-      top: 10px;
+    .toggle-btn, .auth-btn, .metronome-btn {
       background: var(--accent);
       color: white;
       border: none;
       padding: 10px 14px;
       border-radius: 8px;
       cursor: pointer;
+      margin-left: 10px;
+    }
+    .metronome-btn {
+      background: #007BFF; /* Azul */
+    }
+    main {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    .search {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+    #contador {
+      margin-bottom: 20px;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    body.dark .card, body.dark form {
+      background: #1e1e1e;
+    }
+    .card img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    details summary {
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    form {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: none;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+    #proximo-servicio {
+      background: #fff8e1;
+      border-left: 5px solid var(--accent);
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    #canciones-ensayo {
+      background: var(--lightblue);
+      border-left: 5px solid #007BFF;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
     }
   </style>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
-      authDomain: "repertorioworship.firebaseapp.com",
-      projectId: "repertorioworship",
-      storageBucket: "repertorioworship.appspot.com",
-      messagingSenderId: "493050453266",
-      appId: "1:493050453266:web:cf07ce9fbb471122f167cb"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth();
-    const provider = new GoogleAuthProvider();
-
-    const loginBtn = document.createElement('button');
-    loginBtn.id = "login-btn";
-    loginBtn.textContent = "Iniciar sesión";
-    loginBtn.onclick = () => signInWithPopup(auth, provider);
-    document.addEventListener('DOMContentLoaded', () => {
-      document.body.appendChild(loginBtn);
-    });
-
-    onAuthStateChanged(auth, user => {
-      if (user && user.uid === "Wac5yk1NUQNY1fSARyOxRjacLPV2") {
-        loginBtn.textContent = "Cerrar sesión";
-        loginBtn.onclick = () => signOut(auth);
-        document.body.classList.add("admin");
-      } else {
-        loginBtn.textContent = "Iniciar sesión";
-        loginBtn.onclick = () => signInWithPopup(auth, provider);
-        document.body.classList.remove("admin");
-      }
-    });
-  </script>
 </head>
 <body>
   <header>
-    <button id="metronome-btn" onclick="window.open('https://www.metronomeonline.com', '_blank')">🕒 Metrónomo</button>
-    <img src="logo.jpeg" alt="Logo">
-    <h1>Repertorio Worship</h1>
+    <div>
+      <button class="metronome-btn" onclick="window.open('https://www.metronomeonline.com', '_blank')">🎵 Metrónomo</button>
+    </div>
+    <img id="logo" src="logo.jpeg" alt="Logo">
+    <div>
+      <button class="toggle-btn" onclick="toggleDark()">🌙/☀️</button>
+      <button class="auth-btn" onclick="loginLogout()" id="authBtn">🔐 Iniciar sesión</button>
+    </div>
   </header>
-  <!-- El resto del contenido permanece igual -->
+  <main>
+    <div id="proximo-servicio">
+      <strong>Canciones para el próximo servicio:</strong>
+      <p id="notas-texto">Cargando...</p>
+      <small id="fecha-servicio"></small>
+      <button onclick="abrirModalNotas('proximo')">📝 Editar notas</button>
+    </div>
+    <div id="canciones-ensayo">
+      <strong>Canciones a ensayar:</strong>
+      <p id="ensayo-texto">Cargando...</p>
+      <small id="fecha-ensayo"></small>
+      <button onclick="abrirModalNotas('ensayo')">📝 Editar ensayo</button>
+    </div>
+
+    <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
+    <div id="contador">0 canciones</div>
+
+    <button onclick="toggleForm()">➕ Agregar canción</button>
+    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
+      <input type="text" id="titulo" placeholder="Título de la canción" required />
+      <textarea id="acordes" placeholder="Acordes..."></textarea>
+      <input type="file" id="imagenes" accept="image/*" multiple />
+      <input type="file" id="audio" accept="audio/*" />
+      <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
+      <button type="submit">Guardar canción</button>
+    </form>
+
+    <div id="lista-canciones"></div>
+  </main>
+
+  <div id="modal-notas" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); justify-content:center; align-items:center;">
+    <div style="background:white; padding:20px; border-radius:12px; width:90%; max-width:600px;">
+      <h3 id="modal-titulo"></h3>
+      <input type="date" id="modal-fecha" />
+      <textarea id="modal-texto" rows="6"></textarea>
+      <br>
+      <button onclick="guardarNotas()">💾 Guardar</button>
+      <button onclick="document.getElementById('modal-notas').style.display='none'">Cancelar</button>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
