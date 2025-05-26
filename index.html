@@ -1,179 +1,127 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Repertorio Worship</title>
-  <style>
-    body { font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s; }
-    body.dark-mode { background-color: #121212; color: #ffffff; }
-    header { background-color: #002244; color: white; padding: 20px; text-align: center; position: relative; }
-    #logo { width: 120px; height: auto; display: block; margin: 10px auto; }
-    .btn { padding: 8px 16px; margin: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    .btn.orange { background-color: orange; color: white; }
-    .btn.blue { background-color: #00aaff; color: white; }
-    .toggle-theme { position: absolute; top: 20px; right: 20px; font-size: 24px; background: none; border: none; color: white; cursor: pointer; }
-    .metronome-left { position: absolute; top: 20px; left: 20px; font-size: 14px; padding: 6px 10px; }
-    section { padding: 20px; }
-    .section-card { border-radius: 10px; padding: 15px; margin-bottom: 20px; }
-    .service-notes { background-color: #fff3cd; border-left: 6px solid orange; }
-    .rehearsal-notes { background-color: #d1ecf1; border-left: 6px solid #00aaff; }
-    footer { text-align: center; padding: 20px; color: gray; }
-    #advanced-options { display: none; margin-top: 20px; }
-    #song-list li { margin-bottom: 15px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grupo de Música Worship</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        header {
+            text-align: center;
+            padding: 10px;
+            background-color: #4CAF50;
+            color: white;
+        }
+        #logo {
+            width: 100px;
+            position: absolute;
+            top: 10px;
+            left: 10px;
+        }
+        #metronomeButton {
+            position: absolute;
+            top: 10px;
+            left: 120px;
+            padding: 5px 10px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        section {
+            margin: 20px 0;
+        }
+        .chords, .audio {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        .chord, .audio-file {
+            margin: 10px;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            width: 200px;
+            text-align: center;
+        }
+        .notes {
+            margin: 10px 0;
+            padding: 10px;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <a href="https://www.metronomeonline.com" class="btn blue metronome-left" target="_blank">🎵 Metrónomo</a>
-    <img src="./logo.jpeg" alt="Logo" id="logo" />
-    <h1>Repertorio Worship</h1>
-    <button class="toggle-theme" onclick="toggleTheme()">🌙/☀️</button>
-  </header>
 
-  <section>
-    <div class="section-card service-notes">
-      <h3>Canciones para el próximo servicio:</h3>
-      <ul id="service-songs">
-        <li>* Dame de beber</li>
-        <li>* Muévete en mí</li>
-      </ul>
-      <button class="btn orange" onclick="editNotes('service')">📝 Editar notas</button>
+<header>
+    <img id="logo" src="logo.jpeg" alt="Logo">
+    <h1>Grupo de Música Worship</h1>
+    <button id="metronomeButton" onclick="toggleMetronome()">Metrónomo</button>
+</header>
+
+<section>
+    <h2>Acordes</h2>
+    <div class="chords" id="chordsContainer">
+        <!-- Los acordes se agregarán aquí dinámicamente -->
     </div>
+</section>
 
-    <div class="section-card rehearsal-notes">
-      <h3>Canciones para el próximo ensayo:</h3>
-      <p id="rehearsal-text">No hay canciones programadas.</p>
-      <button class="btn orange" onclick="editNotes('rehearsal')">📝 Editar notas</button>
+<section>
+    <h2>Archivos de Audio</h2>
+    <div class="audio" id="audioContainer">
+        <!-- Los archivos de audio se agregarán aquí dinámicamente -->
     </div>
+</section>
 
-    <input id="search-input" type="text" placeholder="Buscar canciones..." style="width:100%;padding:10px;margin-top:10px;" />
-    <p>Total: <span id="song-count">0</span> canciones.</p>
+<section>
+    <h2>Agregar Acorde y Audio</h2>
+    <form id="formulario" onsubmit="enviarDatos(event)">
+        <label for="acorde">Nombre del Acorde:</label>
+        <input type="text" id="acorde" required>
+        
+        <label for="audio">URL del Audio:</label>
+        <input type="text" id="audio" required>
+        
+        <button type="submit">Guardar</button>
+    </form>
+</section>
 
-    <ul id="song-list"></ul>
-    <button class="btn blue" onclick="scrollToTop()">🔍 Volver al buscador</button>
-
-    <div style="text-align: left;">
-      <button class="btn orange" onclick="toggleAdvancedOptions()">⚙️ Opciones avanzadas</button>
+<section>
+    <h2>Canciones para el Servicio</h2>
+    <div class="notes" id="servicioNotes">
+        <p id="servicioText">Escribe tus notas aquí...</p>
+        <button onclick="editarNotas('servicio')">Editar Notas</button>
     </div>
+</section>
 
-    <div id="advanced-options">
-      <form id="song-form" style="margin-top:10px;">
-        <input type="text" id="title" placeholder="Título de la canción" required /><br/>
-        <input type="text" id="ytlink" placeholder="Link de YouTube (opcional)" /><br/>
-        <input type="file" id="images" accept="image/*" multiple /><br/>
-        <input type="file" id="audio" accept="audio/*" /><br/>
-        <button type="submit" class="btn orange">Guardar canción</button>
-      </form>
+<section>
+    <h2>Canciones a Ensayar</h2>
+    <div class="notes" id="ensayoNotes">
+        <p id="ensayoText">Escribe tus notas aquí...</p>
+        <button onclick="editarNotas('ensayo')">Editar Notas</button>
     </div>
-  </section>
+</section>
 
-  <footer>Efesios 2:8</footer>
+<!-- Importa Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
 
-  <!-- Firebase v8 scripts -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
-
-  <script>
-    var firebaseConfig = {
-      apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
-      authDomain: "repertorioworship.firebaseapp.com",
-      projectId: "repertorioworship",
-      storageBucket: "repertorioworship.appspot.com",
-      messagingSenderId: "493050453266",
-      appId: "1:493050453266:web:cf07ce9fbb471122f167cb",
-      measurementId: "G-RB3G81DQQ1"
-    };
-    firebase.initializeApp(firebaseConfig);
-    var db = firebase.firestore();
-    var storage = firebase.storage();
-
-    const form = document.getElementById("song-form");
-    const list = document.getElementById("song-list");
-    const count = document.getElementById("song-count");
-    const search = document.getElementById("search-input");
-
-    function updateCount() {
-      count.innerText = list.children.length;
-    }
-
-    function renderSong(doc) {
-      const data = doc.data();
-      const li = document.createElement("li");
-      li.setAttribute("data-title", data.title.toLowerCase());
-      li.innerHTML = `
-        <strong>${data.title}</strong><br/>
-        ${data.ytLink ? `<a href="${data.ytLink}" target="_blank">🎬 Ver en YouTube</a><br/>` : ""}
-        ${(data.imageUrls || []).map(url => `<img src="${url}" style="max-width:100px;">`).join("<br/>")}<br/>
-        ${data.audioUrl ? `<audio controls src="${data.audioUrl}"></audio><br/>` : ""}
-        <button class="btn orange" onclick="deleteSong('${doc.id}', this)">🗑 Eliminar</button>
-      `;
-      list.appendChild(li);
-      updateCount();
-    }
-
-    function deleteSong(id, el) {
-      db.collection("songs").doc(id).delete().then(() => {
-        el.parentElement.remove();
-        updateCount();
-      });
-    }
-
-    form.onsubmit = async function (e) {
-      e.preventDefault();
-      const title = document.getElementById("title").value;
-      const ytLink = document.getElementById("ytlink").value;
-      const images = document.getElementById("images").files;
-      const audio = document.getElementById("audio").files[0];
-
-      const imageUrls = [];
-      for (let i = 0; i < images.length && i < 2; i++) {
-        const refImg = storage.ref(`songs/${title}/img-${i}`);
-        await refImg.put(images[i]);
-        const url = await refImg.getDownloadURL();
-        imageUrls.push(url);
-      }
-
-      let audioUrl = "";
-      if (audio) {
-        const refAudio = storage.ref(`songs/${title}/audio`);
-        await refAudio.put(audio);
-        audioUrl = await refAudio.getDownloadURL();
-      }
-
-      const docRef = await db.collection("songs").add({ title, ytLink, imageUrls, audioUrl, created: new Date() });
-      renderSong({ id: docRef.id, data: () => ({ title, ytLink, imageUrls, audioUrl }) });
-      form.reset();
-    };
-
-    db.collection("songs").get().then(snapshot => snapshot.forEach(renderSong));
-
-    search.addEventListener("input", () => {
-      const val = search.value.toLowerCase();
-      Array.from(list.children).forEach(li => {
-        li.style.display = li.getAttribute("data-title").includes(val) ? "block" : "none";
-      });
-    });
-
-    function toggleTheme() { document.body.classList.toggle("dark-mode"); }
-    function scrollToTop() { window.scrollTo({ top: 0, behavior: "smooth" }); }
-    function toggleAdvancedOptions() {
-      const el = document.getElementById("advanced-options");
-      el.style.display = el.style.display === "block" ? "none" : "block";
-    }
-    function editNotes(type) {
-      const el = type === 'service' ? document.getElementById('service-songs') : document.getElementById('rehearsal-text');
-      const txt = prompt("Editar contenido:", el.innerText);
-      if (txt !== null) {
-        if (type === 'service') {
-          el.innerHTML = txt.split('\n').map(line => `<li>* ${line}</li>`).join('');
-        } else {
-          el.innerText = txt;
-        }
-      }
-    }
-  </script>
-</body>
-</html>
+<script>
+    // Tu configuración de Firebase
+    const firebaseConfig = {
+        apiKey: "AIzaSyD-1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1",
+        authDomain: "tu-proyecto.firebaseapp.com",
+        databaseURL: "https://tu-proyecto.firebaseio.com",
+        projectId: "tu-proyecto",
+        storageBucket: "tu-proyecto.appspot.com",
+        messagingSenderId: "123456789012",
+        appId: "
