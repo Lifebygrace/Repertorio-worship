@@ -1,140 +1,161 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Repertorio Worship</title>
-  <style>
-    :root {
-      --primary: #002244;
-      --accent: #FF6F00;
-      --bg: #f0f4f8;
-      --text: #002244;
-      --blue-metro: #007bff;
-    }
-    body.dark {
-      --bg: #121212;
-      --text: #f0f4f8;
-    }
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      transition: background 0.3s, color 0.3s;
-      padding-top: 60px;
-    }
-    header {
-      background: var(--primary);
-      color: white;
-      text-align: center;
-      padding: 20px 0 20px 0;
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-    }
-    header img {
-      width: 300px; /* logo 3 veces más grande */
-      height: auto;
-    }
-    /* Botones superiores */
-    #top-buttons {
-      position: fixed;
-      top: 8px;
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      padding: 0 15px;
-      z-index: 110;
-      box-sizing: border-box;
-      font-family: Arial, sans-serif;
-    }
-    #metro-btn {
-      background-color: var(--blue-metro);
-      border: none;
-      color: white;
-      font-weight: bold;
-      padding: 8px 12px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      align-self: flex-start;
-      box-shadow: 0 2px 6px rgba(0,123,255,.5);
-    }
-    #right-buttons {
-      display: flex;
-      gap: 8px;
-      align-items: flex-start;
-    }
-    .top-btn {
-      background-color: var(--accent);
-      border: none;
-      color: white;
-      font-weight: bold;
-      padding: 8px 14px;
-      border-radius: 6px;
-      cursor: pointer;
-      font-size: 14px;
-      box-shadow: 0 2px 6px rgba(255,111,0,.5);
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Repertorio Worship</title>
+<style>
+  :root {
+    --primary: #002244;
+    --accent: #FF6F00;
+    --bg: #f0f4f8;
+    --text: #002244;
+    --blue-metro: #007bff;
+  }
+  body.dark {
+    --bg: #121212;
+    --text: #f0f4f8;
+  }
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    transition: background 0.3s, color 0.3s;
+    padding-top: 70px;
+  }
+  header {
+    background: var(--primary);
+    color: white;
+    text-align: center;
+    padding: 20px 0 20px 0;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+  header img {
+    width: 300px; /* logo 3 veces más grande */
+    height: auto;
+  }
+  /* Botones superiores */
+  #top-buttons {
+    position: fixed;
+    top: 8px;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 15px;
+    z-index: 110;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+  #metro-btn {
+    background-color: var(--blue-metro);
+    border: none;
+    color: white;
+    font-weight: bold;
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    align-self: flex-start;
+    box-shadow: 0 2px 6px rgba(0,123,255,.5);
+  }
+  #right-buttons {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+  .top-btn {
+    background-color: var(--accent);
+    border: none;
+    color: white;
+    font-weight: bold;
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+    box-shadow: 0 2px 6px rgba(255,111,0,.5);
+  }
 
-    main {
-      max-width: 800px;
-      margin: auto;
-      padding: 0 20px 40px 20px;
-    }
-    .search {
-      width: 100%;
-      padding: 10px;
-      margin-top: 10px;
-      margin-bottom: 5px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1em;
-      box-sizing: border-box;
-    }
-    #contador-canciones {
-      font-weight: bold;
-      margin-bottom: 15px;
-      font-size: 1.1em;
-      color: var(--primary);
-    }
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-    }
-    body.dark .card {
-      background: #1e1e1e;
-    }
-    .card img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-    details summary {
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-    a {
-      color: var(--accent);
-    }
-    button.btn-eliminar {
-      background:#d9534f;
-      color:white;
-      float:right;
-      border:none;
-      padding:4px 8px;
-      border-radius:4px;
-      cursor:pointer;
-      font-size: 0.9em;
-    }
-  </style>
+  main {
+    max-width: 800px;
+    margin: auto;
+    padding: 0 20px 40px 20px;
+  }
+  .search {
+    width: 100%;
+    padding: 10px;
+    margin-top: 10px;
+    margin-bottom: 5px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 1em;
+    box-sizing: border-box;
+  }
+  #contador-canciones {
+    font-weight: bold;
+    margin-bottom: 15px;
+    font-size: 1.1em;
+    color: var(--primary);
+  }
+  .card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    margin-bottom: 20px;
+  }
+  body.dark .card {
+    background: #1e1e1e;
+  }
+  .card img {
+    max-width: 100%;
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+  details summary {
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+  }
+  a {
+    color: var(--accent);
+  }
+  button.btn-eliminar {
+    background:#d9534f;
+    color:white;
+    float:right;
+    border:none;
+    padding:4px 8px;
+    border-radius:4px;
+    cursor:pointer;
+    font-size: 0.9em;
+  }
+</style>
+</head>
+<body>
+  <div id="top-buttons">
+    <button id="metro-btn" title="Abrir metrónomo">Metrónomo</button>
+    <div id="right-buttons">
+      <button id="btn-modo" class="top-btn" title="Modo oscuro">Modo Oscuro</button>
+      <button id="btn-login" class="top-btn" title="Iniciar sesión">Log In</button>
+      <button id="btn-logout" class="top-btn" title="Cerrar sesión" style="display:none;">Log Out</button>
+    </div>
+  </div>
+
+  <header>
+    <img src="https://raw.githubusercontent.com/lifebygrace/Repertorio-worship/main/logo.png" alt="Logo Worship" />
+  </header>
+
+  <main>
+    <input id="search" class="search" type="text" placeholder="Buscar canciones..." />
+    <div id="contador-canciones">Canciones encontradas: 0</div>
+    <div id="lista-canciones"></div>
+  </main>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
@@ -158,11 +179,9 @@
     let currentUser = null;
 
     function updateUI() {
-      const btnAgregar = document.getElementById("btn-agregar");
       const eliminarBtns = document.querySelectorAll(".btn-eliminar");
       const loginBtn = document.getElementById("btn-login");
       const logoutBtn = document.getElementById("btn-logout");
-
       if (currentUser && currentUser.uid === ADMIN_UID) {
         eliminarBtns.forEach(b => b.style.display = "inline-block");
         loginBtn.style.display = "none";
@@ -187,9 +206,7 @@
         const div = document.createElement("div");
         div.className = "card";
 
-        const btnEliminarHTML = `
-          <button class="btn-eliminar" title="Eliminar canción">Eliminar</button>
-        `;
+        const btnEliminarHTML = `<button class="btn-eliminar" title="Eliminar canción">Eliminar</button>`;
 
         div.innerHTML = `
           <h3>${data.titulo} ${btnEliminarHTML}</h3>
@@ -202,7 +219,6 @@
 
         contenedor.appendChild(div);
 
-        // Mostrar botón eliminar sólo si es admin
         const btnEliminar = div.querySelector(".btn-eliminar");
         if (currentUser && currentUser.uid === ADMIN_UID) {
           btnEliminar.style.display = "inline-block";
@@ -248,11 +264,23 @@
       cargarCanciones();
 
       document.getElementById("search").addEventListener("input", cargarCanciones);
-
       document.getElementById("btn-login").addEventListener("click", login);
       document.getElementById("btn-logout").addEventListener("click", logout);
-
       document.getElementById("metro-btn").addEventListener("click", () => {
         window.open("https://www.metronomeonline.com", "_blank");
       });
 
+      onAuthStateChanged(auth, (user) => {
+        currentUser = user;
+        updateUI();
+        cargarCanciones();
+      });
+
+      // Modo oscuro toggle
+      document.getElementById("btn-modo").addEventListener("click", () => {
+        document.body.classList.toggle("dark");
+      });
+    });
+  </script>
+</body>
+</html>
