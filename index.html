@@ -1,0 +1,212 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Repertorio Worship</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body.dark-mode {
+      background-color: #121212;
+      color: #ffffff;
+    }
+    header {
+      background-color: #002244;
+      color: white;
+      padding: 20px;
+      text-align: center;
+      position: relative;
+    }
+    #logo {
+      width: 120px;
+      height: auto;
+      display: block;
+      margin: 10px auto;
+    }
+    .btn {
+      padding: 10px 20px;
+      margin: 10px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .btn.orange {
+      background-color: orange;
+      color: white;
+    }
+    .btn.blue {
+      background-color: #00aaff;
+      color: white;
+    }
+    .toggle-theme {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      font-size: 24px;
+      background: none;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
+    section {
+      padding: 20px;
+    }
+    .section-card {
+      border-radius: 10px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    .service-notes {
+      background-color: #fff3cd;
+      border-left: 6px solid orange;
+    }
+    .rehearsal-notes {
+      background-color: #d1ecf1;
+      border-left: 6px solid #00aaff;
+    }
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: gray;
+    }
+    .admin-controls {
+      display: none;
+    }
+    .visible {
+      display: block;
+    }
+    #backToTop {
+      margin: 20px auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="https://www.metronomeonline.com" class="btn blue" target="_blank">🎵 Metrónomo</a>
+    <img src="logo.jpeg" alt="Logo" id="logo" />
+    <h1>Repertorio Worship</h1>
+    <button class="toggle-theme" onclick="toggleTheme()">🌙/☀️</button>
+    <button id="login-btn" class="btn orange" onclick="login()">Iniciar sesión</button>
+  </header>
+
+  <section>
+    <div class="section-card service-notes">
+      <h3>Canciones para el próximo servicio:</h3>
+      <ul id="service-songs">
+        <li>* Dame de beber</li>
+        <li>* Muévete en mí</li>
+      </ul>
+      <button class="btn orange">📝 Editar notas</button>
+    </div>
+
+    <div class="section-card rehearsal-notes">
+      <h3>Canciones para el próximo ensayo:</h3>
+      <p>No hay canciones programadas.</p>
+      <button class="btn orange">📝 Editar notas</button>
+    </div>
+
+    <input type="text" placeholder="Buscar canciones..." style="width:100%;padding:10px;margin-top:10px;" />
+    <p>Total: <span id="song-count">36</span> canciones.</p>
+
+    <button class="btn orange admin-controls">➕ Agregar canción</button>
+
+    <form id="song-form" class="admin-controls" style="margin-top:10px;">
+      <input type="text" placeholder="Título de la canción" required /><br/>
+      <input type="file" accept="image/*" multiple required /><br/>
+      <input type="file" accept="audio/*" required /><br/>
+      <button type="submit" class="btn orange">Guardar canción</button>
+    </form>
+
+    <ul id="song-list">
+      <!-- Lista de canciones aquí -->
+    </ul>
+
+    <button id="backToTop" class="btn blue" onclick="scrollToTop()">🔍 Volver al buscador</button>
+  </section>
+
+  <footer>
+    Efesios 2:8
+  </footer>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
+      authDomain: "repertorioworship.firebaseapp.com",
+      projectId: "repertorioworship",
+      storageBucket: "repertorioworship.appspot.com",
+      messagingSenderId: "493050453266",
+      appId: "1:493050453266:web:cf07ce9fbb471122f167cb",
+      measurementId: "G-RB3G81DQQ1"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const storage = getStorage(app);
+
+    const ADMIN_UID = "Wac5yk1NUQNY1fSARyOxRjacLPV2";
+
+    const adminControls = document.querySelectorAll(".admin-controls");
+
+    onAuthStateChanged(auth, user => {
+      if (user && user.uid === ADMIN_UID) {
+        adminControls.forEach(el => el.classList.add("visible"));
+      }
+    });
+
+    window.login = function () {
+      const provider = new GoogleAuthProvider();
+      signInWithPopup(auth, provider)
+        .then(result => alert("Autenticado como administrador"))
+        .catch(error => console.error(error));
+    };
+
+    document.getElementById("song-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const files = e.target.querySelector('input[type="file"][accept="image/*"]').files;
+      const audioFile = e.target.querySelector('input[type="file"][accept="audio/*"]').files[0];
+      const title = e.target.querySelector('input[type="text"]').value;
+
+      const imageUrls = [];
+      for (let i = 0; i < files.length && i < 2; i++) {
+        const fileRef = ref(storage, `images/${files[i].name}`);
+        await uploadBytes(fileRef, files[i]);
+        const url = await getDownloadURL(fileRef);
+        imageUrls.push(url);
+      }
+
+      const audioRef = ref(storage, `audios/${audioFile.name}`);
+      await uploadBytes(audioRef, audioFile);
+      const audioUrl = await getDownloadURL(audioRef);
+
+      const li = document.createElement("li");
+      li.innerHTML = `<strong>${title}</strong> 
+        <br/><img src="${imageUrls[0] || ''}" style="max-width:100px;">
+        <br/><img src="${imageUrls[1] || ''}" style="max-width:100px;">
+        <br/><audio controls src="${audioUrl}"></audio>
+        <button class="btn orange admin-controls" onclick="this.parentElement.remove()">🗑 Eliminar</button>`;
+      document.getElementById("song-list").appendChild(li);
+    };
+
+    window.toggleTheme = function () {
+      document.body.classList.toggle("dark-mode");
+    };
+
+    window.scrollToTop = function () {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    };
+  </script>
+</body>
+</html>
