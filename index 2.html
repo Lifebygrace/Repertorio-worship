@@ -1,0 +1,140 @@
+
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Repertorio Worship</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 0;
+      background-color: #f5f9ff;
+      color: #000;
+    }
+    header {
+      background-color: #002147;
+      color: white;
+      padding: 1em;
+      text-align: center;
+      position: relative;
+    }
+    header img {
+      width: 100px;
+      display: block;
+      margin: 0 auto;
+    }
+    #metronome-btn {
+      position: absolute;
+      top: 1em;
+      left: 1em;
+      background: #00aaff;
+      color: white;
+      border: none;
+      padding: 0.5em 1em;
+      border-radius: 8px;
+      font-weight: bold;
+    }
+    .dark-mode {
+      background-color: #1a1a1a;
+      color: white;
+    }
+    .dark-mode header {
+      background-color: #000;
+    }
+    .dark-mode .box {
+      background-color: #333;
+    }
+    #toggle-dark {
+      position: absolute;
+      top: 1em;
+      right: 1em;
+      background: orange;
+      border: none;
+      border-radius: 50%;
+      padding: 0.5em;
+      font-size: 1.2em;
+    }
+    .box {
+      background-color: #fff;
+      border-left: 6px solid orange;
+      padding: 1em;
+      margin: 1em;
+      border-radius: 12px;
+    }
+    .blue-box {
+      border-left-color: #0099ff;
+      background-color: #e8f4ff;
+    }
+    button.edit-notes {
+      background-color: #ff6600;
+      color: white;
+      border: none;
+      padding: 0.5em 1em;
+      font-weight: bold;
+      border-radius: 8px;
+      margin-top: 1em;
+    }
+    .container {
+      padding: 1em;
+    }
+    .search-box {
+      width: 100%;
+      padding: 1em;
+      font-size: 1em;
+      margin: 1em 0;
+    }
+    .total-count, .add-song-btn {
+      margin: 1em;
+      font-weight: bold;
+    }
+    .add-song-btn {
+      background-color: orange;
+      color: white;
+      padding: 0.5em 1em;
+      border: none;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <button id="metronome-btn">🎵 Metrónomo</button>
+    <img src="https://i.ibb.co/9tSzbn6/logo-life-grace.png" alt="Logo" />
+    <h1>Repertorio Worship</h1>
+    <button id="toggle-dark">🌙/☀️</button>
+  </header>
+
+  <div class="container">
+    <div class="box">
+      <strong>Canciones para el próximo servicio:</strong>
+      <ul>
+        <li>Dame de beber</li>
+        <li>Muevete en mí</li>
+      </ul>
+      <button class="edit-notes">📝 Editar notas</button>
+    </div>
+
+    <div class="box blue-box">
+      <strong>Canciones para el próximo ensayo:</strong>
+      <p>No hay canciones programadas.</p>
+      <button class="edit-notes">📝 Editar notas</button>
+    </div>
+
+    <input type="text" class="search-box" placeholder="Buscar canciones..." />
+    <p class="total-count">Total: 36 canciones.</p>
+    <button class="add-song-btn">➕ Agregar canción</button>
+  </div>
+
+  <script>
+    document.getElementById("toggle-dark").addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+    });
+
+    document.getElementById("metronome-btn").addEventListener("click", () => {
+      window.open("https://www.imusic-school.com/es/herramientas/metronomo-online/", "_blank");
+    });
+  </script>
+</body>
+</html>
