@@ -4,12 +4,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Repertorio Worship</title>
+  <link rel="icon" href="logo.jpeg" />
   <style>
     :root {
       --primary: #002244;
       --accent: #FF6F00;
       --bg: #f0f4f8;
       --text: #002244;
+      --blue-light: #e0f7fa;
     }
     body.dark {
       --bg: #121212;
@@ -25,17 +27,19 @@
     header {
       background: var(--primary);
       color: white;
-      padding: 10px 20px;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
     }
-    #metr { font-size: 1.2em; background: transparent; border: none; color: white; cursor: pointer; }
-    .toggle-btn, #login-btn {
+    header img {
+      height: 60px;
+    }
+    .toggle-btn, .metronome-btn, .login-btn {
       background: var(--accent);
       color: white;
       border: none;
-      padding: 10px 14px;
+      padding: 8px 12px;
       border-radius: 8px;
       cursor: pointer;
       margin-left: 10px;
@@ -45,13 +49,16 @@
       margin: auto;
       padding: 20px;
     }
-    .search, input, textarea {
+    .search {
       width: 100%;
       padding: 10px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
+      margin-bottom: 10px;
       border-radius: 8px;
+      border: 1px solid #ccc;
       font-size: 1em;
+    }
+    .counter {
+      margin-bottom: 20px;
     }
     .card {
       background: white;
@@ -60,24 +67,119 @@
       box-shadow: 0 2px 8px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
-    body.dark .card, body.dark form { background: #1e1e1e; }
-    .card img { max-width: 100%; border-radius: 8px; margin-top: 10px; }
-    form { display: none; }
-    button { background-color: var(--accent); color: white; border: none; padding: 12px 20px; font-size: 1em; border-radius: 8px; cursor: pointer; }
-    #modal-notas, #modal-ensayo {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.5);
-      display: none; justify-content: center; align-items: center;
+    body.dark .card {
+      background: #1e1e1e;
     }
-    .modal-content {
-      background: white; padding: 20px; border-radius: 12px; width: 90%; max-width: 600px;
+    .card img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 10px;
     }
-    .seccion-notas { background: #fff8e1; border-left: 5px solid var(--accent); padding: 15px; margin-bottom: 20px; border-radius: 8px; }
+    .section-notes {
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    .service-notes {
+      background: #fff8e1;
+      border-left: 5px solid var(--accent);
+    }
+    .rehearsal-notes {
+      background: var(--blue-light);
+      border-left: 5px solid #039be5;
+    }
+    details summary {
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    form {
+      display: none;
+      margin-bottom: 20px;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+    button {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 1em;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #back-to-top {
+      margin-top: 40px;
+      display: block;
+      text-align: center;
+    }
+    .hidden {
+      display: none;
+    }
   </style>
+</head>
+<body>
+  <header>
+    <button class="metronome-btn" onclick="window.open('https://www.imusic-school.com/es/herramientas/metronomo-online/', '_blank')">🎵 Metrónomo</button>
+    <img src="logo.jpeg" alt="Logo">
+    <div>
+      <button class="toggle-btn" onclick="toggleDark()">🌙/☀️</button>
+      <button class="login-btn" onclick="toggleAuth()" id="auth-btn">Iniciar sesión</button>
+    </div>
+  </header>
+  <main>
+    <div id="proximo-servicio" class="section-notes service-notes">
+      <strong>Canciones para el próximo servicio:</strong>
+      <p id="notas-servicio-texto">Cargando...</p>
+      <p id="fecha-servicio"></p>
+      <button onclick="abrirModal('servicio')" class="hidden admin-only">📝 Editar notas</button>
+    </div>
+
+    <div id="ensayo" class="section-notes rehearsal-notes">
+      <strong>Canciones para el próximo ensayo:</strong>
+      <p id="notas-ensayo-texto">Cargando...</p>
+      <p id="fecha-ensayo"></p>
+      <button onclick="abrirModal('ensayo')" class="hidden admin-only">📝 Editar notas</button>
+    </div>
+
+    <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
+    <div class="counter">Total canciones: <span id="contador">0</span></div>
+
+    <button onclick="toggleForm()" class="admin-only hidden">➕ Agregar canción</button>
+    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
+      <input type="text" id="titulo" placeholder="Título de la canción" required />
+      <textarea id="acordes" placeholder="Acordes..."></textarea>
+      <input type="file" id="imagenes" multiple accept="image/*" />
+      <input type="file" id="audio" accept="audio/*" />
+      <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
+      <button type="submit">Guardar canción</button>
+    </form>
+
+    <div id="lista-canciones"></div>
+
+    <a href="#" id="back-to-top">🔝 Volver al principio</a>
+  </main>
+
+  <div id="modal-notas" class="hidden">
+    <div style="background:white;padding:20px;border-radius:12px;max-width:600px;margin:auto">
+      <h3 id="modal-titulo">Editar notas</h3>
+      <input type="date" id="fecha-nota" /><br><br>
+      <textarea id="texto-nota" rows="6"></textarea><br>
+      <button onclick="guardarNotas()">💾 Guardar</button>
+      <button onclick="cerrarModal()">Cancelar</button>
+    </div>
+  </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
     import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
 
     const firebaseConfig = {
@@ -92,146 +194,137 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth();
-    const provider = new GoogleAuthProvider();
     const storage = getStorage(app);
-
     const adminUID = "Wac5yk1NUQNY1fSARyOxRjacLPV2";
 
-    let user;
+    let isAdmin = false;
+    let notaModo = "";
 
-    function updateUIAuth(currentUser) {
-      user = currentUser;
-      document.getElementById("formulario").style.display = user?.uid === adminUID ? "block" : "none";
-      document.querySelectorAll(".admin-only").forEach(e => e.style.display = user?.uid === adminUID ? "inline-block" : "none");
-      document.getElementById("login-btn").textContent = user ? "Cerrar sesión" : "Iniciar sesión";
+    onAuthStateChanged(auth, user => {
+      const btn = document.getElementById("auth-btn");
+      isAdmin = user?.uid === adminUID;
+      btn.textContent = user ? "Cerrar sesión" : "Iniciar sesión";
+      document.querySelectorAll(".admin-only").forEach(el => el.classList.toggle("hidden", !isAdmin));
+    });
+
+    function toggleAuth() {
+      const user = auth.currentUser;
+      if (user) signOut(auth);
+      else signInWithPopup(auth, new GoogleAuthProvider());
     }
 
-    onAuthStateChanged(auth, user => updateUIAuth(user));
+    function toggleForm() {
+      const f = document.getElementById("formulario");
+      f.style.display = f.style.display === "block" ? "none" : "block";
+    }
 
-    document.getElementById("login-btn").onclick = async () => {
-      if (!auth.currentUser) await signInWithPopup(auth, provider);
-      else await signOut(auth);
-    };
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+    }
 
-    document.getElementById("metr").onclick = () => window.open("https://www.imusic-school.com/es/herramientas/metronomo-online/", "_blank");
-
-    function toggleDark() { document.body.classList.toggle("dark"); }
+    window.toggleAuth = toggleAuth;
+    window.toggleForm = toggleForm;
     window.toggleDark = toggleDark;
 
-    async function cargarNotas(id, elemento) {
-      const notaDoc = await getDocs(collection(db, id));
-      notaDoc.forEach(doc => document.getElementById(elemento).innerText = doc.data().texto || "...");
-    }
-    async function guardarNotas(id, input, modal) {
-      await setDoc(doc(db, id, "texto"), { texto: document.getElementById(input).value });
-      document.getElementById(modal).style.display = "none";
-      cargarNotas(id, id+"-texto");
-    }
-
-    window.guardarNotas = guardarNotas;
-
     async function cargarCanciones() {
-      const contenedor = document.getElementById("lista-canciones");
-      contenedor.innerHTML = "";
+      const cont = document.getElementById("lista-canciones");
+      cont.innerHTML = "";
       const search = document.getElementById("search").value.toLowerCase();
-      const querySnapshot = await getDocs(collection(db, "canciones"));
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (!data.titulo.toLowerCase().includes(search)) return;
+      const snaps = await getDocs(collection(db, "canciones"));
+      let count = 0;
+      snaps.forEach(docSnap => {
+        const d = docSnap.data();
+        if (!d.titulo.toLowerCase().includes(search)) return;
+        count++;
         const div = document.createElement("div");
         div.className = "card";
-        div.innerHTML = `<h2>${data.titulo}</h2><p>${data.acordes}</p>
-          ${(data.imagenes||[]).map(url=>`<img src="${url}" alt="">`).join("")}
-          ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Audio</a></p>` : ""}
-          ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ YouTube</a></p>` : ""}
-          ${user?.uid === adminUID ? `<details><summary>Opciones</summary><button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar</button></details>` : ""}`;
-        contenedor.appendChild(div);
+        div.innerHTML = `<h2>${d.titulo}</h2><p>${d.acordes}</p>
+          ${(d.imagenes||[]).map(url=>`<img src="${url}" alt="acorde" />`).join('')}
+          ${d.audio ? `<p><a href="${d.audio}" target="_blank">🎧 Audio</a></p>` : ""}
+          ${d.youtube ? `<p><a href="${d.youtube}" target="_blank">▶ YouTube</a></p>` : ""}
+          ${isAdmin ? `<details><summary>Opciones</summary><button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar</button></details>` : ""}`;
+        cont.appendChild(div);
       });
+      document.getElementById("contador").textContent = count;
     }
-    window.eliminarCancion = async id => { await deleteDoc(doc(db, "canciones", id)); cargarCanciones(); }
 
-    document.getElementById("search").addEventListener("input", cargarCanciones);
-
-    window.agregarCancion = async () => {
+    async function agregarCancion() {
       const titulo = document.getElementById("titulo").value;
       const acordes = document.getElementById("acordes").value;
       const youtube = document.getElementById("youtube").value;
-      const imagenes = Array.from(document.getElementById("imagenFiles").files);
-      const audio = document.getElementById("audioFile").files[0];
-      let imagenURLs = [];
+      const imgs = document.getElementById("imagenes").files;
+      const audio = document.getElementById("audio").files[0];
+      if (!titulo.trim()) return;
 
-      for (let i = 0; i < Math.min(2, imagenes.length); i++) {
-        const imgRef = ref(storage, `imagenes/${titulo}_${i}_${imagenes[i].name}`);
-        await uploadBytes(imgRef, imagenes[i]);
-        const url = await getDownloadURL(imgRef);
-        imagenURLs.push(url);
+      const imgUrls = [];
+      for (let file of imgs) {
+        const path = `imagenes/${Date.now()}-${file.name}`;
+        const snapshot = await uploadBytes(ref(storage, path), file);
+        const url = await getDownloadURL(snapshot.ref);
+        imgUrls.push(url);
       }
-      let audioURL = null;
+
+      let audioUrl = null;
       if (audio) {
-        const audioRef = ref(storage, `audios/${titulo}_${audio.name}`);
-        await uploadBytes(audioRef, audio);
-        audioURL = await getDownloadURL(audioRef);
+        const path = `audios/${Date.now()}-${audio.name}`;
+        const snapshot = await uploadBytes(ref(storage, path), audio);
+        audioUrl = await getDownloadURL(snapshot.ref);
       }
+
       await addDoc(collection(db, "canciones"), {
         titulo, acordes, youtube,
-        imagenes: imagenURLs,
-        audio: audioURL
+        imagenes: imgUrls,
+        audio: audioUrl
       });
+
       document.getElementById("formulario").reset();
+      document.getElementById("formulario").style.display = "none";
       cargarCanciones();
     }
+
+    async function eliminarCancion(id) {
+      await deleteDoc(doc(db, "canciones", id));
+      cargarCanciones();
+    }
+
+    async function cargarNotas() {
+      const ens = await getDoc(doc(db, "notas", "ensayo"));
+      const srv = await getDoc(doc(db, "notas", "servicio"));
+      document.getElementById("notas-ensayo-texto").textContent = ens.data()?.texto || "";
+      document.getElementById("fecha-ensayo").textContent = ens.data()?.fecha || "";
+      document.getElementById("notas-servicio-texto").textContent = srv.data()?.texto || "";
+      document.getElementById("fecha-servicio").textContent = srv.data()?.fecha || "";
+    }
+
+    function abrirModal(tipo) {
+      notaModo = tipo;
+      document.getElementById("modal-notas").classList.remove("hidden");
+      document.getElementById("modal-titulo").textContent = tipo === "ensayo" ? "Editar notas del ensayo" : "Editar notas del servicio";
+    }
+
+    function cerrarModal() {
+      document.getElementById("modal-notas").classList.add("hidden");
+    }
+
+    async function guardarNotas() {
+      const texto = document.getElementById("texto-nota").value;
+      const fecha = document.getElementById("fecha-nota").value;
+      await setDoc(doc(db, "notas", notaModo), { texto, fecha });
+      cerrarModal();
+      cargarNotas();
+    }
+
+    document.getElementById("search").addEventListener("input", cargarCanciones);
+    window.agregarCancion = agregarCancion;
+    window.eliminarCancion = eliminarCancion;
+    window.abrirModal = abrirModal;
+    window.guardarNotas = guardarNotas;
+    window.cerrarModal = cerrarModal;
 
     window.onload = () => {
       cargarCanciones();
-      cargarNotas("notas", "notas-texto");
-      cargarNotas("ensayo", "ensayo-texto");
-    }
+      cargarNotas();
+    };
   </script>
-</head>
-<body>
-  <header>
-    <button id="metr">🎵 Metrónomo</button>
-    <h1>Repertorio Worship</h1>
-    <div>
-      <button class="toggle-btn" onclick="toggleDark()">🌙/☀️</button>
-      <button id="login-btn"></button>
-    </div>
-  </header>
-  <main>
-    <div class="seccion-notas">
-      <strong>Canciones para el próximo servicio:</strong>
-      <p id="notas-texto"></p>
-      <button class="admin-only" onclick="document.getElementById('modal-notas').style.display='flex'">📝 Editar notas</button>
-    </div>
-    <div class="seccion-notas">
-      <strong>Canciones a ensayar:</strong>
-      <p id="ensayo-texto"></p>
-      <button class="admin-only" onclick="document.getElementById('modal-ensayo').style.display='flex'">📝 Editar ensayo</button>
-    </div>
-    <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
-    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
-      <input type="text" id="titulo" placeholder="Título" required />
-      <textarea id="acordes" placeholder="Acordes"></textarea>
-      <input type="file" id="imagenFiles" accept="image/*" multiple />
-      <input type="file" id="audioFile" accept="audio/*" />
-      <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
-      <button type="submit">Guardar canción</button>
-    </form>
-    <div id="lista-canciones"></div>
-  </main>
-
-  <div id="modal-notas" class="modal"><div class="modal-content">
-    <h3>Editar notas del próximo servicio</h3>
-    <textarea id="texto-notas" rows="6"></textarea><br>
-    <button onclick="guardarNotas('notas','texto-notas','modal-notas')">💾 Guardar</button>
-    <button onclick="document.getElementById('modal-notas').style.display='none'">Cancelar</button>
-  </div></div>
-
-  <div id="modal-ensayo" class="modal"><div class="modal-content">
-    <h3>Editar canciones a ensayar</h3>
-    <textarea id="texto-ensayo" rows="6"></textarea><br>
-    <button onclick="guardarNotas('ensayo','texto-ensayo','modal-ensayo')">💾 Guardar</button>
-    <button onclick="document.getElementById('modal-ensayo').style.display='none'">Cancelar</button>
-  </div></div>
 </body>
 </html>
