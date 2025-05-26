@@ -5,306 +5,180 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Repertorio Worship</title>
 <style>
-  /* Básicos y diseño */
   body {
     font-family: Arial, sans-serif;
-    margin: 0; padding: 0 10px 30px;
-    background: white;
-    color: #222;
-    min-height: 100vh;
+    margin: 0; padding: 0;
+    background: #121212;
+    color: #eee;
   }
   header {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    background: #222;
+    padding: 8px 12px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    border-bottom: 2px solid #ccc;
-    padding: 10px 0;
-    position: relative;
+    z-index: 1000;
   }
-  header img {
-    height: 70px;
-  }
-  #btnMetro {
-    position: fixed;
-    top: 10px;
-    left: 10px;
-    background: #007bff;
-    color: white;
+  #metronomeBtn {
+    background: #555;
     border: none;
-    padding: 7px 12px;
-    border-radius: 5px;
-    cursor: pointer;
+    color: white;
     font-weight: bold;
-    z-index: 1000;
-  }
-  #btnArriba {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    background: #007bff;
-    color: white;
-    border: none;
-    padding: 8px 14px;
-    border-radius: 50%;
+    padding: 6px 12px;
     cursor: pointer;
-    display: none;
-    font-size: 18px;
-    z-index: 1000;
+    border-radius: 4px;
   }
-  #btnLogin, #btnLogout, #btnModo {
-    position: fixed;
-    top: 10px;
-    right: 10px;
+  #loginStatus {
+    color: #ddd;
+  }
+  #loginBtn {
     margin-left: 10px;
-    background: transparent;
-    border: 1px solid #007bff;
-    color: #007bff;
-    padding: 6px 10px;
-    border-radius: 5px;
+    background: #3a88f8;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
     cursor: pointer;
+    color: white;
     font-weight: bold;
   }
-  #btnLogout {
-    right: 90px;
+  main {
+    max-width: 900px;
+    margin: 70px auto 40px auto;
+    padding: 0 10px;
   }
-  #btnModo {
-    right: 170px;
+  h2 {
+    border-bottom: 2px solid #3a88f8;
+    padding-bottom: 5px;
   }
-
-  #buscador {
-    margin: 15px auto;
-    max-width: 400px;
-    display: block;
-    font-size: 16px;
-    padding: 8px;
+  .section {
+    margin-bottom: 40px;
+  }
+  .song {
+    background: #222;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+  .song input[type="text"], 
+  .song textarea {
     width: 100%;
-    border: 2px solid #007bff;
-    border-radius: 5px;
+    background: #333;
+    border: none;
+    color: white;
+    padding: 6px 8px;
+    border-radius: 4px;
+    margin-top: 6px;
+    margin-bottom: 10px;
+    font-size: 1rem;
   }
-  #contador {
-    text-align: center;
-    font-weight: bold;
-    margin-bottom: 20px;
-    color: #007bff;
+  .song input[type="file"] {
+    margin-top: 6px;
+    margin-bottom: 10px;
+    color: #eee;
   }
-
-  .cancion {
-    border: 1px solid #ccc;
-    margin-bottom: 15px;
-    padding: 10px;
-    border-radius: 7px;
-    background: #f9f9f9;
+  .song audio {
+    width: 100%;
+    margin-top: 6px;
   }
-  .cancion h3 {
-    margin: 0 0 5px 0;
-  }
-  .imagenes {
+  .images-container {
     display: flex;
     gap: 10px;
-    margin: 10px 0;
+    margin-top: 6px;
   }
-  .imagenes img {
-    max-height: 100px;
-    max-width: 150px;
-    border-radius: 5px;
+  .images-container img {
+    width: 120px;
+    height: 90px;
     object-fit: contain;
+    border-radius: 4px;
+    background: #111;
   }
-  audio {
-    width: 100%;
-    margin-top: 5px;
-  }
-  .btnEliminar {
-    background: #d9534f;
+  button.saveBtn {
+    background: #3a88f8;
     border: none;
     color: white;
-    padding: 5px 9px;
+    padding: 8px 16px;
     border-radius: 4px;
-    cursor: pointer;
     font-weight: bold;
-    float: right;
+    cursor: pointer;
   }
-
-  .notas-section {
-    margin-top: 30px;
-    padding: 15px;
-    border: 2px solid #007bff;
-    border-radius: 7px;
-    background: #eef7ff;
-  }
-  .notas-section h4 {
-    margin-top: 0;
-    margin-bottom: 8px;
-    color: #004a99;
-  }
-  .notas-section textarea {
-    width: 100%;
-    height: 80px;
-    padding: 8px;
-    resize: vertical;
-    font-family: inherit;
-    font-size: 14px;
-    border: 1px solid #007bff;
-    border-radius: 4px;
-  }
-  .notas-section input[type="date"] {
-    margin-top: 5px;
-    padding: 5px;
-    border: 1px solid #007bff;
-    border-radius: 4px;
-  }
-  .editarNotasBtn {
-    margin-top: 8px;
-    padding: 6px 12px;
+  button.deleteBtn {
+    background: #d84444;
     border: none;
-    background: #007bff;
     color: white;
-    border-radius: 5px;
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-weight: bold;
     cursor: pointer;
-    font-weight: bold;
+    margin-left: 10px;
   }
-
-  form#formAgregar {
-    margin-top: 30px;
-    border: 2px solid #007bff;
-    padding: 15px;
-    border-radius: 7px;
-    background: #f0f8ff;
-    max-width: 500px;
-  }
-  form#formAgregar h3 {
-    margin-top: 0;
-    color: #004a99;
-  }
-  form#formAgregar label {
-    display: block;
-    margin: 10px 0 5px 0;
-    font-weight: bold;
-  }
-  form#formAgregar input[type="text"],
-  form#formAgregar input[type="file"] {
-    width: 100%;
-    padding: 7px;
-    border: 1px solid #007bff;
-    border-radius: 5px;
-    font-size: 14px;
-  }
-  form#formAgregar button {
-    margin-top: 15px;
-    background: #007bff;
+  button.addSongBtn {
+    background: #3a88f8;
     border: none;
     color: white;
     padding: 10px 18px;
-    border-radius: 6px;
-    cursor: pointer;
+    border-radius: 4px;
     font-weight: bold;
+    cursor: pointer;
+    margin-top: 12px;
   }
-
-  footer {
-    margin-top: 50px;
-    text-align: center;
-    font-style: italic;
-    color: #666;
-    border-top: 1px solid #ccc;
-    padding-top: 15px;
+  #message {
+    margin-top: 12px;
+    color: #f55;
   }
-
-  /* Modo oscuro */
-  body.dark {
-    background: #222;
-    color: #eee;
-  }
-  body.dark header {
-    background: #111;
-    border-bottom-color: #444;
-  }
-  body.dark #btnMetro,
-  body.dark #btnArriba {
-    background: #005bb5;
-  }
-  body.dark .cancion {
+  textarea.notes-area {
+    width: 100%;
+    height: 100px;
     background: #333;
-    border-color: #555;
-  }
-  body.dark .notas-section {
-    background: #333;
-  }
-  body.dark input, body.dark textarea {
-    background: #444;
-    color: #eee;
-    border-color: #555;
-  }
-  body.dark button {
+    border: none;
+    border-radius: 6px;
     color: white;
+    padding: 10px;
+    font-size: 1rem;
+    resize: vertical;
   }
 </style>
 </head>
 <body>
 
 <header>
-  <img src="logo.jpeg" alt="Logo Worship" />
+  <button id="metronomeBtn" title="Activar/Desactivar Metrónomo">Metrónomo ▶️</button>
+  <div>
+    <span id="loginStatus">No conectado</span>
+    <button id="loginBtn">Iniciar sesión</button>
+  </div>
 </header>
 
-<button id="btnMetro" title="Metrónomo">Metro</button>
-<button id="btnArriba" title="Volver arriba">↑</button>
+<main>
+  <section class="section" id="serviceSongsSection">
+    <h2>Canciones para el servicio <span id="countServiceSongs"></span></h2>
+    <div id="serviceSongsContainer"></div>
+    <button id="addServiceSongBtn" class="addSongBtn" style="display:none;">Agregar canción para el servicio</button>
+  </section>
 
-<button id="btnModo" title="Modo Oscuro">🌙</button>
-<button id="btnLogin" title="Iniciar sesión">Login</button>
-<button id="btnLogout" title="Cerrar sesión" style="display:none;">Logout</button>
+  <section class="section" id="practiceSongsSection">
+    <h2>Canciones a ensayar</h2>
+    <textarea id="practiceNotes" class="notes-area" placeholder="Notas para las canciones a ensayar..."></textarea>
+    <button id="savePracticeNotesBtn" class="saveBtn" style="margin-top:10px;">Guardar notas</button>
+    <div id="message"></div>
+  </section>
+</main>
 
-<input type="text" id="buscador" placeholder="Buscar canción..." />
-<div id="contador">0 canciones</div>
-
-<div id="listaCanciones"></div>
-
-<div class="notas-section" id="notasServicioSection" style="display:none;">
-  <h4>Notas para el servicio</h4>
-  <textarea id="notasServicio" readonly></textarea>
-  <br />
-  <label>Fecha: <input type="date" id="fechaServicio" disabled /></label>
-  <br />
-  <button class="editarNotasBtn" id="editarServicio">Editar Notas</button>
-</div>
-
-<div class="notas-section" id="notasEnsayoSection" style="display:none;">
-  <h4>Canciones a ensayar</h4>
-  <textarea id="notasEnsayo" readonly></textarea>
-  <br />
-  <label>Fecha: <input type="date" id="fechaEnsayo" disabled /></label>
-  <br />
-  <button class="editarNotasBtn" id="editarEnsayo">Editar Notas</button>
-</div>
-
-<form id="formAgregar" style="display:none;">
-  <h3>Agregar canción</h3>
-  <label for="nombre">Nombre de la canción *</label>
-  <input type="text" id="nombre" required />
-  <label for="urlImagen1">Imagen acorde 1 (máx 1 archivo)</label>
-  <input type="file" id="urlImagen1" accept="image/*" />
-  <label for="urlImagen2">Imagen acorde 2 (máx 1 archivo)</label>
-  <input type="file" id="urlImagen2" accept="image/*" />
-  <label for="urlAudio">Archivo de audio (máx 1 archivo)</label>
-  <input type="file" id="urlAudio" accept="audio/*" />
-  <button type="submit">Agregar canción</button>
-</form>
-
-<footer>
-  Efesios 2:8 — Porque por gracia sois salvos por medio de la fe; y esto no de vosotros, pues es don de Dios.
-</footer>
-
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
-<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
 
 <script>
-  // CONFIGURA TU FIREBASE AQUÍ
+  // Configura Firebase con tus credenciales
   const firebaseConfig = {
     apiKey: "TU_API_KEY",
     authDomain: "TU_AUTH_DOMAIN",
     projectId: "TU_PROJECT_ID",
     storageBucket: "TU_STORAGE_BUCKET",
-    messagingSenderId: "TU_MESSAGING_SENDER_ID",
+    messagingSenderId: "TU_MSG_SENDER_ID",
     appId: "TU_APP_ID"
   };
   firebase.initializeApp(firebaseConfig);
@@ -313,226 +187,316 @@
   const db = firebase.firestore();
   const storage = firebase.storage();
 
+  // UID Admin
   const ADMIN_UID = "Wac5yk1NUQNY1fSARyOxRjacLPV2";
 
-  // Elementos DOM
-  const btnLogin = document.getElementById('btnLogin');
-  const btnLogout = document.getElementById('btnLogout');
-  const btnModo = document.getElementById('btnModo');
-  const btnMetro = document.getElementById('btnMetro');
-  const btnArriba = document.getElementById('btnArriba');
-  const buscador = document.getElementById('buscador');
-  const contador = document.getElementById('contador');
-  const listaCanciones = document.getElementById('listaCanciones');
-  const formAgregar = document.getElementById('formAgregar');
-  const nombreInput = document.getElementById('nombre');
-  const urlImagen1Input = document.getElementById('urlImagen1');
-  const urlImagen2Input = document.getElementById('urlImagen2');
-  const urlAudioInput = document.getElementById('urlAudio');
+  // DOM Elements
+  const loginStatus = document.getElementById("loginStatus");
+  const loginBtn = document.getElementById("loginBtn");
+  const addServiceSongBtn = document.getElementById("addServiceSongBtn");
+  const serviceSongsContainer = document.getElementById("serviceSongsContainer");
+  const countServiceSongs = document.getElementById("countServiceSongs");
+  const practiceNotes = document.getElementById("practiceNotes");
+  const savePracticeNotesBtn = document.getElementById("savePracticeNotesBtn");
+  const message = document.getElementById("message");
+  const metronomeBtn = document.getElementById("metronomeBtn");
 
-  const notasServicio = document.getElementById('notasServicio');
-  const fechaServicio = document.getElementById('fechaServicio');
-  const editarServicio = document.getElementById('editarServicio');
-  const notasEnsayo = document.getElementById('notasEnsayo');
-  const fechaEnsayo = document.getElementById('fechaEnsayo');
-  const editarEnsayo = document.getElementById('editarEnsayo');
-
-  let canciones = [];
   let currentUser = null;
+  let serviceSongs = [];
+  let practiceNotesText = "";
+  let metronomeInterval = null;
+  let metronomeOn = false;
 
-  // --- Modo Oscuro ---
-  function guardarModo(modo) {
-    localStorage.setItem('modoOscuro', modo);
-  }
-  function cargarModo() {
-    const modo = localStorage.getItem('modoOscuro') || 'claro';
-    if(modo === 'oscuro') {
-      document.body.classList.add('dark');
-      btnModo.textContent = '☀️';
+  // --- Autenticación ---
+  loginBtn.addEventListener("click", () => {
+    if (currentUser) {
+      auth.signOut();
     } else {
-      document.body.classList.remove('dark');
-      btnModo.textContent = '🌙';
+      // Iniciar sesión con popup Google
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider).catch(e => alert("Error login: " + e.message));
     }
-  }
-  btnModo.onclick = () => {
-    if(document.body.classList.contains('dark')) {
-      document.body.classList.remove('dark');
-      btnModo.textContent = '🌙';
-      guardarModo('claro');
+  });
+
+  auth.onAuthStateChanged(user => {
+    currentUser = user;
+    if (user) {
+      loginStatus.textContent = `Conectado: ${user.displayName || user.email}`;
+      loginBtn.textContent = "Cerrar sesión";
+      addServiceSongBtn.style.display = isAdmin() ? "inline-block" : "none";
+      renderSongs();
     } else {
-      document.body.classList.add('dark');
-      btnModo.textContent = '☀️';
-      guardarModo('oscuro');
+      loginStatus.textContent = "No conectado";
+      loginBtn.textContent = "Iniciar sesión";
+      addServiceSongBtn.style.display = "none";
+      serviceSongsContainer.innerHTML = "";
+      countServiceSongs.textContent = "";
+    }
+  });
+
+  function isAdmin() {
+    return currentUser && currentUser.uid === ADMIN_UID;
+  }
+
+  // --- Metrónomo ---
+  metronomeBtn.addEventListener("click", () => {
+    if (metronomeOn) {
+      stopMetronome();
+    } else {
+      startMetronome();
+    }
+  });
+
+  function startMetronome() {
+    let bpm = 60; // puedes cambiar o hacer dinámico
+    let intervalMs = 60000 / bpm;
+    const context = new AudioContext();
+    metronomeOn = true;
+    metronomeBtn.textContent = "Metrónomo ⏸️";
+
+    function playClick() {
+      const osc = context.createOscillator();
+      osc.frequency.value = 1000;
+      const envelope = context.createGain();
+      envelope.gain.setValueAtTime(1, context.currentTime);
+      envelope.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.1);
+      osc.connect(envelope).connect(context.destination);
+      osc.start(context.currentTime);
+      osc.stop(context.currentTime + 0.1);
+    }
+
+    playClick();
+    metronomeInterval = setInterval(playClick, intervalMs);
+  }
+
+  function stopMetronome() {
+    metronomeOn = false;
+    metronomeBtn.textContent = "Metrónomo ▶️";
+    if (metronomeInterval) {
+      clearInterval(metronomeInterval);
+      metronomeInterval = null;
     }
   }
 
-  // --- Mostrar canciones ---
-  function mostrarCanciones(filtro) {
-    const texto = filtro.toLowerCase();
-    const filtradas = canciones.filter(c => c.nombre.toLowerCase().includes(texto));
-    contador.textContent = `${filtradas.length} canción${filtradas.length !== 1 ? 'es' : ''}`;
-    listaCanciones.innerHTML = '';
-    for(const cancion of filtradas) {
-      const div = document.createElement('div');
-      div.classList.add('cancion');
-      div.innerHTML = `<h3>${cancion.nombre}</h3>`;
+  // --- Datos de Firestore ---
 
-      // Imágenes acorde
-      const imgs = document.createElement('div');
-      imgs.classList.add('imagenes');
-      if(cancion.urlImagen1) {
-        const img1 = document.createElement('img');
-        img1.src = cancion.urlImagen1;
-        img1.alt = `Acorde 1 ${cancion.nombre}`;
-        imgs.appendChild(img1);
-      }
-      if(cancion.urlImagen2) {
-        const img2 = document.createElement('img');
-        img2.src = cancion.urlImagen2;
-        img2.alt = `Acorde 2 ${cancion.nombre}`;
-        imgs.appendChild(img2);
-      }
-      div.appendChild(imgs);
-
-      // Audio
-      if(cancion.urlAudio) {
-        const audio = document.createElement('audio');
-        audio.controls = true;
-        audio.src = cancion.urlAudio;
-        div.appendChild(audio);
-      }
-
-      // Botón eliminar solo admin
-      if(currentUser && currentUser.uid === ADMIN_UID) {
-        const btnEliminar = document.createElement('button');
-        btnEliminar.textContent = 'Eliminar';
-        btnEliminar.classList.add('btnEliminar');
-        btnEliminar.onclick = () => eliminarCancion(cancion.id);
-        div.appendChild(btnEliminar);
-      }
-
-      listaCanciones.appendChild(div);
-    }
+  // Cargar canciones para servicio
+  async function loadServiceSongs() {
+    const snapshot = await db.collection("serviceSongs").orderBy("createdAt", "asc").get();
+    serviceSongs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderSongs();
   }
 
-  // --- Cargar canciones ---
-  async function cargarCanciones() {
-    try {
-      const snapshot = await db.collection('canciones').orderBy('nombre').get();
-      canciones = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      mostrarCanciones(buscador.value);
-    } catch(e) {
-      console.error('Error al cargar canciones:', e);
-    }
-  }
-
-  // --- Agregar canción ---
-  async function agregarCancion(e) {
-    e.preventDefault();
-
-    if(!currentUser || currentUser.uid !== ADMIN_UID) {
-      alert('Solo el administrador puede agregar canciones.');
+  // Guardar canción (crear o actualizar)
+  async function saveSong(song) {
+    if (!isAdmin()) {
+      alert("Solo el admin puede guardar canciones.");
       return;
     }
+    const { id, ...data } = song;
+    data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
+    if (!id) {
+      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+      const docRef = await db.collection("serviceSongs").add(data);
+      song.id = docRef.id;
+      serviceSongs.push(song);
+    } else {
+      await db.collection("serviceSongs").doc(id).update(data);
+      const index = serviceSongs.findIndex(s => s.id === id);
+      if (index >= 0) serviceSongs[index] = song;
+    }
+    renderSongs();
+  }
 
-    const nombre = nombreInput.value.trim();
-    if(!nombre) {
-      alert('El nombre es obligatorio');
+  // Borrar canción
+  async function deleteSong(id) {
+    if (!isAdmin()) {
+      alert("Solo el admin puede borrar canciones.");
       return;
     }
+    if (!confirm("¿Eliminar esta canción?")) return;
+    await db.collection("serviceSongs").doc(id).delete();
+    serviceSongs = serviceSongs.filter(s => s.id !== id);
+    renderSongs();
+  }
 
-    // Subir imágenes si hay
-    const imagenesURLs = [];
-    for (const inputFile of [urlImagen1Input, urlImagen2Input]) {
-      if(inputFile.files.length > 0) {
-        const file = inputFile.files[0];
-        const ref = storage.ref(`imagenes/${Date.now()}_${file.name}`);
-        await ref.put(file);
-        const url = await ref.getDownloadURL();
-        imagenesURLs.push(url);
-      } else {
-        imagenesURLs.push('');
-      }
-    }
+  // Renderizar canciones en UI
+  function renderSongs() {
+    serviceSongsContainer.innerHTML = "";
+    countServiceSongs.textContent = `(${serviceSongs.length})`;
+    serviceSongs.forEach(song => {
+      const div = document.createElement("div");
+      div.className = "song";
 
-    // Subir audio si hay
-    let urlAudio = '';
-    if(urlAudioInput.files.length > 0) {
-      const file = urlAudioInput.files[0];
-      const ref = storage.ref(`audios/${Date.now()}_${file.name}`);
-      await ref.put(file);
-      urlAudio = await ref.getDownloadURL();
-    }
+      div.innerHTML = `
+        <input type="text" placeholder="Nombre de la canción" class="songName" value="${escapeHtml(song.name || "")}" ${isAdmin() ? "" : "readonly"} />
+        <input type="text" placeholder="Link de YouTube (opcional)" class="songYoutube" value="${escapeHtml(song.youtube || "")}" ${isAdmin() ? "" : "readonly"} />
+        <div>
+          <label>Subir Imagenes (máx 2): </label><br />
+          <input type="file" accept="image/*" multiple ${isAdmin() ? "" : "disabled"} />
+        </div>
+        <div class="images-container">
+          ${song.images ? song.images.map(url => `<img src="${url}" alt="Acorde">`).join("") : ""}
+        </div>
+        <div>
+          <label>Subir Audio:</label><br />
+          <input type="file" accept="audio/*" ${isAdmin() ? "" : "disabled"} />
+        </div>
+        ${song.audio ? `<audio controls src="${song.audio}"></audio>` : ""}
+        <button class="saveBtn">${isAdmin() ? "Guardar" : "Ver"}</button>
+        ${isAdmin() ? '<button class="deleteBtn">Eliminar</button>' : ""}
+      `;
 
-    try {
-      await db.collection('canciones').add({
-        nombre,
-        urlImagen1: imagenesURLs[0],
-        urlImagen2: imagenesURLs[1],
-        urlAudio
+      // Eventos:
+      const nameInput = div.querySelector(".songName");
+      const ytInput = div.querySelector(".songYoutube");
+      const fileImageInput = div.querySelector('input[type="file"][accept="image/*"]');
+      const fileAudioInput = div.querySelector('input[type="file"][accept="audio/*"]');
+      const saveBtn = div.querySelector(".saveBtn");
+      const deleteBtn = div.querySelector(".deleteBtn");
+
+      // Variables para almacenar URLs subidos antes de guardar
+      let uploadedImagesUrls = song.images ? [...song.images] : [];
+      let uploadedAudioUrl = song.audio || "";
+
+      fileImageInput.addEventListener("change", async e => {
+        if (!isAdmin()) return;
+        const files = Array.from(e.target.files).slice(0, 2); // max 2
+        uploadedImagesUrls = [];
+        message.textContent = "Subiendo imágenes...";
+        for (const file of files) {
+          try {
+            const url = await uploadFile(file, `serviceSongs/${song.id || "temp"}_img_${Date.now()}_${file.name}`);
+            uploadedImagesUrls.push(url);
+          } catch (err) {
+            alert("Error subiendo imagen: " + err.message);
+          }
+        }
+        message.textContent = "";
+        renderSongs(); // recarga para mostrar imágenes nuevas
       });
 
-      // Limpiar form
-      nombreInput.value = '';
-      urlImagen1Input.value = '';
-      urlImagen2Input.value = '';
-      urlAudioInput.value = '';
+      fileAudioInput.addEventListener("change", async e => {
+        if (!isAdmin()) return;
+        const file = e.target.files[0];
+        if (!file) return;
+        message.textContent = "Subiendo audio...";
+        try {
+          const url = await uploadFile(file, `serviceSongs/${song.id || "temp"}_audio_${Date.now()}_${file.name}`);
+          uploadedAudioUrl = url;
+          message.textContent = "";
+          renderSongs();
+        } catch (err) {
+          alert("Error subiendo audio: " + err.message);
+          message.textContent = "";
+        }
+      });
 
-      cargarCanciones();
-    } catch(e) {
-      alert('Error al agregar canción');
-      console.error(e);
+      saveBtn.addEventListener("click", async () => {
+        if (!isAdmin()) {
+          alert("Solo el admin puede guardar cambios.");
+          return;
+        }
+        const updatedSong = {
+          id: song.id,
+          name: nameInput.value.trim(),
+          youtube: ytInput.value.trim(),
+          images: uploadedImagesUrls,
+          audio: uploadedAudioUrl,
+          createdAt: song.createdAt || null,
+          updatedAt: null,
+        };
+        if (!updatedSong.name) {
+          alert("El nombre de la canción es obligatorio.");
+          return;
+        }
+        message.textContent = "Guardando canción...";
+        await saveSong(updatedSong);
+        message.textContent = "Canción guardada.";
+        setTimeout(() => message.textContent = "", 2000);
+      });
+
+      if (deleteBtn) {
+        deleteBtn.addEventListener("click", () => deleteSong(song.id));
+      }
+
+      serviceSongsContainer.appendChild(div);
+    });
+  }
+
+  // --- Notas para canciones a ensayar ---
+  async function loadPracticeNotes() {
+    const doc = await db.collection("practiceNotes").doc("main").get();
+    if (doc.exists) {
+      practiceNotesText = doc.data().text || "";
+      practiceNotes.value = practiceNotesText;
     }
   }
 
-  // --- Eliminar canción ---
-  async function eliminarCancion(id) {
-    if(!confirm('¿Eliminar esta canción?')) return;
-    if(!currentUser || currentUser.uid !== ADMIN_UID) {
-      alert('Solo el administrador puede eliminar canciones.');
+  async function savePracticeNotes() {
+    if (!isAdmin()) {
+      alert("Solo el admin puede guardar las notas.");
       return;
     }
-    try {
-      await db.collection('canciones').doc(id).delete();
-      cargarCanciones();
-    } catch(e) {
-      alert('Error al eliminar canción');
-      console.error(e);
-    }
+    const text = practiceNotes.value.trim();
+    message.textContent = "Guardando notas...";
+    await db.collection("practiceNotes").doc("main").set({
+      text,
+      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    message.textContent = "Notas guardadas.";
+    setTimeout(() => message.textContent = "", 2000);
   }
 
-  // --- Notas servicio y ensayo ---
-  async function cargarNotas() {
-    try {
-      const docServicio = await db.collection('notas').doc('servicio').get();
-      if(docServicio.exists) {
-        notasServicio.value = docServicio.data().texto || '';
-        fechaServicio.value = docServicio.data().fecha || '';
-      }
-      const docEnsayo = await db.collection('notas').doc('ensayo').get();
-      if(docEnsayo.exists) {
-        notasEnsayo.value = docEnsayo.data().texto || '';
-        fechaEnsayo.value = docEnsayo.data().fecha || '';
-      }
-    } catch(e) {
-      console.error('Error al cargar notas:', e);
-    }
+  savePracticeNotesBtn.addEventListener("click", savePracticeNotes);
+
+  // --- Subir archivo a Firebase Storage ---
+  async function uploadFile(file, path) {
+    const storageRef = storage.ref().child(path);
+    const snapshot = await storageRef.put(file);
+    return await snapshot.ref.getDownloadURL();
   }
-  async function guardarNotas(tipo) {
-    if(!currentUser || currentUser.uid !== ADMIN_UID) {
-      alert('Solo el administrador puede guardar notas.');
+
+  // --- Escape HTML para evitar inyección ---
+  function escapeHtml(text) {
+    if (!text) return "";
+    return text.replace(/[&<>"']/g, function (m) {
+      return ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      })[m];
+    });
+  }
+
+  // --- Agregar canción vacía ---
+  addServiceSongBtn.addEventListener("click", () => {
+    if (!isAdmin()) {
+      alert("Solo el admin puede agregar canciones.");
       return;
     }
-    let texto, fecha;
-    if(tipo === 'servicio') {
-      texto = notasServicio.value;
-      fecha = fechaServicio.value;
-    } else {
-      texto = notasEnsayo.value;
-      fecha = fechaEnsayo.value;
-    }
-    try {
-      await db.collection('notas').doc(tipo).set({ texto, fecha });
-      alert('Notas guardadas');
-    } catch(e) {
-      alert('
+    const newSong = {
+      name: "",
+      youtube: "",
+      images: [],
+      audio: "",
+      createdAt: null,
+      updatedAt: null,
+    };
+    serviceSongs.push(newSong);
+    renderSongs();
+  });
+
+  // --- Inicializar ---
+  async function init() {
+    await loadServiceSongs();
+    await loadPracticeNotes();
+  }
+  init();
+
+</script>
+
+</body>
+</html>
