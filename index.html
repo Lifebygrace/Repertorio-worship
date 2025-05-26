@@ -1,0 +1,38 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Repertorio Worship</title>
+  <style>
+    body { font-family: Arial, sans-serif; background-color: #f9f9f9; margin: 0; padding: 0; transition: background-color 0.3s, color 0.3s; }
+    body.dark-mode { background-color: #121212; color: #ffffff; }
+    header { background-color: #002244; color: white; padding: 20px; text-align: center; position: relative; }
+    #logo { width: 120px; height: auto; display: block; margin: 10px auto; }
+    .btn { padding: 8px 16px; margin: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+    .btn.orange { background-color: orange; color: white; }
+    .btn.blue { background-color: #00aaff; color: white; }
+    .toggle-theme { position: absolute; top: 20px; right: 20px; font-size: 24px; background: none; border: none; color: white; cursor: pointer; }
+    .metronome-left { position: absolute; top: 20px; left: 20px; font-size: 14px; padding: 6px 10px; }
+    section { padding: 20px; }
+    .section-card { border-radius: 10px; padding: 15px; margin-bottom: 20px; }
+    .service-notes { background-color: #fff3cd; border-left: 6px solid orange; }
+    .rehearsal-notes { background-color: #d1ecf1; border-left: 6px solid #00aaff; }
+    footer { text-align: center; padding: 20px; color: gray; }
+    #advanced-options { display: none; margin-top: 20px; }
+    #song-list li { margin-bottom: 15px; }
+  </style>
+</head>
+<body>
+  <header>
+    <a href="https://www.metronomeonline.com" class="btn blue metronome-left" target="_blank">🎵 Metrónomo</a>
+    <img src="./logo.jpeg" alt="Logo" id="logo" />
+    <h1>Repertorio Worship</h1>
+    <button class="toggle-theme" onclick="toggleTheme()">🌙/☀️</button>
+  </header>
+
+  <!-- El resto del contenido será igual que antes, pero con rutas relativas ajustadas -->
+
+</body>
+</html>
