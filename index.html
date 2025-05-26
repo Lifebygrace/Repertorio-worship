@@ -1,502 +1,245 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Repertorio Worship</title>
-<style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0; padding: 0;
-    background: #121212;
-    color: #eee;
-  }
-  header {
-    position: fixed;
-    top: 0; left: 0; right: 0;
-    background: #222;
-    padding: 8px 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    z-index: 1000;
-  }
-  #metronomeBtn {
-    background: #555;
-    border: none;
-    color: white;
-    font-weight: bold;
-    padding: 6px 12px;
-    cursor: pointer;
-    border-radius: 4px;
-  }
-  #loginStatus {
-    color: #ddd;
-  }
-  #loginBtn {
-    margin-left: 10px;
-    background: #3a88f8;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 4px;
-    cursor: pointer;
-    color: white;
-    font-weight: bold;
-  }
-  main {
-    max-width: 900px;
-    margin: 70px auto 40px auto;
-    padding: 0 10px;
-  }
-  h2 {
-    border-bottom: 2px solid #3a88f8;
-    padding-bottom: 5px;
-  }
-  .section {
-    margin-bottom: 40px;
-  }
-  .song {
-    background: #222;
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 12px;
-  }
-  .song input[type="text"], 
-  .song textarea {
-    width: 100%;
-    background: #333;
-    border: none;
-    color: white;
-    padding: 6px 8px;
-    border-radius: 4px;
-    margin-top: 6px;
-    margin-bottom: 10px;
-    font-size: 1rem;
-  }
-  .song input[type="file"] {
-    margin-top: 6px;
-    margin-bottom: 10px;
-    color: #eee;
-  }
-  .song audio {
-    width: 100%;
-    margin-top: 6px;
-  }
-  .images-container {
-    display: flex;
-    gap: 10px;
-    margin-top: 6px;
-  }
-  .images-container img {
-    width: 120px;
-    height: 90px;
-    object-fit: contain;
-    border-radius: 4px;
-    background: #111;
-  }
-  button.saveBtn {
-    background: #3a88f8;
-    border: none;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-  button.deleteBtn {
-    background: #d84444;
-    border: none;
-    color: white;
-    padding: 8px 16px;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-left: 10px;
-  }
-  button.addSongBtn {
-    background: #3a88f8;
-    border: none;
-    color: white;
-    padding: 10px 18px;
-    border-radius: 4px;
-    font-weight: bold;
-    cursor: pointer;
-    margin-top: 12px;
-  }
-  #message {
-    margin-top: 12px;
-    color: #f55;
-  }
-  textarea.notes-area {
-    width: 100%;
-    height: 100px;
-    background: #333;
-    border: none;
-    border-radius: 6px;
-    color: white;
-    padding: 10px;
-    font-size: 1rem;
-    resize: vertical;
-  }
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Repertorio Worship</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter&display=swap">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #111;
+      color: #fff;
+    }
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #222;
+      padding: 10px 20px;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.2em;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo img {
+      height: 30px;
+    }
+    .btn {
+      background: #444;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      margin-left: 10px;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background: #666;
+    }
+    main {
+      padding: 20px;
+    }
+    section {
+      margin-bottom: 40px;
+    }
+    .song {
+      background: #222;
+      border: 1px solid #333;
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 8px;
+    }
+    .admin-controls {
+      margin-top: 10px;
+    }
+    .audio-player {
+      margin-top: 5px;
+    }
+    input, textarea {
+      width: 100%;
+      margin: 5px 0;
+      padding: 8px;
+      background: #1a1a1a;
+      color: white;
+      border: 1px solid #444;
+      border-radius: 4px;
+    }
+    label {
+      margin-top: 10px;
+      display: block;
+    }
+  </style>
 </head>
 <body>
 
-<header>
-  <button id="metronomeBtn" title="Activar/Desactivar Metrónomo">Metrónomo ▶️</button>
-  <div>
-    <span id="loginStatus">No conectado</span>
-    <button id="loginBtn">Iniciar sesión</button>
-  </div>
-</header>
+  <header>
+    <div class="logo">
+      <img src="https://upload.wikimedia.org/wikipedia/commons/1/1e/Worship_Music.png" alt="Logo" />
+      <h1>Repertorio Worship</h1>
+    </div>
+    <div>
+      <button id="metronomeBtn" class="btn">Metrónomo</button>
+      <button id="loginBtn" class="btn">Iniciar sesión</button>
+      <button id="logoutBtn" class="btn" style="display: none;">Cerrar sesión</button>
+    </div>
+  </header>
 
-<main>
-  <section class="section" id="serviceSongsSection">
-    <h2>Canciones para el servicio <span id="countServiceSongs"></span></h2>
-    <div id="serviceSongsContainer"></div>
-    <button id="addServiceSongBtn" class="addSongBtn" style="display:none;">Agregar canción para el servicio</button>
-  </section>
+  <main>
+    <section>
+      <h2>Agregar nueva canción</h2>
+      <div id="addSongForm" style="display: none;">
+        <input type="text" id="songTitle" placeholder="Título de la canción" />
+        <input type="text" id="songLink" placeholder="Link de YouTube (opcional)" />
+        <label>Sube hasta 2 imágenes:</label>
+        <input type="file" id="imageUpload1" accept="image/*" />
+        <input type="file" id="imageUpload2" accept="image/*" />
+        <label>Sube archivo de audio:</label>
+        <input type="file" id="audioUpload" accept="audio/*" />
+        <button class="btn" onclick="addSong()">Agregar canción</button>
+      </div>
+    </section>
 
-  <section class="section" id="practiceSongsSection">
-    <h2>Canciones a ensayar</h2>
-    <textarea id="practiceNotes" class="notes-area" placeholder="Notas para las canciones a ensayar..."></textarea>
-    <button id="savePracticeNotesBtn" class="saveBtn" style="margin-top:10px;">Guardar notas</button>
-    <div id="message"></div>
-  </section>
-</main>
+    <section>
+      <h2>Repertorio (Total: <span id="songCount">0</span>)</h2>
+      <div id="songList"></div>
+    </section>
 
-<!-- Firebase SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-storage-compat.js"></script>
+    <section>
+      <h2>Canciones para el servicio</h2>
+      <textarea id="serviceNotes" placeholder="Escribe las canciones aquí..."></textarea>
+      <button class="btn" onclick="saveNotes('service')">Guardar</button>
+    </section>
 
-<script>
-  // Configura Firebase con tus credenciales
-  const firebaseConfig = {
-    apiKey: "TU_API_KEY",
-    authDomain: "TU_AUTH_DOMAIN",
-    projectId: "TU_PROJECT_ID",
-    storageBucket: "TU_STORAGE_BUCKET",
-    messagingSenderId: "TU_MSG_SENDER_ID",
-    appId: "TU_APP_ID"
-  };
-  firebase.initializeApp(firebaseConfig);
+    <section>
+      <h2>Canciones a ensayar</h2>
+      <textarea id="practiceNotes" placeholder="Escribe las canciones para ensayar aquí..."></textarea>
+      <button class="btn" onclick="saveNotes('practice')">Guardar</button>
+    </section>
+  </main>
 
-  const auth = firebase.auth();
-  const db = firebase.firestore();
-  const storage = firebase.storage();
+  <!-- Firebase SDK -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+    import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
 
-  // UID Admin
-  const ADMIN_UID = "Wac5yk1NUQNY1fSARyOxRjacLPV2";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
+      authDomain: "repertorioworship.firebaseapp.com",
+      projectId: "repertorioworship",
+      storageBucket: "repertorioworship.firebasestorage.app",
+      messagingSenderId: "493050453266",
+      appId: "1:493050453266:web:cf07ce9fbb471122f167cb",
+      measurementId: "G-RB3G81DQQ1"
+    };
 
-  // DOM Elements
-  const loginStatus = document.getElementById("loginStatus");
-  const loginBtn = document.getElementById("loginBtn");
-  const addServiceSongBtn = document.getElementById("addServiceSongBtn");
-  const serviceSongsContainer = document.getElementById("serviceSongsContainer");
-  const countServiceSongs = document.getElementById("countServiceSongs");
-  const practiceNotes = document.getElementById("practiceNotes");
-  const savePracticeNotesBtn = document.getElementById("savePracticeNotesBtn");
-  const message = document.getElementById("message");
-  const metronomeBtn = document.getElementById("metronomeBtn");
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const storage = getStorage(app);
 
-  let currentUser = null;
-  let serviceSongs = [];
-  let practiceNotesText = "";
-  let metronomeInterval = null;
-  let metronomeOn = false;
+    const adminUID = "Wac5yk1NUQNY1fSARyOxRjacLPV2";
 
-  // --- Autenticación ---
-  loginBtn.addEventListener("click", () => {
-    if (currentUser) {
-      auth.signOut();
-    } else {
-      // Iniciar sesión con popup Google
-      const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(e => alert("Error login: " + e.message));
-    }
-  });
+    const loginBtn = document.getElementById("loginBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const addForm = document.getElementById("addSongForm");
 
-  auth.onAuthStateChanged(user => {
-    currentUser = user;
-    if (user) {
-      loginStatus.textContent = `Conectado: ${user.displayName || user.email}`;
-      loginBtn.textContent = "Cerrar sesión";
-      addServiceSongBtn.style.display = isAdmin() ? "inline-block" : "none";
-      renderSongs();
-    } else {
-      loginStatus.textContent = "No conectado";
-      loginBtn.textContent = "Iniciar sesión";
-      addServiceSongBtn.style.display = "none";
-      serviceSongsContainer.innerHTML = "";
-      countServiceSongs.textContent = "";
-    }
-  });
+    loginBtn.onclick = async () => {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    };
 
-  function isAdmin() {
-    return currentUser && currentUser.uid === ADMIN_UID;
-  }
+    logoutBtn.onclick = async () => {
+      await signOut(auth);
+    };
 
-  // --- Metrónomo ---
-  metronomeBtn.addEventListener("click", () => {
-    if (metronomeOn) {
-      stopMetronome();
-    } else {
-      startMetronome();
-    }
-  });
+    onAuthStateChanged(auth, (user) => {
+      const isAdmin = user?.uid === adminUID;
+      loginBtn.style.display = user ? "none" : "inline-block";
+      logoutBtn.style.display = user ? "inline-block" : "none";
+      addForm.style.display = isAdmin ? "block" : "none";
+    });
 
-  function startMetronome() {
-    let bpm = 60; // puedes cambiar o hacer dinámico
-    let intervalMs = 60000 / bpm;
-    const context = new AudioContext();
-    metronomeOn = true;
-    metronomeBtn.textContent = "Metrónomo ⏸️";
+    async function addSong() {
+      const title = document.getElementById("songTitle").value.trim();
+      const youtubeLink = document.getElementById("songLink").value.trim();
+      const img1 = document.getElementById("imageUpload1").files[0];
+      const img2 = document.getElementById("imageUpload2").files[0];
+      const audio = document.getElementById("audioUpload").files[0];
 
-    function playClick() {
-      const osc = context.createOscillator();
-      osc.frequency.value = 1000;
-      const envelope = context.createGain();
-      envelope.gain.setValueAtTime(1, context.currentTime);
-      envelope.gain.exponentialRampToValueAtTime(0.001, context.currentTime + 0.1);
-      osc.connect(envelope).connect(context.destination);
-      osc.start(context.currentTime);
-      osc.stop(context.currentTime + 0.1);
-    }
+      const filesToUpload = [[img1, "image1"], [img2, "image2"], [audio, "audio"]];
+      const urls = {};
 
-    playClick();
-    metronomeInterval = setInterval(playClick, intervalMs);
-  }
-
-  function stopMetronome() {
-    metronomeOn = false;
-    metronomeBtn.textContent = "Metrónomo ▶️";
-    if (metronomeInterval) {
-      clearInterval(metronomeInterval);
-      metronomeInterval = null;
-    }
-  }
-
-  // --- Datos de Firestore ---
-
-  // Cargar canciones para servicio
-  async function loadServiceSongs() {
-    const snapshot = await db.collection("serviceSongs").orderBy("createdAt", "asc").get();
-    serviceSongs = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderSongs();
-  }
-
-  // Guardar canción (crear o actualizar)
-  async function saveSong(song) {
-    if (!isAdmin()) {
-      alert("Solo el admin puede guardar canciones.");
-      return;
-    }
-    const { id, ...data } = song;
-    data.updatedAt = firebase.firestore.FieldValue.serverTimestamp();
-    if (!id) {
-      data.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-      const docRef = await db.collection("serviceSongs").add(data);
-      song.id = docRef.id;
-      serviceSongs.push(song);
-    } else {
-      await db.collection("serviceSongs").doc(id).update(data);
-      const index = serviceSongs.findIndex(s => s.id === id);
-      if (index >= 0) serviceSongs[index] = song;
-    }
-    renderSongs();
-  }
-
-  // Borrar canción
-  async function deleteSong(id) {
-    if (!isAdmin()) {
-      alert("Solo el admin puede borrar canciones.");
-      return;
-    }
-    if (!confirm("¿Eliminar esta canción?")) return;
-    await db.collection("serviceSongs").doc(id).delete();
-    serviceSongs = serviceSongs.filter(s => s.id !== id);
-    renderSongs();
-  }
-
-  // Renderizar canciones en UI
-  function renderSongs() {
-    serviceSongsContainer.innerHTML = "";
-    countServiceSongs.textContent = `(${serviceSongs.length})`;
-    serviceSongs.forEach(song => {
-      const div = document.createElement("div");
-      div.className = "song";
-
-      div.innerHTML = `
-        <input type="text" placeholder="Nombre de la canción" class="songName" value="${escapeHtml(song.name || "")}" ${isAdmin() ? "" : "readonly"} />
-        <input type="text" placeholder="Link de YouTube (opcional)" class="songYoutube" value="${escapeHtml(song.youtube || "")}" ${isAdmin() ? "" : "readonly"} />
-        <div>
-          <label>Subir Imagenes (máx 2): </label><br />
-          <input type="file" accept="image/*" multiple ${isAdmin() ? "" : "disabled"} />
-        </div>
-        <div class="images-container">
-          ${song.images ? song.images.map(url => `<img src="${url}" alt="Acorde">`).join("") : ""}
-        </div>
-        <div>
-          <label>Subir Audio:</label><br />
-          <input type="file" accept="audio/*" ${isAdmin() ? "" : "disabled"} />
-        </div>
-        ${song.audio ? `<audio controls src="${song.audio}"></audio>` : ""}
-        <button class="saveBtn">${isAdmin() ? "Guardar" : "Ver"}</button>
-        ${isAdmin() ? '<button class="deleteBtn">Eliminar</button>' : ""}
-      `;
-
-      // Eventos:
-      const nameInput = div.querySelector(".songName");
-      const ytInput = div.querySelector(".songYoutube");
-      const fileImageInput = div.querySelector('input[type="file"][accept="image/*"]');
-      const fileAudioInput = div.querySelector('input[type="file"][accept="audio/*"]');
-      const saveBtn = div.querySelector(".saveBtn");
-      const deleteBtn = div.querySelector(".deleteBtn");
-
-      // Variables para almacenar URLs subidos antes de guardar
-      let uploadedImagesUrls = song.images ? [...song.images] : [];
-      let uploadedAudioUrl = song.audio || "";
-
-      fileImageInput.addEventListener("change", async e => {
-        if (!isAdmin()) return;
-        const files = Array.from(e.target.files).slice(0, 2); // max 2
-        uploadedImagesUrls = [];
-        message.textContent = "Subiendo imágenes...";
-        for (const file of files) {
-          try {
-            const url = await uploadFile(file, `serviceSongs/${song.id || "temp"}_img_${Date.now()}_${file.name}`);
-            uploadedImagesUrls.push(url);
-          } catch (err) {
-            alert("Error subiendo imagen: " + err.message);
-          }
+      for (const [file, key] of filesToUpload) {
+        if (file) {
+          const storageRef = ref(storage, `songs/${title}/${key}-${file.name}`);
+          const snapshot = await uploadBytes(storageRef, file);
+          urls[key] = await getDownloadURL(snapshot.ref);
         }
-        message.textContent = "";
-        renderSongs(); // recarga para mostrar imágenes nuevas
-      });
-
-      fileAudioInput.addEventListener("change", async e => {
-        if (!isAdmin()) return;
-        const file = e.target.files[0];
-        if (!file) return;
-        message.textContent = "Subiendo audio...";
-        try {
-          const url = await uploadFile(file, `serviceSongs/${song.id || "temp"}_audio_${Date.now()}_${file.name}`);
-          uploadedAudioUrl = url;
-          message.textContent = "";
-          renderSongs();
-        } catch (err) {
-          alert("Error subiendo audio: " + err.message);
-          message.textContent = "";
-        }
-      });
-
-      saveBtn.addEventListener("click", async () => {
-        if (!isAdmin()) {
-          alert("Solo el admin puede guardar cambios.");
-          return;
-        }
-        const updatedSong = {
-          id: song.id,
-          name: nameInput.value.trim(),
-          youtube: ytInput.value.trim(),
-          images: uploadedImagesUrls,
-          audio: uploadedAudioUrl,
-          createdAt: song.createdAt || null,
-          updatedAt: null,
-        };
-        if (!updatedSong.name) {
-          alert("El nombre de la canción es obligatorio.");
-          return;
-        }
-        message.textContent = "Guardando canción...";
-        await saveSong(updatedSong);
-        message.textContent = "Canción guardada.";
-        setTimeout(() => message.textContent = "", 2000);
-      });
-
-      if (deleteBtn) {
-        deleteBtn.addEventListener("click", () => deleteSong(song.id));
       }
 
-      serviceSongsContainer.appendChild(div);
-    });
-  }
+      await addDoc(collection(db, "songs"), {
+        title,
+        youtube: youtubeLink,
+        image1: urls.image1 || "",
+        image2: urls.image2 || "",
+        audio: urls.audio || ""
+      });
 
-  // --- Notas para canciones a ensayar ---
-  async function loadPracticeNotes() {
-    const doc = await db.collection("practiceNotes").doc("main").get();
-    if (doc.exists) {
-      practiceNotesText = doc.data().text || "";
-      practiceNotes.value = practiceNotesText;
+      location.reload();
     }
-  }
 
-  async function savePracticeNotes() {
-    if (!isAdmin()) {
-      alert("Solo el admin puede guardar las notas.");
-      return;
+    async function loadSongs() {
+      const songList = document.getElementById("songList");
+      songList.innerHTML = "";
+      const querySnapshot = await getDocs(collection(db, "songs"));
+      document.getElementById("songCount").textContent = querySnapshot.size;
+      querySnapshot.forEach((docSnap) => {
+        const song = docSnap.data();
+        const div = document.createElement("div");
+        div.className = "song";
+        div.innerHTML = `
+          <h3>${song.title}</h3>
+          ${song.youtube ? `<p><a href="${song.youtube}" target="_blank">Ver en YouTube</a></p>` : ""}
+          ${song.image1 ? `<img src="${song.image1}" style="max-width:100%;margin:5px 0;" />` : ""}
+          ${song.image2 ? `<img src="${song.image2}" style="max-width:100%;margin:5px 0;" />` : ""}
+          ${song.audio ? `<audio class="audio-player" controls src="${song.audio}"></audio>` : ""}
+          <div class="admin-controls" style="display: ${auth.currentUser?.uid === adminUID ? 'block' : 'none'}">
+            <button class="btn" onclick="deleteSong('${docSnap.id}')">Eliminar</button>
+          </div>
+        `;
+        songList.appendChild(div);
+      });
     }
-    const text = practiceNotes.value.trim();
-    message.textContent = "Guardando notas...";
-    await db.collection("practiceNotes").doc("main").set({
-      text,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp(),
-    });
-    message.textContent = "Notas guardadas.";
-    setTimeout(() => message.textContent = "", 2000);
-  }
 
-  savePracticeNotesBtn.addEventListener("click", savePracticeNotes);
-
-  // --- Subir archivo a Firebase Storage ---
-  async function uploadFile(file, path) {
-    const storageRef = storage.ref().child(path);
-    const snapshot = await storageRef.put(file);
-    return await snapshot.ref.getDownloadURL();
-  }
-
-  // --- Escape HTML para evitar inyección ---
-  function escapeHtml(text) {
-    if (!text) return "";
-    return text.replace(/[&<>"']/g, function (m) {
-      return ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;'
-      })[m];
-    });
-  }
-
-  // --- Agregar canción vacía ---
-  addServiceSongBtn.addEventListener("click", () => {
-    if (!isAdmin()) {
-      alert("Solo el admin puede agregar canciones.");
-      return;
+    async function deleteSong(id) {
+      await deleteDoc(doc(db, "songs", id));
+      location.reload();
     }
-    const newSong = {
-      name: "",
-      youtube: "",
-      images: [],
-      audio: "",
-      createdAt: null,
-      updatedAt: null,
-    };
-    serviceSongs.push(newSong);
-    renderSongs();
-  });
 
-  // --- Inicializar ---
-  async function init() {
-    await loadServiceSongs();
-    await loadPracticeNotes();
-  }
-  init();
+    async function saveNotes(type) {
+      const value = document.getElementById(type === 'service' ? 'serviceNotes' : 'practiceNotes').value;
+      await setDoc(doc(db, "notes", type), { text: value });
+    }
 
-</script>
+    async function loadNotes() {
+      const serviceSnap = await getDocs(collection(db, "notes"));
+      serviceSnap.forEach((docSnap) => {
+        if (docSnap.id === "service") document.getElementById("serviceNotes").value = docSnap.data().text;
+        if (docSnap.id === "practice") document.getElementById("practiceNotes").value = docSnap.data().text;
+      });
+    }
 
+    loadSongs();
+    loadNotes();
+  </script>
 </body>
 </html>
