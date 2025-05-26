@@ -4,6 +4,12 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Repertorio Worship</title>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
 <style>
   :root {
     --primary: #002244;
@@ -20,23 +26,23 @@
   }
   body {
     margin: 0;
-    font-family: 'Segoe UI', sans-serif;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     background: var(--bg);
     color: var(--text);
     transition: background 0.3s, color 0.3s;
-    padding-top: 80px;
+    padding-top: 90px;
   }
   header {
     background: var(--primary);
     color: white;
     text-align: center;
-    padding: 15px 0;
+    padding: 10px 0;
     position: fixed;
     top: 0; left: 0; right: 0;
     z-index: 100;
   }
   header img {
-    height: 60px;
+    height: 120px; /* doble tamaño del anterior 60px */
     width: auto;
   }
   #top-buttons {
@@ -48,24 +54,22 @@
     padding: 0 15px;
     z-index: 110;
     box-sizing: border-box;
-    font-family: Arial, sans-serif;
   }
   #metro-btn {
     background-color: var(--blue-metro);
     border: none;
     color: white;
     font-weight: bold;
-    padding: 8px 12px;
+    padding: 8px 14px;
     border-radius: 6px;
     cursor: pointer;
     font-size: 14px;
-    align-self: flex-start;
     box-shadow: 0 2px 6px rgba(0,123,255,.5);
   }
   #right-buttons {
     display: flex;
     gap: 8px;
-    align-items: flex-start;
+    align-items: center;
   }
   .top-btn {
     background-color: var(--accent);
@@ -250,28 +254,49 @@
     opacity: 0.5;
     pointer-events: none;
   }
+  /* Ajuste para que top botones estén más cerca del borde */
+  #top-buttons {
+    top: 5px;
+  }
 </style>
 </head>
 <body>
-  <div id="top-buttons">
-    <button id="metro-btn" title="Abrir metrónomo">Metrónomo</button>
-    <div id="right-buttons">
-      <button id="btn-modo" title="Alternar modo oscuro">🌙☀️</button>
-      <button id="btn-login" class="top-btn" title="Iniciar sesión">Iniciar sesión</button>
-      <button id="btn-logout" class="top-btn" title="Cerrar sesión" style="display:none;">Cerrar sesión</button>
-    </div>
+
+<div id="top-buttons">
+  <button id="metro-btn" title="Abrir metrónomo">Metrónomo</button>
+  <div id="right-buttons">
+    <button id="btn-modo" title="Alternar modo oscuro">🌙☀️</button>
+    <button id="btn-login" class="top-btn" title="Iniciar sesión">Iniciar sesión</button>
+    <button id="btn-logout" class="top-btn" title="Cerrar sesión" style="display:none;">Cerrar sesión</button>
   </div>
+</div>
 
-  <header>
-    <img src="logo.jpeg" alt="Logo Worship" />
-  </header>
+<header>
+  <img src="logo.jpeg" alt="Logo Worship" />
+</header>
 
-  <main>
-    <input id="search" class="search" type="text" placeholder="Buscar canciones..." autocomplete="off"/>
-    <div id="contador-canciones">Canciones encontradas: 0</div>
-    <div id="lista-canciones"></div>
+<main>
+  <input id="search" class="search" type="text" placeholder="Buscar canciones..." autocomplete="off" />
+  <div id="contador-canciones">Canciones encontradas: 0</div>
+  <div id="lista-canciones"></div>
 
-    <section id="servicio" class="notas">
-      <div class="nota-header">
-        <div><strong>Canciones para el servicio</strong> <span id="fecha-servicio"></span></div>
-        <button id="editar-servicio" class="
+  <section id="servicio" class="notas">
+    <div class="nota-header">
+      <div><strong>Canciones para el servicio</strong> - <input type="date" id="fecha-servicio" /></div>
+      <button id="editar-servicio" class="btn-editar">Editar</button>
+    </div>
+    <textarea id="notas-servicio" rows="4" placeholder="Notas para el servicio..." readonly></textarea>
+  </section>
+
+  <section id="ensayo" class="notas">
+    <div class="nota-header">
+      <div><strong>Canciones para el ensayo</strong> - <input type="date" id="fecha-ensayo" /></div>
+      <button id="editar-ensayo" class="btn-editar ensayo">Editar</button>
+    </div>
+    <textarea id="notas-ensayo" rows="4" placeholder="Notas para el ensayo..." readonly></textarea>
+  </section>
+
+  <form id="form-cancion" class="cancion-form">
+    <h3>Añadir / Editar canción</h3>
+    <label for="nombre">Nombre</label>
+    <input type="text
