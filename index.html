@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grupo de Música Worship</title>
+    <title>Repertorio Worship</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -13,8 +13,8 @@
         }
         header {
             text-align: center;
-            padding: 10px;
-            background-color: #4CAF50;
+            padding: 20px;
+            background-color: #003366; /* Azul marino */
             color: white;
         }
         #logo {
@@ -28,7 +28,7 @@
             top: 10px;
             left: 120px;
             padding: 5px 10px;
-            background-color: #4CAF50;
+            background-color: #ff6600; /* Naranja */
             color: white;
             border: none;
             border-radius: 5px;
@@ -58,15 +58,49 @@
             border: 1px solid #ddd;
             border-radius: 5px;
         }
+        #searchContainer {
+            margin: 20px 0;
+            text-align: center;
+        }
+        #songCount {
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        #addSongMenu {
+            display: none;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            position: absolute;
+            top: 60px;
+            left: 10px;
+            z-index: 10;
+        }
+        #addSongButton {
+            background-color: #ff6600; /* Naranja */
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            padding: 10px;
+        }
     </style>
 </head>
 <body>
 
 <header>
     <img id="logo" src="logo.jpeg" alt="Logo">
-    <h1>Grupo de Música Worship</h1>
-    <button id="metronomeButton" onclick="toggleMetronome()">Metrónomo</button>
+    <h1>Repertorio Worship</h1>
+    <button id="metronomeButton" onclick="window.open('https://www.metronomeonline.com', '_blank')">Metrónomo</button>
 </header>
+
+<section>
+    <div id="searchContainer">
+        <input type="text" id="searchInput" placeholder="Buscar canciones..." oninput="filterSongs()">
+    </div>
+    <div id="songCount">Total de canciones: <span id="count">0</span></div>
+</section>
 
 <section>
     <h2>Acordes</h2>
@@ -83,45 +117,15 @@
 </section>
 
 <section>
-    <h2>Agregar Acorde y Audio</h2>
-    <form id="formulario" onsubmit="enviarDatos(event)">
-        <label for="acorde">Nombre del Acorde:</label>
-        <input type="text" id="acorde" required>
-        
-        <label for="audio">URL del Audio:</label>
-        <input type="text" id="audio" required>
-        
-        <button type="submit">Guardar</button>
-    </form>
-</section>
-
-<section>
-    <h2>Canciones para el Servicio</h2>
-    <div class="notes" id="servicioNotes">
-        <p id="servicioText">Escribe tus notas aquí...</p>
-        <button onclick="editarNotas('servicio')">Editar Notas</button>
-    </div>
-</section>
-
-<section>
-    <h2>Canciones a Ensayar</h2>
-    <div class="notes" id="ensayoNotes">
-        <p id="ensayoText">Escribe tus notas aquí...</p>
-        <button onclick="editarNotas('ensayo')">Editar Notas</button>
-    </div>
-</section>
-
-<!-- Importa Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-
-<script>
-    // Tu configuración de Firebase
-    const firebaseConfig = {
-        apiKey: "AIzaSyD-1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1Z1",
-        authDomain: "tu-proyecto.firebaseapp.com",
-        databaseURL: "https://tu-proyecto.firebaseio.com",
-        projectId: "tu-proyecto",
-        storageBucket: "tu-proyecto.appspot.com",
-        messagingSenderId: "123456789012",
-        appId: "
+    <button id="addSongButton" onclick="toggleAddSongMenu()">Agregar Nueva Canción</button>
+    <div id="addSongMenu">
+        <h3>Agregar Canción</h3>
+        <form id="songForm" onsubmit="addSong(event)">
+            <label for="songName">Nombre de la Canción:</label>
+            <input type="text" id="songName" required>
+            
+            <label for="chordImage">Subir Foto de Acordes:</label>
+            <input type="file" id="chordImage" accept="image/*">
+            
+            <label for="audio">Subir Audio:</label>
+            <input type="
