@@ -11,6 +11,8 @@
     --bg: #f0f4f8;
     --text: #002244;
     --blue-metro: #007bff;
+    --naranja: #FF6F00;
+    --azul-ensayo: #a0c4ff;
   }
   body.dark {
     --bg: #121212;
@@ -22,27 +24,24 @@
     background: var(--bg);
     color: var(--text);
     transition: background 0.3s, color 0.3s;
-    padding-top: 70px;
+    padding-top: 80px;
   }
   header {
     background: var(--primary);
     color: white;
     text-align: center;
-    padding: 20px 0 20px 0;
+    padding: 15px 0;
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     z-index: 100;
   }
   header img {
-    width: 300px; /* logo 3 veces más grande */
-    height: auto;
+    height: 60px;
+    width: auto;
   }
-  /* Botones superiores */
   #top-buttons {
     position: fixed;
-    top: 8px;
+    top: 10px;
     width: 100%;
     display: flex;
     justify-content: space-between;
@@ -78,12 +77,25 @@
     cursor: pointer;
     font-size: 14px;
     box-shadow: 0 2px 6px rgba(255,111,0,.5);
+    user-select:none;
   }
-
+  #btn-modo {
+    background: none;
+    color: var(--text);
+    font-size: 20px;
+    padding: 5px 10px;
+    font-weight: normal;
+    box-shadow: none;
+  }
+  #btn-modo:hover {
+    background: var(--accent);
+    color: white;
+    border-radius: 6px;
+  }
   main {
-    max-width: 800px;
+    max-width: 900px;
     margin: auto;
-    padding: 0 20px 40px 20px;
+    padding: 0 20px 60px 20px;
   }
   .search {
     width: 100%;
@@ -134,153 +146,132 @@
     cursor:pointer;
     font-size: 0.9em;
   }
+  section.notas {
+    margin-top: 30px;
+    padding: 15px 20px;
+    border-radius: 12px;
+    box-shadow: 0 0 8px rgba(0,0,0,0.1);
+  }
+  section#servicio {
+    background: #fff4e5;
+    border-left: 6px solid var(--naranja);
+  }
+  section#ensayo {
+    background: var(--azul-ensayo);
+    border-left: 6px solid #003366;
+    color: #002244;
+  }
+  .nota-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .nota-fecha {
+    font-weight: bold;
+    font-size: 1em;
+  }
+  .btn-editar {
+    background: var(--naranja);
+    border: none;
+    color: white;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    user-select:none;
+  }
+  .btn-editar.ensayo {
+    background: #0077ff;
+  }
+  #btn-volver-buscador {
+    display: block;
+    margin: 30px auto 10px auto;
+    padding: 10px 20px;
+    font-weight: bold;
+    font-size: 1em;
+    border-radius: 10px;
+    cursor: pointer;
+    background-color: var(--primary);
+    color: white;
+    border: none;
+  }
+  footer {
+    text-align: center;
+    font-style: italic;
+    font-weight: bold;
+    margin-top: 10px;
+    margin-bottom: 40px;
+    color: var(--primary);
+  }
+  form.cancion-form {
+    margin-top: 30px;
+    border: 1px solid #ccc;
+    padding: 15px 20px;
+    border-radius: 12px;
+    background: white;
+  }
+  body.dark form.cancion-form {
+    background: #222;
+    border-color: #444;
+  }
+  form.cancion-form label {
+    display: block;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+  form.cancion-form input[type=text],
+  form.cancion-form textarea,
+  form.cancion-form input[type=date] {
+    width: 100%;
+    padding: 6px 10px;
+    margin-top: 6px;
+    border-radius: 6px;
+    border: 1px solid #999;
+    box-sizing: border-box;
+    font-size: 1em;
+  }
+  form.cancion-form textarea {
+    resize: vertical;
+  }
+  form.cancion-form input[type=file] {
+    margin-top: 6px;
+  }
+  form.cancion-form button {
+    margin-top: 15px;
+    padding: 8px 14px;
+    background-color: var(--accent);
+    border: none;
+    color: white;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  .disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
 </style>
 </head>
 <body>
   <div id="top-buttons">
     <button id="metro-btn" title="Abrir metrónomo">Metrónomo</button>
     <div id="right-buttons">
-      <button id="btn-modo" class="top-btn" title="Modo oscuro">Modo Oscuro</button>
-      <button id="btn-login" class="top-btn" title="Iniciar sesión">Log In</button>
-      <button id="btn-logout" class="top-btn" title="Cerrar sesión" style="display:none;">Log Out</button>
+      <button id="btn-modo" title="Alternar modo oscuro">🌙☀️</button>
+      <button id="btn-login" class="top-btn" title="Iniciar sesión">Iniciar sesión</button>
+      <button id="btn-logout" class="top-btn" title="Cerrar sesión" style="display:none;">Cerrar sesión</button>
     </div>
   </div>
 
   <header>
-    <img src="https://raw.githubusercontent.com/lifebygrace/Repertorio-worship/main/logo.png" alt="Logo Worship" />
+    <img src="logo.jpeg" alt="Logo Worship" />
   </header>
 
   <main>
-    <input id="search" class="search" type="text" placeholder="Buscar canciones..." />
+    <input id="search" class="search" type="text" placeholder="Buscar canciones..." autocomplete="off"/>
     <div id="contador-canciones">Canciones encontradas: 0</div>
     <div id="lista-canciones"></div>
-  </main>
 
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getFirestore, collection, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
-
-    const ADMIN_UID = "Wac5yk1NUQNY1fSARyOxRjacLPV2";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
-      authDomain: "repertorioworship.firebaseapp.com",
-      projectId: "repertorioworship",
-      storageBucket: "repertorioworship.appspot.com",
-      messagingSenderId: "493050453266",
-      appId: "1:493050453266:web:cf07ce9fbb471122f167cb"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-
-    let currentUser = null;
-
-    function updateUI() {
-      const eliminarBtns = document.querySelectorAll(".btn-eliminar");
-      const loginBtn = document.getElementById("btn-login");
-      const logoutBtn = document.getElementById("btn-logout");
-      if (currentUser && currentUser.uid === ADMIN_UID) {
-        eliminarBtns.forEach(b => b.style.display = "inline-block");
-        loginBtn.style.display = "none";
-        logoutBtn.style.display = "inline-block";
-      } else {
-        eliminarBtns.forEach(b => b.style.display = "none");
-        loginBtn.style.display = "inline-block";
-        logoutBtn.style.display = "none";
-      }
-    }
-
-    async function cargarCanciones() {
-      const contenedor = document.getElementById("lista-canciones");
-      contenedor.innerHTML = "";
-      const search = document.getElementById("search").value.toLowerCase();
-      const querySnapshot = await getDocs(collection(db, "canciones"));
-      let count = 0;
-      querySnapshot.forEach((docSnap) => {
-        const data = docSnap.data();
-        if (!data.titulo.toLowerCase().includes(search)) return;
-        count++;
-        const div = document.createElement("div");
-        div.className = "card";
-
-        const btnEliminarHTML = `<button class="btn-eliminar" title="Eliminar canción">Eliminar</button>`;
-
-        div.innerHTML = `
-          <h3>${data.titulo} ${btnEliminarHTML}</h3>
-          <p><strong>Autor:</strong> ${data.autor}</p>
-          <p><strong>Acordes:</strong> ${data.acordes}</p>
-          <p><strong>Notas:</strong> ${data.notas}</p>
-          ${data.audioUrl ? `<audio controls src="${data.audioUrl}"></audio>` : ""}
-          ${data.imagenes ? data.imagenes.map(url => `<img src="${url}" alt="Imagen de acordes" />`).join('') : ''}
-        `;
-
-        contenedor.appendChild(div);
-
-        const btnEliminar = div.querySelector(".btn-eliminar");
-        if (currentUser && currentUser.uid === ADMIN_UID) {
-          btnEliminar.style.display = "inline-block";
-          btnEliminar.onclick = async () => {
-            if(confirm(`¿Eliminar canción "${data.titulo}"?`)){
-              await deleteDoc(doc(db, "canciones", docSnap.id));
-              cargarCanciones();
-            }
-          }
-        } else {
-          btnEliminar.style.display = "none";
-        }
-      });
-      document.getElementById("contador-canciones").textContent = `Canciones encontradas: ${count}`;
-    }
-
-    async function login() {
-      const email = prompt("Introduce tu correo admin:");
-      const password = prompt("Introduce tu contraseña:");
-      try {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        currentUser = userCredential.user;
-        if (currentUser.uid !== ADMIN_UID) {
-          alert("No eres admin autorizado.");
-          await signOut(auth);
-          currentUser = null;
-        }
-      } catch (error) {
-        alert("Error al iniciar sesión: " + error.message);
-      }
-      updateUI();
-      cargarCanciones();
-    }
-
-    async function logout() {
-      await signOut(auth);
-      currentUser = null;
-      updateUI();
-      cargarCanciones();
-    }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      cargarCanciones();
-
-      document.getElementById("search").addEventListener("input", cargarCanciones);
-      document.getElementById("btn-login").addEventListener("click", login);
-      document.getElementById("btn-logout").addEventListener("click", logout);
-      document.getElementById("metro-btn").addEventListener("click", () => {
-        window.open("https://www.metronomeonline.com", "_blank");
-      });
-
-      onAuthStateChanged(auth, (user) => {
-        currentUser = user;
-        updateUI();
-        cargarCanciones();
-      });
-
-      // Modo oscuro toggle
-      document.getElementById("btn-modo").addEventListener("click", () => {
-        document.body.classList.toggle("dark");
-      });
-    });
-  </script>
-</body>
-</html>
+    <section id="servicio" class="notas">
+      <div class="nota-header">
+        <div><strong>Canciones para el servicio</strong> <span id="fecha-servicio"></span></div>
+        <button id="editar-servicio" class="
