@@ -30,7 +30,7 @@
       margin: 10px auto;
     }
     .btn {
-      padding: 10px 20px;
+      padding: 8px 16px;
       margin: 10px;
       border: none;
       border-radius: 8px;
@@ -59,6 +59,8 @@
       position: absolute;
       top: 20px;
       left: 20px;
+      font-size: 14px;
+      padding: 6px 10px;
     }
     section {
       padding: 20px;
@@ -84,6 +86,9 @@
     #advanced-options {
       display: none;
       margin-top: 20px;
+    }
+    #song-list li {
+      margin-bottom: 15px;
     }
   </style>
 </head>
@@ -111,8 +116,8 @@
       <button class="btn orange" onclick="editNotes('rehearsal')">📝 Editar notas</button>
     </div>
 
-    <input type="text" placeholder="Buscar canciones..." style="width:100%;padding:10px;margin-top:10px;" />
-    <p>Total: <span id="song-count">36</span> canciones.</p>
+    <input id="search-input" type="text" placeholder="Buscar canciones..." style="width:100%;padding:10px;margin-top:10px;" />
+    <p>Total: <span id="song-count">0</span> canciones.</p>
 
     <ul id="song-list">
       <!-- Lista de canciones -->
@@ -156,16 +161,40 @@
     const app = initializeApp(firebaseConfig);
     const storage = getStorage(app);
 
-    document.getElementById("song-form").addEventListener("submit", async (e) => {
+    const songList = document.getElementById("song-list");
+    const songForm = document.getElementById("song-form");
+    const searchInput = document.getElementById("search-input");
+    const songCount = document.getElementById("song-count");
+
+    function renderSong({ title, ytLink, imageUrls, audioUrl }) {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <strong>${title}</strong><br/>
+        ${ytLink ? `<a href="${ytLink}" target="_blank">🎬 Ver en YouTube</a><br/>` : ""}
+        ${imageUrls.map(url => `<img src="${url}" style="max-width:100px;">`).join("<br/>")}<br/>
+        ${audioUrl ? `<audio controls src="${audioUrl}"></audio><br/>` : ""}
+        <button class="btn orange" onclick="this.parentElement.remove(); updateSongCount();">🗑 Eliminar</button>
+      `;
+      li.setAttribute("data-title", title.toLowerCase());
+      songList.appendChild(li);
+      updateSongCount();
+    }
+
+    function updateSongCount() {
+      songCount.innerText = songList.children.length;
+    }
+
+    songForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const title = e.target.querySelector('input[type="text"]').value;
-      const ytLink = e.target.querySelectorAll('input[type="text"]')[1].value;
-      const imageFiles = e.target.querySelector('input[type="file"][accept="image/*"]').files;
-      const audioFile = e.target.querySelector('input[type="file"][accept="audio/*"]').files[0];
+      const inputs = e.target.querySelectorAll("input[type='text']");
+      const title = inputs[0].value;
+      const ytLink = inputs[1].value;
+      const imageFiles = e.target.querySelector("input[type='file'][accept='image/*']").files;
+      const audioFile = e.target.querySelector("input[type='file'][accept='audio/*']").files[0];
 
       const imageUrls = [];
       for (let i = 0; i < imageFiles.length && i < 2; i++) {
-        const fileRef = ref(storage, `images/${imageFiles[i].name}`);
+        const fileRef = ref(storage, `songs/${title}/image-${i + 1}`);
         await uploadBytes(fileRef, imageFiles[i]);
         const url = await getDownloadURL(fileRef);
         imageUrls.push(url);
@@ -173,19 +202,20 @@
 
       let audioUrl = "";
       if (audioFile) {
-        const audioRef = ref(storage, `audios/${audioFile.name}`);
+        const audioRef = ref(storage, `songs/${title}/audio`);
         await uploadBytes(audioRef, audioFile);
         audioUrl = await getDownloadURL(audioRef);
       }
 
-      const li = document.createElement("li");
-      li.innerHTML = `<strong>${title}</strong><br/>
-        ${ytLink ? `<a href="${ytLink}" target="_blank">🎬 Ver en YouTube</a><br/>` : ""}
-        ${imageUrls.map(url => `<img src="${url}" style="max-width:100px;">`).join("<br/>")}<br/>
-        ${audioUrl ? `<audio controls src="${audioUrl}"></audio><br/>` : ""}
-        <button class="btn orange" onclick="this.parentElement.remove()">🗑 Eliminar</button>`;
-      document.getElementById("song-list").appendChild(li);
+      renderSong({ title, ytLink, imageUrls, audioUrl });
       e.target.reset();
+    });
+
+    searchInput.addEventListener("input", () => {
+      const filter = searchInput.value.toLowerCase();
+      Array.from(songList.children).forEach(li => {
+        li.style.display = li.getAttribute("data-title").includes(filter) ? "block" : "none";
+      });
     });
 
     window.toggleTheme = function () {
