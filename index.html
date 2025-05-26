@@ -4,53 +4,301 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Repertorio Worship</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script type="module" src="app.js"></script>
+  <style>
+    :root {
+      --primary: #002244;
+      --accent: #FF6F00;
+      --bg: #f0f4f8;
+      --text: #002244;
+    }
+    body.dark {
+      --bg: #121212;
+      --text: #f0f4f8;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    header {
+      background: var(--primary);
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+    header img {
+      width: 100px;
+    }
+    main {
+      max-width: 800px;
+      margin: auto;
+      padding: 20px;
+    }
+    .toggle-btn {
+      margin: 10px 0;
+      float: right;
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .search {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1em;
+    }
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+    body.dark .card {
+      background: #1e1e1e;
+    }
+    .card img {
+      max-width: 100%;
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+    details summary {
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+    a {
+      color: var(--accent);
+    }
+    form {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      display: none;
+    }
+    body.dark form {
+      background: #1e1e1e;
+    }
+    input, textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 12px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 1em;
+    }
+    button {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 12px 20px;
+      font-size: 1em;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    #proximo-servicio {
+      background: #fff8e1;
+      border-left: 5px solid var(--accent);
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+    }
+    #modal-notas {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
+    #modal-notas-content {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 600px;
+    }
+    #volver-arriba {
+      display: block;
+      margin: 30px auto 10px;
+      text-align: center;
+    }
+  </style>
 </head>
 <body>
   <header>
     <img src="logo.jpeg" alt="Logo">
     <h1>Repertorio Worship</h1>
     <button class="toggle-btn" onclick="toggleDark()">🌙/☀️</button>
-    <button id="login-btn">🔐 Iniciar sesión</button>
-    <button id="logout-btn" style="display:none;">🚪 Cerrar sesión</button>
   </header>
-
   <main>
     <div id="proximo-servicio">
       <strong>Canciones para el próximo servicio:</strong>
       <p id="notas-texto">Cargando...</p>
-      <button id="editar-notas" style="display: none;">📝 Editar notas</button>
+      <button onclick="abrirModalNotas()">📝 Editar notas</button>
     </div>
 
-    <input type="text" id="search" class="search" placeholder="Buscar canciones..." />
-    <button id="toggleFormBtn" style="display:none;">➕ Agregar canción</button>
+    <a href="https://www.imusic-school.com/es/herramientas/metronomo/" target="_blank">🕒 Abrir metrónomo</a>
 
-    <form id="formulario" style="display:none;">
+    <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
+
+    <button onclick="toggleForm()">➕ Agregar canción</button>
+    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
       <input type="text" id="titulo" placeholder="Título de la canción" required />
       <textarea id="acordes" placeholder="Acordes..."></textarea>
-      <input type="file" id="imagenes" multiple accept="image/*"/>
-      <input type="file" id="audio" accept="audio/*"/>
+      <input type="text" id="imagenURL" placeholder="URL de imagen" />
+      <input type="text" id="audioURL" placeholder="URL de audio" />
       <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
       <button type="submit">Guardar canción</button>
     </form>
 
+    <p><strong>Total de canciones:</strong> <span id="contador">0</span></p>
     <div id="lista-canciones"></div>
-    <p id="contador-canciones"></p>
-    <div style="text-align: center; margin-top: 40px;">
-      <a href="https://www.imusic-school.com/es/herramientas/metronomo-online/" target="_blank">🕒 Abrir Metrónomo</a>
-    </div>
-    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'})">⬆ Volver al inicio</button>
+    <a id="volver-arriba" href="#">⬆ Volver arriba</a>
   </main>
 
-  <div id="modal-notas" style="display:none;">
+  <div id="modal-notas">
     <div id="modal-notas-content">
       <h3>Editar notas del próximo servicio</h3>
       <textarea id="texto-notas" rows="6"></textarea>
       <br>
-      <button id="guardar-notas">💾 Guardar</button>
+      <button onclick="guardarNotas()">💾 Guardar</button>
       <button onclick="document.getElementById('modal-notas').style.display='none'">Cancelar</button>
     </div>
   </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, getDocs,
+      deleteDoc, doc, setDoc
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+    import {
+      getAuth, onAuthStateChanged, signInWithPopup, GoogleAuthProvider, signOut
+    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
+      authDomain: "repertorioworship.firebaseapp.com",
+      projectId: "repertorioworship",
+      storageBucket: "repertorioworship.appspot.com",
+      messagingSenderId: "493050453266",
+      appId: "1:493050453266:web:cf07ce9fbb471122f167cb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    let userUID = null;
+    const ADMIN_UID = "Wac5yk1NUQNY1fSARyOxRjacLPV2";
+
+    async function cargarCanciones() {
+      const contenedor = document.getElementById("lista-canciones");
+      contenedor.innerHTML = "";
+      const search = document.getElementById("search").value.toLowerCase();
+      const snapshot = await getDocs(collection(db, "canciones"));
+      let count = 0;
+      snapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (!data.titulo.toLowerCase().includes(search)) return;
+        count++;
+        const div = document.createElement("div");
+        div.className = "card";
+        div.innerHTML = `
+          <h2>${data.titulo}</h2>
+          <p>${data.acordes}</p>
+          ${data.imagenes?.map(url => `<img src="${url}" alt="Acordes">`).join('') || ""}
+          ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar Audio</a></p>` : ""}
+          ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ Ver en YouTube</a></p>` : ""}
+          ${(userUID === ADMIN_UID) ? `<details><summary>Opciones</summary><button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar</button></details>` : ""}
+        `;
+        contenedor.appendChild(div);
+      });
+      document.getElementById("contador").innerText = count;
+    }
+
+    async function agregarCancion() {
+      if (userUID !== ADMIN_UID) {
+        alert("Solo el administrador puede agregar canciones.");
+        return;
+      }
+      const titulo = document.getElementById("titulo").value;
+      const acordes = document.getElementById("acordes").value;
+      const youtube = document.getElementById("youtube").value;
+      const imagenURL = document.getElementById("imagenURL").value;
+      const audioURL = document.getElementById("audioURL").value;
+      if (titulo.trim() === "") return;
+      await addDoc(collection(db, "canciones"), {
+        titulo, acordes, youtube,
+        imagenes: imagenURL ? [imagenURL] : [],
+        audio: audioURL || null
+      });
+      document.getElementById("formulario").reset();
+      document.getElementById("formulario").style.display = "none";
+      cargarCanciones();
+    }
+
+    async function eliminarCancion(id) {
+      if (userUID !== ADMIN_UID) return;
+      await deleteDoc(doc(db, "canciones", id));
+      cargarCanciones();
+    }
+
+    async function cargarNotas() {
+      const notaDoc = await getDocs(collection(db, "notas"));
+      let notas = "";
+      notaDoc.forEach(doc => {
+        notas = doc.data().texto || "";
+      });
+      document.getElementById("texto-notas").value = notas;
+      document.getElementById("notas-texto").innerText = notas || "No hay canciones programadas.";
+    }
+
+    async function guardarNotas() {
+      if (userUID !== ADMIN_UID) {
+        alert("Solo el administrador puede editar las notas.");
+        return;
+      }
+      const texto = document.getElementById("texto-notas").value;
+      await setDoc(doc(db, "notas", "proximo"), { texto });
+      document.getElementById("modal-notas").style.display = "none";
+      cargarNotas();
+    }
+
+    function toggleForm() {
+      const form = document.getElementById("formulario");
+      form.style.display = form.style.display === "none" ? "block" : "none";
+    }
+
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+    }
+
+    function abrirModalNotas() {
+      document.getElementById("modal-notas").style.display = "flex";
+    }
+
+    onAuthStateChanged(auth, user => {
+      userUID = user?.uid || null;
+      cargarCanciones();
+      cargarNotas();
+    });
+
+    window.agregarCancion = agregarCancion;
+    window.eliminarCancion = eliminarCancion;
+    window.toggleForm = toggleForm;
+    window.toggleDark = toggleDark;
+    window.abrirModalNotas = abrirModalNotas;
+    window.guardarNotas = guardarNotas;
+  </script>
 </body>
 </html>
