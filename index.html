@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Repertorio Worship</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script type="module" src="app.js" defer></script>
+</head>
+<body>
+  <header>
+    <div id="metronome">🎵</div>
+    <h1>Repertorio Worship</h1>
+    <div id="auth-controls">
+      <button id="login-btn">Iniciar Sesión</button>
+      <button id="logout-btn" style="display:none;">Cerrar Sesión</button>
+    </div>
+  </header>
+
+  <section id="proximo-servicio">
+    <h2>Canciones para el próximo servicio</h2>
+    <p id="notas-proximo">Cargando...</p>
+    <button id="editar-notas-proximo" style="display:none;">✏️ Editar</button>
+  </section>
+
+  <input type="text" id="searchInput" placeholder="Buscar canción..."/>
+
+  <section id="canciones-a-ensayar">
+    <h2>Canciones a ensayar</h2>
+    <ul id="listaEnsayo"></ul>
+    <button id="editarEnsayo" style="display:none;">✏️ Editar</button>
+  </section>
+
+  <section id="canciones">
+    <h2>Lista de Canciones (<span id="contadorCanciones">0</span>)</h2>
+    <ul id="listaCanciones"></ul>
+  </section>
+
+  <button id="volver-arriba">🔝</button>
+</body>
+</html>
