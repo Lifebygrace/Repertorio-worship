@@ -15,6 +15,9 @@
       --bg: #121212;
       --text: #f0f4f8;
     }
+    * {
+      box-sizing: border-box;
+    }
     body {
       margin: 0;
       font-family: 'Segoe UI', sans-serif;
@@ -25,55 +28,60 @@
     header {
       background: var(--primary);
       color: white;
-      padding: 10px 20px;
-      position: relative;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
     }
-    .metronome-btn {
-      position: absolute;
-      top: 10px;
-      left: 10px;
-      background-color: #007BFF;
-      color: white;
-      padding: 10px 14px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      text-decoration: none;
-      font-weight: bold;
+    .logo {
+      display: flex;
+      align-items: center;
     }
-    .toggle-btn {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 10px 14px;
-      border-radius: 8px;
-      cursor: pointer;
+    .logo img {
+      height: 40px;
+      margin-right: 10px;
     }
-    header h1 {
-      text-align: center;
+    .logo h1 {
+      font-size: 1.2rem;
       margin: 0;
+    }
+    .btns-header {
+      display: flex;
+      gap: 10px;
+      margin-top: 8px;
+    }
+    .btns-header button, .btns-header a {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     main {
       max-width: 800px;
       margin: auto;
-      padding: 20px;
+      padding: 16px;
     }
     .search {
       width: 100%;
-      padding: 10px;
-      margin-bottom: 20px;
+      padding: 12px;
+      margin-bottom: 16px;
       border-radius: 8px;
       border: 1px solid #ccc;
       font-size: 1em;
     }
     .card {
       background: white;
-      padding: 20px;
+      padding: 16px;
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
       margin-bottom: 20px;
     }
     body.dark .card {
@@ -84,21 +92,12 @@
       border-radius: 8px;
       margin-top: 10px;
     }
-    details summary {
-      cursor: pointer;
-      font-weight: bold;
-      margin-top: 10px;
-    }
-    a {
-      color: var(--accent);
-      text-decoration: none;
-    }
     form {
       background: white;
-      padding: 20px;
+      padding: 16px;
       margin-bottom: 20px;
       border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
       display: none;
     }
     body.dark form {
@@ -106,7 +105,7 @@
     }
     input, textarea {
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       margin-bottom: 12px;
       border: 1px solid #ccc;
       border-radius: 8px;
@@ -123,20 +122,28 @@
     }
     .editable-section {
       background: white;
-      padding: 15px;
+      padding: 16px;
       border-radius: 12px;
       margin: 20px 0;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
     body.dark .editable-section {
       background: #1e1e1e;
     }
-    .editable-section h2 {
-      margin-top: 0;
-    }
     .editable-section textarea,
     .editable-section input[type="date"] {
       margin-top: 10px;
+    }
+    @media (max-width: 600px) {
+      header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+      .btns-header {
+        width: 100%;
+        justify-content: flex-start;
+        margin-top: 10px;
+      }
     }
   </style>
 
@@ -223,7 +230,6 @@
       cargarCanciones();
       document.getElementById("search").addEventListener("input", cargarCanciones);
 
-      // Cargar secciones editables
       ['ensayo', 'servicio'].forEach(tipo => {
         const txt = document.getElementById(`notas-${tipo}`);
         const date = document.getElementById(`fecha-${tipo}`);
@@ -242,13 +248,19 @@
 </head>
 <body>
   <header>
-    <a class="metronome-btn" href="https://www.metronomeonline.com" target="_blank">🎵 Metrónomo</a>
-    <h1>Repertorio Worship</h1>
-    <button class="toggle-btn" onclick="toggleDark()">🌙 / ☀️</button>
+    <div class="logo">
+      <img src="logo.jpeg" alt="Logo del grupo" />
+      <h1>Repertorio Worship</h1>
+    </div>
+    <div class="btns-header">
+      <a href="https://www.metronomeonline.com" target="_blank">🎵 Metrónomo</a>
+      <button onclick="toggleDark()">🌙 / ☀️</button>
+    </div>
   </header>
   <main>
     <input type="text" id="search" class="search" placeholder="Buscar canciones..."/>
     <button onclick="toggleForm()">➕ Agregar canción</button>
+
     <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
       <input type="text" id="titulo" placeholder="Título de la canción" required />
       <textarea id="acordes" placeholder="Acordes..."></textarea>
