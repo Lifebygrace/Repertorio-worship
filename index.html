@@ -10,6 +10,8 @@
       --accent: #FF6F00;
       --bg: #f0f4f8;
       --text: #002244;
+      --ensayo-bg: #d0e7ff;
+      --servicio-bg: #ffe5cc;
     }
     body.dark {
       --bg: #121212;
@@ -39,11 +41,11 @@
       align-items: center;
     }
     .logo img {
-      height: 40px;
+      height: 80px; /* LOGO MÁS GRANDE */
       margin-right: 10px;
     }
     .logo h1 {
-      font-size: 1.2rem;
+      font-size: 1.4rem;
       margin: 0;
     }
     .btns-header {
@@ -120,20 +122,28 @@
       border-radius: 8px;
       cursor: pointer;
     }
+
     .editable-section {
-      background: white;
       padding: 16px;
       border-radius: 12px;
       margin: 20px 0;
       box-shadow: 0 2px 6px rgba(0,0,0,0.08);
     }
+    #ensayo {
+      background: var(--ensayo-bg);
+    }
+    #servicio {
+      background: var(--servicio-bg);
+    }
     body.dark .editable-section {
       background: #1e1e1e;
     }
+
     .editable-section textarea,
     .editable-section input[type="date"] {
       margin-top: 10px;
     }
+
     @media (max-width: 600px) {
       header {
         flex-direction: column;
@@ -270,13 +280,13 @@
       <button type="submit">Guardar canción</button>
     </form>
 
-    <div class="editable-section">
+    <div class="editable-section" id="ensayo">
       <h2>🎶 Canciones para ensayar</h2>
       <input type="date" id="fecha-ensayo" />
       <textarea id="notas-ensayo" placeholder="Escribe las canciones que se ensayarán..." rows="4"></textarea>
     </div>
 
-    <div class="editable-section">
+    <div class="editable-section" id="servicio">
       <h2>🙌 Canciones para el servicio</h2>
       <input type="date" id="fecha-servicio" />
       <textarea id="notas-servicio" placeholder="Escribe las canciones del servicio..." rows="4"></textarea>
