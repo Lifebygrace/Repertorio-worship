@@ -194,8 +194,7 @@
     }
 
     async function cargarSeccion(tipo) {
-      const tituloInput = document.getElementById(`titulo-${tipo}`);
-      const cancionesInput = document.getElementById(`canciones-${tipo}`);
+      const contenedor = document.getElementById(`contenedor-${tipo}`);
       const mostrar = document.getElementById(`mostrar-${tipo}`);
 
       const docRef = doc(db, "secciones", tipo);
@@ -203,11 +202,12 @@
 
       if (snap.exists()) {
         const data = snap.data();
-        tituloInput.value = data.titulo || "";
-        cancionesInput.value = (data.canciones || []).join("\n");
+        contenedor.style.display = "none";
+        mostrar.style.display = "block";
         mostrar.innerHTML = `
           <h3>${data.titulo || ""}</h3>
           <ul>${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}</ul>
+          <button onclick="editarSeccion('${tipo}')">✏️ Editar sección</button>
         `;
       } else {
         mostrar.innerHTML = "<p>Aún no hay información guardada.</p>";
@@ -217,9 +217,18 @@
     async function guardarSeccion(tipo) {
       const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
       const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").filter(x => x);
+
       await setDoc(doc(db, "secciones", tipo), { titulo, canciones });
+
       alert("✅ Guardado correctamente");
+      document.getElementById(`contenedor-${tipo}`).style.display = "none";
+      document.getElementById(`mostrar-${tipo}`).style.display = "block";
       cargarSeccion(tipo);
+    }
+
+    function editarSeccion(tipo) {
+      document.getElementById(`contenedor-${tipo}`).style.display = "block";
+      document.getElementById(`mostrar-${tipo}`).style.display = "none";
     }
 
     // 🌙/☀️ Modo oscuro
@@ -243,6 +252,7 @@
 
     window.agregarCancion = agregarCancion;
     window.guardarSeccion = guardarSeccion;
+    window.editarSeccion = editarSeccion;
     window.toggleDark = toggleDark;
     window.toggleFormulario = toggleFormulario;
   </script>
@@ -265,18 +275,22 @@
 
     <div class="section">
       <h2>🎶 Canciones para la semana</h2>
-      <input type="text" id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
-      <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('semana')">Guardar sección</button>
-      <div id="mostrar-semana" style="margin-top:10px;"></div>
+      <div id="contenedor-semana">
+        <input type="text" id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
+        <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
+        <button onclick="guardarSeccion('semana')">Guardar sección</button>
+      </div>
+      <div id="mostrar-semana" style="margin-top:10px; display:none;"></div>
     </div>
 
     <div class="section">
       <h2>🆕 Canciones nuevas del mes</h2>
-      <input type="text" id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
-      <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('mes')">Guardar sección</button>
-      <div id="mostrar-mes" style="margin-top:10px;"></div>
+      <div id="contenedor-mes">
+        <input type="text" id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
+        <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
+        <button onclick="guardarSeccion('mes')">Guardar sección</button>
+      </div>
+      <div id="mostrar-mes" style="margin-top:10px; display:none;"></div>
     </div>
 
     <button onclick="toggleFormulario()">➕ Agregar nueva canción</button>
