@@ -116,12 +116,20 @@
       padding: 20px;
       font-size: 1em;
     }
+    .edit-field {
+      background: var(--section-bg);
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 8px;
+      margin-bottom: 8px;
+      color: var(--text);
+    }
   </style>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import {
-      getFirestore, collection, addDoc, getDocs, doc, setDoc, getDoc
+      getFirestore, collection, addDoc, getDocs, doc, setDoc, getDoc, updateDoc
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
     // 🔥 Configuración Firebase
@@ -136,6 +144,8 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+
+    let modoEdicion = false;
 
     // 🎵 Cargar canciones
     async function cargarCanciones() {
@@ -153,11 +163,13 @@
         const div = document.createElement("div");
         div.className = "card";
         div.innerHTML = `
-          <h2>${data.titulo}</h2>
-          <p>${data.acordes}</p>
+          <h2 contenteditable="${modoEdicion}" class="editable titulo">${data.titulo}</h2>
+          <p contenteditable="${modoEdicion}" class="editable acordes">${data.acordes}</p>
           ${data.imagenes?.length ? data.imagenes.map(url => `<img src="${url}" width="100%" style="margin-top:10px;border-radius:8px;">`).join('') : ""}
-          ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar audio</a></p>` : ""}
-          ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ Ver en YouTube</a></p>` : ""}
+          ${modoEdicion ? `<textarea class="edit-field imagenes">${(data.imagenes || []).join("\n")}</textarea>` : ""}
+          ${modoEdicion ? `<input class="edit-field audio" value="${data.audio || ""}" placeholder="Link de audio"/>` : data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar audio</a></p>` : ""}
+          ${modoEdicion ? `<input class="edit-field youtube" value="${data.youtube || ""}" placeholder="Link de YouTube"/>` : data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ Ver en YouTube</a></p>` : ""}
+          ${modoEdicion ? `<button onclick="guardarCambios('${docSnap.id}', this)">💾 Guardar cambios</button>` : ""}
         `;
         contenedor.appendChild(div);
       });
@@ -165,6 +177,44 @@
       document.getElementById("contador").textContent = `🎵 Total de canciones: ${count}`;
     }
 
+    async function guardarCambios(id, btn) {
+      const card = btn.closest(".card");
+      const titulo = card.querySelector(".titulo").textContent.trim();
+      const acordes = card.querySelector(".acordes").textContent.trim();
+      const audio = card.querySelector(".audio")?.value.trim() || "";
+      const youtube = card.querySelector(".youtube")?.value.trim() || "";
+      const imagenes = card.querySelector(".imagenes")?.value.trim().split("\n").filter(x => x) || [];
+
+      await updateDoc(doc(db, "canciones", id), {
+        titulo, acordes, audio, youtube, imagenes
+      });
+
+      alert("✅ Cambios guardados");
+      cargarCanciones();
+    }
+
+    // 🌙/☀️ Modo oscuro
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+      const mode = document.body.classList.contains("dark") ? "Modo Claro ☀️" : "Modo Oscuro 🌙";
+      document.getElementById("modoBtn").textContent = mode;
+    }
+
+    // ➕ Mostrar/Ocultar formulario
+    function toggleFormulario() {
+      const form = document.getElementById("formulario");
+      form.style.display = form.style.display === "none" ? "block" : "none";
+    }
+
+    // 🎼 Alternar modo edición
+    function toggleEdicion() {
+      modoEdicion = !modoEdicion;
+      const btn = document.getElementById("edicionBtn");
+      btn.textContent = modoEdicion ? "🔒 Salir del modo edición" : "🎼 Modo Edición";
+      cargarCanciones();
+    }
+
+    // ➕ Agregar canción
     async function agregarCancion() {
       const titulo = document.getElementById("titulo").value.trim();
       const acordes = document.getElementById("acordes").value.trim();
@@ -188,73 +238,16 @@
       alert("✅ Canción agregada correctamente");
     }
 
-    async function cargarSecciones() {
-      await cargarSeccion("semana");
-      await cargarSeccion("mes");
-    }
-
-    async function cargarSeccion(tipo) {
-      const contenedor = document.getElementById(`contenedor-${tipo}`);
-      const mostrar = document.getElementById(`mostrar-${tipo}`);
-
-      const docRef = doc(db, "secciones", tipo);
-      const snap = await getDoc(docRef);
-
-      if (snap.exists()) {
-        const data = snap.data();
-        contenedor.style.display = "none";
-        mostrar.style.display = "block";
-        mostrar.innerHTML = `
-          <h3>${data.titulo || ""}</h3>
-          <ul>${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}</ul>
-          <button onclick="editarSeccion('${tipo}')">✏️ Editar sección</button>
-        `;
-      } else {
-        mostrar.innerHTML = "<p>Aún no hay información guardada.</p>";
-      }
-    }
-
-    async function guardarSeccion(tipo) {
-      const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
-      const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").filter(x => x);
-
-      await setDoc(doc(db, "secciones", tipo), { titulo, canciones });
-
-      alert("✅ Guardado correctamente");
-      document.getElementById(`contenedor-${tipo}`).style.display = "none";
-      document.getElementById(`mostrar-${tipo}`).style.display = "block";
-      cargarSeccion(tipo);
-    }
-
-    function editarSeccion(tipo) {
-      document.getElementById(`contenedor-${tipo}`).style.display = "block";
-      document.getElementById(`mostrar-${tipo}`).style.display = "none";
-    }
-
-    // 🌙/☀️ Modo oscuro
-    function toggleDark() {
-      document.body.classList.toggle("dark");
-      const mode = document.body.classList.contains("dark") ? "Modo Claro ☀️" : "Modo Oscuro 🌙";
-      document.getElementById("modoBtn").textContent = mode;
-    }
-
-    // ➕ Mostrar/Ocultar formulario
-    function toggleFormulario() {
-      const form = document.getElementById("formulario");
-      form.style.display = form.style.display === "none" ? "block" : "none";
-    }
-
     window.onload = () => {
       cargarCanciones();
-      cargarSecciones();
       document.getElementById("search").addEventListener("input", cargarCanciones);
     };
 
     window.agregarCancion = agregarCancion;
-    window.guardarSeccion = guardarSeccion;
-    window.editarSeccion = editarSeccion;
     window.toggleDark = toggleDark;
     window.toggleFormulario = toggleFormulario;
+    window.toggleEdicion = toggleEdicion;
+    window.guardarCambios = guardarCambios;
   </script>
 </head>
 
@@ -272,26 +265,6 @@
 
   <main>
     <input type="text" id="search" placeholder="🔍 Buscar canciones por título..." />
-
-    <div class="section">
-      <h2>🎶 Canciones para la semana</h2>
-      <div id="contenedor-semana">
-        <input type="text" id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
-        <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
-        <button onclick="guardarSeccion('semana')">Guardar sección</button>
-      </div>
-      <div id="mostrar-semana" style="margin-top:10px; display:none;"></div>
-    </div>
-
-    <div class="section">
-      <h2>🆕 Canciones nuevas del mes</h2>
-      <div id="contenedor-mes">
-        <input type="text" id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
-        <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
-        <button onclick="guardarSeccion('mes')">Guardar sección</button>
-      </div>
-      <div id="mostrar-mes" style="margin-top:10px; display:none;"></div>
-    </div>
 
     <button onclick="toggleFormulario()">➕ Agregar nueva canción</button>
 
@@ -311,6 +284,7 @@
 
     <footer>
       <p id="contador">🎵 Total de canciones: 0</p>
+      <button id="edicionBtn" onclick="toggleEdicion()">🎼 Modo Edición</button><br><br>
       <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
     </footer>
   </main>
