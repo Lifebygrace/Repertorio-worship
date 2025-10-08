@@ -84,6 +84,20 @@
       border-radius: 8px;
       cursor: pointer;
     }
+    #progress-container {
+      margin-top: 10px;
+      background: #ddd;
+      border-radius: 6px;
+      overflow: hidden;
+      height: 18px;
+      display: none;
+    }
+    #progress-bar {
+      background: var(--accent);
+      width: 0%;
+      height: 100%;
+      transition: width 0.3s;
+    }
   </style>
 
   <script type="module">
@@ -92,7 +106,7 @@
       getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
     import {
-      getStorage, ref, uploadBytes, getDownloadURL
+      getStorage, ref, uploadBytesResumable, getDownloadURL
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
 
     const firebaseConfig = {
@@ -108,7 +122,7 @@
     const db = getFirestore(app);
     const storage = getStorage(app);
 
-    // 🎵 Escucha los cambios en tiempo real
+    // 🔥 Escuchar canciones en tiempo real
     function escucharCanciones() {
       const contenedor = document.getElementById("lista-canciones");
       const q = query(collection(db, "canciones"), orderBy("titulo", "asc"));
@@ -136,6 +150,35 @@
       });
     }
 
+    // 📤 Subir archivos con progreso
+    async function subirArchivoConProgreso(file, ruta) {
+      return new Promise((resolve, reject) => {
+        const storageRef = ref(storage, ruta);
+        const uploadTask = uploadBytesResumable(storageRef, file);
+        const progressContainer = document.getElementById("progress-container");
+        const progressBar = document.getElementById("progress-bar");
+        progressContainer.style.display = "block";
+
+        uploadTask.on("state_changed",
+          (snapshot) => {
+            const progreso = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+            progressBar.style.width = `${progreso}%`;
+          },
+          (error) => {
+            progressContainer.style.display = "none";
+            alert("❌ Error al subir: " + error.message);
+            reject(error);
+          },
+          async () => {
+            const url = await getDownloadURL(uploadTask.snapshot.ref);
+            progressContainer.style.display = "none";
+            progressBar.style.width = "0%";
+            resolve(url);
+          }
+        );
+      });
+    }
+
     async function agregarCancion() {
       const titulo = document.getElementById("titulo").value.trim();
       const acordes = document.getElementById("acordes").value;
@@ -145,31 +188,34 @@
 
       if (!titulo) return alert("El título es obligatorio");
 
-      const imagenURLs = [];
-      for (const file of imagenFiles) {
-        const imgRef = ref(storage, `imagenes/${Date.now()}_${file.name}`);
-        await uploadBytes(imgRef, file);
-        const url = await getDownloadURL(imgRef);
-        imagenURLs.push(url);
+      try {
+        const imagenURLs = [];
+        for (const file of imagenFiles) {
+          const ruta = `imagenes/${Date.now()}_${file.name}`;
+          const url = await subirArchivoConProgreso(file, ruta);
+          imagenURLs.push(url);
+        }
+
+        let audioURL = null;
+        if (audioFile) {
+          const rutaAudio = `audios/${Date.now()}_${audioFile.name}`;
+          audioURL = await subirArchivoConProgreso(audioFile, rutaAudio);
+        }
+
+        await addDoc(collection(db, "canciones"), {
+          titulo,
+          acordes,
+          youtube,
+          imagenes: imagenURLs,
+          audio: audioURL
+        });
+
+        document.getElementById("formulario").reset();
+        document.getElementById("formulario").style.display = "none";
+        alert("✅ Canción guardada correctamente");
+      } catch (e) {
+        alert("❌ Error al guardar canción: " + e.message);
       }
-
-      let audioURL = null;
-      if (audioFile) {
-        const audioRef = ref(storage, `audios/${Date.now()}_${audioFile.name}`);
-        await uploadBytes(audioRef, audioFile);
-        audioURL = await getDownloadURL(audioRef);
-      }
-
-      await addDoc(collection(db, "canciones"), {
-        titulo,
-        acordes,
-        youtube,
-        imagenes: imagenURLs,
-        audio: audioURL
-      });
-
-      document.getElementById("formulario").reset();
-      document.getElementById("formulario").style.display = "none";
     }
 
     async function eliminarCancion(id) {
@@ -187,7 +233,7 @@
     }
 
     window.onload = () => {
-      escucharCanciones(); // 👂 Se activa la escucha en tiempo real
+      escucharCanciones();
       document.getElementById("search").addEventListener("input", escucharCanciones);
     };
 
@@ -216,12 +262,19 @@
     <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
       <input type="text" id="titulo" placeholder="Título de la canción" required />
       <textarea id="acordes" placeholder="Acordes..."></textarea>
+
       <label>Seleccionar imágenes:</label>
       <input type="file" id="imagenFile" accept="image/*" multiple />
+
       <label>Seleccionar audio:</label>
       <input type="file" id="audioFile" accept="audio/*" />
+
       <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
       <button type="submit">Guardar canción</button>
+
+      <div id="progress-container">
+        <div id="progress-bar"></div>
+      </div>
     </form>
 
     <div id="lista-canciones"></div>
