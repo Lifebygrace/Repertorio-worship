@@ -4,110 +4,15 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Repertorio Worship</title>
-
   <style>
-    :root {
-      --primary: #002244;
-      --accent: #FF6F00;
-      --bg: #f0f4f8;
-      --text: #002244;
-    }
-    body.dark {
-      --bg: #121212;
-      --text: #f0f4f8;
-    }
-    body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      transition: background 0.3s, color 0.3s;
-    }
-    header {
-      background: var(--primary);
-      color: white;
-      padding: 12px 16px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-    }
-    .logo {
-      display: flex;
-      align-items: center;
-    }
-    .logo img {
-      height: 80px;
-      margin-right: 10px;
-    }
-    main {
-      max-width: 800px;
-      margin: auto;
-      padding: 16px;
-    }
-    .card {
-      background: white;
-      padding: 16px;
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-      margin-bottom: 20px;
-    }
-    body.dark .card {
-      background: #1e1e1e;
-    }
-    .card img {
-      max-width: 100%;
-      border-radius: 8px;
-      margin-top: 10px;
-    }
-    form {
-      background: white;
-      padding: 16px;
-      margin-bottom: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
-      display: none;
-    }
-    input, textarea {
-      width: 100%;
-      padding: 12px;
-      margin-bottom: 12px;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      font-size: 1em;
-    }
-    button {
-      background-color: var(--accent);
-      color: white;
-      border: none;
-      padding: 12px 20px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    #progress-container {
-      margin-top: 10px;
-      background: #ddd;
-      border-radius: 6px;
-      overflow: hidden;
-      height: 18px;
-      display: none;
-    }
-    #progress-bar {
-      background: var(--accent);
-      width: 0%;
-      height: 100%;
-      transition: width 0.3s;
-    }
+    /* tu CSS aquí (igual que antes) */
   </style>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import {
-      getFirestore, collection, addDoc, deleteDoc, doc, onSnapshot, query, orderBy
+      getFirestore, collection, onSnapshot, query, orderBy
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
-    import {
-      getStorage, ref, uploadBytesResumable, getDownloadURL
-    } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
@@ -120,164 +25,58 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const storage = getStorage(app);
 
-    // 🔥 Escuchar canciones en tiempo real
     function escucharCanciones() {
       const contenedor = document.getElementById("lista-canciones");
       const q = query(collection(db, "canciones"), orderBy("titulo", "asc"));
 
-      onSnapshot(q, (snapshot) => {
-        contenedor.innerHTML = "";
-        const search = document.getElementById("search").value.toLowerCase();
+      console.log("Inicializando listener de canciones...");
+      onSnapshot(q,
+        (snapshot) => {
+          console.log("Snapshot recibido, número de canciones: ", snapshot.size);
+          contenedor.innerHTML = "";
+          const search = document.getElementById("search").value.toLowerCase();
 
-        snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          if (!data.titulo.toLowerCase().includes(search)) return;
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            console.log("Documento:", docSnap.id, data);
+            if (!data.titulo.toLowerCase().includes(search)) return;
 
-          const div = document.createElement("div");
-          div.className = "card";
-          div.innerHTML = `
-            <h2>${data.titulo}</h2>
-            <p>${data.acordes}</p>
-            ${data.imagenes?.map(url => `<img src="${url}" alt="Acordes">`).join('') || ""}
-            ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar Audio</a></p>` : ""}
-            ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ Ver en YouTube</a></p>` : ""}
-            <button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar</button>
-          `;
-          contenedor.appendChild(div);
-        });
-      });
-    }
-
-    // 📤 Subir archivos con progreso
-    async function subirArchivoConProgreso(file, ruta) {
-      return new Promise((resolve, reject) => {
-        const storageRef = ref(storage, ruta);
-        const uploadTask = uploadBytesResumable(storageRef, file);
-        const progressContainer = document.getElementById("progress-container");
-        const progressBar = document.getElementById("progress-bar");
-        progressContainer.style.display = "block";
-
-        uploadTask.on("state_changed",
-          (snapshot) => {
-            const progreso = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            progressBar.style.width = `${progreso}%`;
-          },
-          (error) => {
-            progressContainer.style.display = "none";
-            alert("❌ Error al subir: " + error.message);
-            reject(error);
-          },
-          async () => {
-            const url = await getDownloadURL(uploadTask.snapshot.ref);
-            progressContainer.style.display = "none";
-            progressBar.style.width = "0%";
-            resolve(url);
-          }
-        );
-      });
-    }
-
-    async function agregarCancion() {
-      const titulo = document.getElementById("titulo").value.trim();
-      const acordes = document.getElementById("acordes").value;
-      const youtube = document.getElementById("youtube").value;
-      const imagenFiles = document.getElementById("imagenFile").files;
-      const audioFile = document.getElementById("audioFile").files[0];
-
-      if (!titulo) return alert("El título es obligatorio");
-
-      try {
-        const imagenURLs = [];
-        for (const file of imagenFiles) {
-          const ruta = `imagenes/${Date.now()}_${file.name}`;
-          const url = await subirArchivoConProgreso(file, ruta);
-          imagenURLs.push(url);
+            const div = document.createElement("div");
+            div.className = "card";
+            div.innerHTML = `
+              <h2>${data.titulo}</h2>
+              <p>${data.acordes}</p>
+              ${data.imagenes?.map(url => `<img src="${url}" alt="Acordes">`).join('') || ""}
+              ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar Audio</a></p>` : ""}
+              ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ Ver en YouTube</a></p>` : ""}
+            `;
+            contenedor.appendChild(div);
+          });
+        },
+        (error) => {
+          console.error("Error al escuchar canciones:", error);
+          const cont = document.getElementById("lista-canciones");
+          cont.innerHTML = `<p style="color:red;">Error al cargar canciones: ${error.message}</p>`;
         }
-
-        let audioURL = null;
-        if (audioFile) {
-          const rutaAudio = `audios/${Date.now()}_${audioFile.name}`;
-          audioURL = await subirArchivoConProgreso(audioFile, rutaAudio);
-        }
-
-        await addDoc(collection(db, "canciones"), {
-          titulo,
-          acordes,
-          youtube,
-          imagenes: imagenURLs,
-          audio: audioURL
-        });
-
-        document.getElementById("formulario").reset();
-        document.getElementById("formulario").style.display = "none";
-        alert("✅ Canción guardada correctamente");
-      } catch (e) {
-        alert("❌ Error al guardar canción: " + e.message);
-      }
-    }
-
-    async function eliminarCancion(id) {
-      if (!confirm("¿Eliminar esta canción?")) return;
-      await deleteDoc(doc(db, "canciones", id));
-    }
-
-    function toggleForm() {
-      const form = document.getElementById("formulario");
-      form.style.display = form.style.display === "none" ? "block" : "none";
-    }
-
-    function toggleDark() {
-      document.body.classList.toggle("dark");
+      );
     }
 
     window.onload = () => {
       escucharCanciones();
       document.getElementById("search").addEventListener("input", escucharCanciones);
     };
-
-    window.agregarCancion = agregarCancion;
-    window.eliminarCancion = eliminarCancion;
-    window.toggleForm = toggleForm;
-    window.toggleDark = toggleDark;
   </script>
 </head>
-
 <body>
   <header>
-    <div class="logo">
-      <img src="logo.jpeg" alt="Logo del grupo" />
-      <h1>Repertorio Worship</h1>
-    </div>
-    <div>
-      <button onclick="toggleDark()">🌙 / ☀️</button>
-    </div>
+    <h1>Repertorio Worship</h1>
   </header>
-
   <main>
     <input type="text" id="search" placeholder="Buscar canciones..." />
-    <button onclick="toggleForm()">➕ Agregar canción</button>
-
-    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
-      <input type="text" id="titulo" placeholder="Título de la canción" required />
-      <textarea id="acordes" placeholder="Acordes..."></textarea>
-
-      <label>Seleccionar imágenes:</label>
-      <input type="file" id="imagenFile" accept="image/*" multiple />
-
-      <label>Seleccionar audio:</label>
-      <input type="file" id="audioFile" accept="audio/*" />
-
-      <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
-      <button type="submit">Guardar canción</button>
-
-      <div id="progress-container">
-        <div id="progress-bar"></div>
-      </div>
-    </form>
-
-    <div id="lista-canciones"></div>
+    <div id="lista-canciones">
+      <p>Cargando…</p>
+    </div>
   </main>
 </body>
 </html>
