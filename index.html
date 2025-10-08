@@ -3,34 +3,68 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Repertorio Worship (links + secciones)</title>
+  <title>Repertorio Worship</title>
 
   <style>
+    :root {
+      --primary: #002244;
+      --accent: #FF6F00;
+      --bg: #f0f4f8;
+      --text: #002244;
+      --section-bg: #fff8e1;
+      --card-bg: #ffffff;
+    }
+    body.dark {
+      --bg: #121212;
+      --text: #f0f4f8;
+      --card-bg: #1e1e1e;
+      --section-bg: #2a2a2a;
+    }
     body {
       font-family: 'Segoe UI', sans-serif;
-      background: #f0f4f8;
-      color: #002244;
       margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
     }
     header {
-      background: #002244;
+      background: var(--primary);
       color: white;
       padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      flex-wrap: wrap;
+    }
+    .logo {
+      display: flex;
+      align-items: center;
+    }
+    .logo img {
+      height: 70px;
+      margin-right: 12px;
+      border-radius: 8px;
+    }
+    button {
+      background-color: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
     }
     main {
-      max-width: 800px;
+      max-width: 850px;
       margin: auto;
       padding: 16px;
     }
     .card {
-      background: white;
+      background: var(--card-bg);
       padding: 16px;
       border-radius: 12px;
-      margin-bottom: 20px;
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
     }
     input, textarea {
       width: 100%;
@@ -38,31 +72,31 @@
       margin-bottom: 10px;
       border-radius: 8px;
       border: 1px solid #ccc;
-      font-size: 1em;
-    }
-    button {
-      background: #FF6F00;
-      color: white;
-      border: none;
-      padding: 10px 16px;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    h2 {
-      margin-top: 0;
+      background: var(--bg);
+      color: var(--text);
     }
     .section {
-      background: #fff8e1;
+      background: var(--section-bg);
       padding: 16px;
       border-radius: 10px;
       margin-bottom: 20px;
+    }
+    #formulario {
+      display: none;
+      margin-top: 15px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 40px;
+      padding: 20px;
+      font-size: 1em;
     }
   </style>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
     import {
-      getFirestore, collection, addDoc, getDocs, deleteDoc, doc, setDoc, getDoc
+      getFirestore, collection, addDoc, getDocs, doc, setDoc, getDoc
     } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
     // 🔥 Configuración Firebase
@@ -78,31 +112,32 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // ---------------------------
-    // 🎵 CANCIONES (repertorio)
-    // ---------------------------
+    // 🎵 Cargar canciones
     async function cargarCanciones() {
       const contenedor = document.getElementById("lista-canciones");
       contenedor.innerHTML = "";
       const search = document.getElementById("search").value.toLowerCase();
-
       const querySnapshot = await getDocs(collection(db, "canciones"));
+      let count = 0;
+
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
         if (!data.titulo.toLowerCase().includes(search)) return;
+        count++;
 
         const div = document.createElement("div");
         div.className = "card";
         div.innerHTML = `
           <h2>${data.titulo}</h2>
           <p>${data.acordes}</p>
-          ${data.imagenes?.length ? data.imagenes.map(url => `<img src="${url}" width="100%">`).join('') : ""}
+          ${data.imagenes?.length ? data.imagenes.map(url => `<img src="${url}" width="100%" style="margin-top:10px;border-radius:8px;">`).join('') : ""}
           ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar audio</a></p>` : ""}
           ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">▶ Ver en YouTube</a></p>` : ""}
-          <button onclick="eliminarCancion('${docSnap.id}')">🗑️ Eliminar</button>
         `;
         contenedor.appendChild(div);
       });
+
+      document.getElementById("contador").textContent = `🎵 Total de canciones: ${count}`;
     }
 
     async function agregarCancion() {
@@ -123,19 +158,12 @@
       });
 
       document.getElementById("formulario").reset();
+      document.getElementById("formulario").style.display = "none";
       cargarCanciones();
       alert("✅ Canción agregada correctamente");
     }
 
-    async function eliminarCancion(id) {
-      if (!confirm("¿Eliminar esta canción?")) return;
-      await deleteDoc(doc(db, "canciones", id));
-      cargarCanciones();
-    }
-
-    // ---------------------------
-    // 🗓️ SECCIONES: Semana / Mes
-    // ---------------------------
+    // 🗓️ Cargar y guardar secciones (semana / mes)
     async function cargarSecciones() {
       await cargarSeccion("semana");
       await cargarSeccion("mes");
@@ -165,15 +193,24 @@
     async function guardarSeccion(tipo) {
       const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
       const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").filter(x => x);
-
       await setDoc(doc(db, "secciones", tipo), { titulo, canciones });
       alert("✅ Guardado correctamente");
       cargarSeccion(tipo);
     }
 
-    // ---------------------------
-    // 🧭 Inicialización
-    // ---------------------------
+    // 🎨 Modo oscuro
+    function toggleDark() {
+      document.body.classList.toggle("dark");
+      const mode = document.body.classList.contains("dark") ? "Modo Claro ☀️" : "Modo Oscuro 🌙";
+      document.getElementById("modoBtn").textContent = mode;
+    }
+
+    // 🎹 Mostrar/Ocultar formulario
+    function toggleFormulario() {
+      const form = document.getElementById("formulario");
+      form.style.display = form.style.display === "none" ? "block" : "none";
+    }
+
     window.onload = () => {
       cargarCanciones();
       cargarSecciones();
@@ -181,21 +218,26 @@
     };
 
     window.agregarCancion = agregarCancion;
-    window.eliminarCancion = eliminarCancion;
     window.guardarSeccion = guardarSeccion;
+    window.toggleDark = toggleDark;
+    window.toggleFormulario = toggleFormulario;
   </script>
 </head>
 
 <body>
   <header>
-    <h1>🎵 Repertorio Worship</h1>
+    <div class="logo">
+      <img src="logo.jpg" alt="Logo Repertorio Worship" />
+      <h1>Repertorio Worship</h1>
+    </div>
+    <div>
+      <button id="modoBtn" onclick="toggleDark()">Modo Oscuro 🌙</button>
+    </div>
   </header>
 
   <main>
-    <!-- 🔍 Buscar -->
-    <input type="text" id="search" placeholder="Buscar canciones..." />
+    <input type="text" id="search" placeholder="🔍 Buscar canciones..." />
 
-    <!-- 🗓️ Canciones para la semana -->
     <div class="section">
       <h2>🎶 Canciones para la semana</h2>
       <input type="text" id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
@@ -204,7 +246,6 @@
       <div id="mostrar-semana" style="margin-top:10px;"></div>
     </div>
 
-    <!-- 🆕 Canciones nuevas del mes -->
     <div class="section">
       <h2>🆕 Canciones nuevas del mes</h2>
       <input type="text" id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
@@ -213,21 +254,31 @@
       <div id="mostrar-mes" style="margin-top:10px;"></div>
     </div>
 
-    <!-- 🎵 Formulario agregar canción -->
-    <div class="card">
-      <h2>➕ Agregar canción</h2>
-      <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
+    <button onclick="toggleFormulario()">➕ Agregar nueva canción</button>
+
+    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
+      <div class="card">
+        <h2>Agregar canción</h2>
         <input type="text" id="titulo" placeholder="Título de la canción" required />
         <textarea id="acordes" placeholder="Acordes..."></textarea>
-        <textarea id="imagenes" placeholder="Pega los links de imágenes (uno por línea)"></textarea>
+        <textarea id="imagenes" placeholder="Links de imágenes (uno por línea)"></textarea>
         <input type="text" id="audio" placeholder="Link de audio (Drive, SoundCloud, etc.)" />
         <input type="text" id="youtube" placeholder="Link de YouTube (opcional)" />
         <button type="submit">Guardar canción</button>
-      </form>
-    </div>
+      </div>
+    </form>
 
-    <!-- 📜 Lista de canciones -->
     <div id="lista-canciones"></div>
+
+    <footer>
+      <p id="contador">🎵 Total de canciones: 0</p>
+      <p>
+        <button onclick="window.open('https://www.imusic-school.com/es/herramientas/metronomo-online/', '_blank')">🕒 Ir al metrónomo</button>
+      </p>
+      <p>
+        <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
+      </p>
+    </footer>
   </main>
 </body>
 </html>
