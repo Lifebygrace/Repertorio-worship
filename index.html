@@ -154,6 +154,7 @@ footer {
   padding: 20px;
   font-size: 1em;
 }
+
 mark {
   background-color: yellow;
   color: black;
@@ -201,13 +202,17 @@ async function cargarCanciones() {
 
     const div = document.createElement("div");
     div.className = "card";
+
+    // Editable inputs para modo edición
     div.innerHTML = `
       <h2 contenteditable="${modoEdicion}">${modoEdicion ? data.titulo : resaltar(data.titulo, searchInput)}</h2>
       <p contenteditable="${modoEdicion}">${modoEdicion ? (data.acordes || "") : data.acordes || ""}</p>
-      <textarea style="display:${modoEdicion ? "block" : "none"}">${(data.imagenes || []).join("\n")}</textarea>
+      <textarea style="display:${modoEdicion ? "block" : "none"}" placeholder="Links de imágenes (uno por línea)">${(data.imagenes || []).join("\n")}</textarea>
+      <input style="display:${modoEdicion ? "block" : "none"}" value="${data.audio || ""}" placeholder="Link de audio">
+      <input style="display:${modoEdicion ? "block" : "none"}" value="${data.youtube || ""}" placeholder="Link de YouTube">
       ${(data.imagenes || []).map(url => `<img src="${url}" width="100%" style="margin-top:10px;border-radius:8px;">`).join('')}
-      ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar grabación</a></p>` : ""}
-      ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">📺 Ver en YouTube</a></p>` : ""}
+      ${!modoEdicion && data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar grabación</a></p>` : ""}
+      ${!modoEdicion && data.youtube ? `<p><a href="${data.youtube}" target="_blank">📺 Ver en YouTube</a></p>` : ""}
       ${modoEdicion ? `<button onclick="guardarEdicion('${data.id}', this)">💾 Guardar cambios</button>` : ""}
     `;
     contenedor.appendChild(div);
@@ -218,13 +223,12 @@ async function cargarCanciones() {
 
 async function guardarEdicion(id, btn){
   const card = btn.closest(".card");
-  const [tituloEl, acordesEl, imagenesEl] = card.querySelectorAll("h2, p, textarea");
+  const [tituloEl, acordesEl, imagenesEl, audioEl, youtubeEl] = card.querySelectorAll("h2, p, textarea, input:nth-of-type(1), input:nth-of-type(2)");
   const titulo = tituloEl.innerText.trim();
   const acordes = acordesEl.innerText.trim();
   const imagenes = imagenesEl.value.trim().split("\n").filter(x=>x);
-  const links = Array.from(card.querySelectorAll("a"));
-  const audio = links.find(a=>a.textContent.includes("🎧"))?.href || "";
-  const youtube = links.find(a=>a.textContent.includes("📺"))?.href || "";
+  const audio = audioEl.value.trim();
+  const youtube = youtubeEl.value.trim();
 
   await updateDoc(doc(db, "canciones", id), {titulo, acordes, imagenes, audio, youtube});
   alert("✅ Cambios guardados");
