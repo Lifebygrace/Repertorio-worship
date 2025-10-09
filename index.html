@@ -249,7 +249,9 @@ async function cargarCanciones() {
     contenedor.appendChild(div);
   });
 
-  contenedor.style.display = cancionesVisible ? "block" : "none";
+  // 🔧 Mostrar canciones si hay búsqueda o si se presionó el botón
+  const searchActive = search.length > 0;
+  contenedor.style.display = cancionesVisible || searchActive ? "block" : "none";
   document.getElementById("contador").textContent = `🎵 Total de canciones: ${cancionesCache.length}`;
 }
 
@@ -354,11 +356,10 @@ function activarEdicion(){
   cargarCanciones();
 }
 
-// ✅ Nueva función para mostrar/ocultar canciones
 function toggleCanciones() {
   cancionesVisible = !cancionesVisible;
-  document.getElementById("lista-canciones").style.display = cancionesVisible ? "block" : "none";
   document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar canciones" : "🎵 Mostrar canciones";
+  cargarCanciones();
 }
 
 window.onload=()=>{
