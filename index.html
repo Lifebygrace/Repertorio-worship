@@ -212,6 +212,7 @@ const db = getFirestore(app);
 let modoEdicion = false;
 let cancionesCache = [];
 let debounceTimer;
+let cancionesVisible = false; // Nuevo: estado de visibilidad de canciones
 
 function normalizar(texto){
   return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -248,6 +249,7 @@ async function cargarCanciones() {
     contenedor.appendChild(div);
   });
 
+  contenedor.style.display = cancionesVisible ? "block" : "none";
   document.getElementById("contador").textContent = `🎵 Total de canciones: ${cancionesCache.length}`;
 }
 
@@ -352,95 +354,15 @@ function activarEdicion(){
   cargarCanciones();
 }
 
+// Nueva función para mostrar/ocultar canciones
+function toggleCanciones() {
+  cancionesVisible = !cancionesVisible;
+  document.getElementById("lista-canciones").style.display = cancionesVisible ? "block" : "none";
+  document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar canciones" : "🎵 Mostrar canciones";
+}
+
 window.onload=()=>{
   inicializarCanciones();
   cargarSeccion("semana");
   cargarSeccion("mes");
-  const searchInput = document.getElementById("search");
-  const clearBtn = document.getElementById("clearSearch");
-  
-  searchInput.addEventListener("input", ()=>{
-    debounceBuscar();
-    clearBtn.style.display = searchInput.value ? "block" : "none";
-  });
-
-  clearBtn.addEventListener("click", ()=>{
-    searchInput.value = "";
-    clearBtn.style.display = "none";
-    cargarCanciones();
-  });
-}
-
-window.agregarCancion=agregarCancion;
-window.guardarEdicion=guardarEdicion;
-window.toggleDark=toggleDark;
-window.toggleFormulario=toggleFormulario;
-window.activarEdicion=activarEdicion;
-window.guardarSeccion=guardarSeccion;
-</script>
-
-<body>
-<div class="edit-banner">✏️ Modo edición activo</div>
-
-<header>
-  <div class="logo">
-    <img src="https://raw.githubusercontent.com/Lifebygrace/Repertorio-worship/main/logo.jpeg" alt="Logo Repertorio Worship" />
-    <h1>Repertorio Worship</h1>
-  </div>
-  <div class="controls">
-    <button onclick="toggleDark()">🌙 / ☀️</button>
-    <button onclick="activarEdicion()">✏️ Editar</button>
-    <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
-  </div>
-</header>
-
-<main>
-  <div class="search-container">
-    <input type="text" id="search" placeholder="🔍 Buscar canciones por título..." />
-    <button id="clearSearch">❌</button>
-  </div>
-
-  <div class="section">
-    <h2>🎶 Canciones para la semana</h2>
-    <div id="contenedor-semana" style="display:none;">
-      <input type="text" id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
-      <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('semana')">Guardar sección</button>
-    </div>
-    <div id="mostrar-semana" style="margin-top:10px;"></div>
-  </div>
-
-  <div class="section">
-    <h2>🆕 Canciones nuevas del mes</h2>
-    <div id="contenedor-mes" style="display:none;">
-      <input type="text" id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
-      <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('mes')">Guardar sección</button>
-    </div>
-    <div id="mostrar-mes" style="margin-top:10px;"></div>
-  </div>
-
-  <!-- botón oculto hasta modo edición -->
-  <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
-
-  <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
-    <div class="card">
-      <h2>Agregar canción</h2>
-      <input type="text" id="titulo" placeholder="Título de la canción" required />
-      <textarea id="acordes" placeholder="Acordes..."></textarea>
-      <textarea id="imagenes" placeholder="Links de imágenes (uno por línea)"></textarea>
-      <input type="text" id="audio" placeholder="Link de audio" />
-      <input type="text" id="youtube" placeholder="Link de YouTube" />
-      <button type="submit">Guardar canción</button>
-    </div>
-  </form>
-
-  <div id="lista-canciones"></div>
-
-  <footer>
-    <p id="contador">🎵 Total de canciones: 0</p>
-    <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
-  </footer>
-</main>
-</body>
-</html>
+  const searchInput = document
