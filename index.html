@@ -195,7 +195,7 @@ mark {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, getDocs, doc, setDoc, getDoc, updateDoc, onSnapshot
+  getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, onSnapshot
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -212,6 +212,7 @@ const db = getFirestore(app);
 let modoEdicion = false;
 let cancionesCache = [];
 let debounceTimer;
+let cancionesVisible = false;
 
 function normalizar(texto){
   return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
@@ -248,6 +249,7 @@ async function cargarCanciones() {
     contenedor.appendChild(div);
   });
 
+  contenedor.style.display = cancionesVisible ? "block" : "none";
   document.getElementById("contador").textContent = `🎵 Total de canciones: ${cancionesCache.length}`;
 }
 
@@ -352,6 +354,13 @@ function activarEdicion(){
   cargarCanciones();
 }
 
+// ✅ Nueva función para mostrar/ocultar canciones
+function toggleCanciones() {
+  cancionesVisible = !cancionesVisible;
+  document.getElementById("lista-canciones").style.display = cancionesVisible ? "block" : "none";
+  document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar canciones" : "🎵 Mostrar canciones";
+}
+
 window.onload=()=>{
   inicializarCanciones();
   cargarSeccion("semana");
@@ -377,6 +386,7 @@ window.toggleDark=toggleDark;
 window.toggleFormulario=toggleFormulario;
 window.activarEdicion=activarEdicion;
 window.guardarSeccion=guardarSeccion;
+window.toggleCanciones=toggleCanciones;
 </script>
 
 <body>
@@ -391,6 +401,7 @@ window.guardarSeccion=guardarSeccion;
     <button onclick="toggleDark()">🌙 / ☀️</button>
     <button onclick="activarEdicion()">✏️ Editar</button>
     <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
+    <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵 Mostrar canciones</button>
   </div>
 </header>
 
@@ -420,7 +431,6 @@ window.guardarSeccion=guardarSeccion;
     <div id="mostrar-mes" style="margin-top:10px;"></div>
   </div>
 
-  <!-- botón oculto hasta modo edición -->
   <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
 
   <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
@@ -435,7 +445,7 @@ window.guardarSeccion=guardarSeccion;
     </div>
   </form>
 
-  <div id="lista-canciones"></div>
+  <div id="lista-canciones" style="display:none;"></div>
 
   <footer>
     <p id="contador">🎵 Total de canciones: 0</p>
