@@ -13,13 +13,17 @@
       --text: #002244;
       --section-bg: #fff8e1;
       --card-bg: #ffffff;
+      --edit-bg: #FFEB3B;
     }
+
     body.dark {
       --bg: #121212;
       --text: #f0f4f8;
       --card-bg: #1e1e1e;
       --section-bg: #2a2a2a;
+      --edit-bg: #f9a825;
     }
+
     body {
       font-family: 'Segoe UI', sans-serif;
       margin: 0;
@@ -27,6 +31,7 @@
       color: var(--text);
       transition: background 0.3s, color 0.3s;
     }
+
     header {
       background: var(--primary);
       color: white;
@@ -35,29 +40,25 @@
       justify-content: space-between;
       align-items: center;
       flex-wrap: wrap;
-      position: sticky;
-      top: 0;
-      z-index: 20;
     }
+
     .logo {
       display: flex;
       align-items: center;
       gap: 10px;
     }
+
     .logo img {
       height: 65px;
       border-radius: 8px;
     }
-    .header-buttons {
+
+    .controls {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-      flex: 1;
-      max-width: 500px;
-      margin-left: auto;
-      margin-right: auto;
-      gap: 15px;
+      gap: 10px;
     }
+
     button {
       background-color: var(--accent);
       color: white;
@@ -68,26 +69,17 @@
       font-weight: bold;
       transition: background 0.2s;
     }
+
     button:hover {
       background-color: #e65e00;
     }
-    #banda-edicion {
-      display: none;
-      position: sticky;
-      top: 0;
-      background: #ffeb3b;
-      color: #002244;
-      text-align: center;
-      padding: 10px;
-      font-weight: bold;
-      font-size: 1.1em;
-      z-index: 10;
-    }
+
     main {
       max-width: 850px;
       margin: auto;
       padding: 16px;
     }
+
     .card {
       background: var(--card-bg);
       padding: 16px;
@@ -95,6 +87,7 @@
       box-shadow: 0 2px 6px rgba(0,0,0,0.1);
       margin-bottom: 20px;
     }
+
     input, textarea {
       width: 100%;
       padding: 10px;
@@ -104,12 +97,19 @@
       background: var(--bg);
       color: var(--text);
     }
+
     .section {
       background: var(--section-bg);
       padding: 16px;
       border-radius: 10px;
       margin-bottom: 20px;
     }
+
+    #formulario {
+      display: none;
+      margin-top: 15px;
+    }
+
     #search {
       width: 100%;
       padding: 12px 14px;
@@ -120,11 +120,34 @@
       box-shadow: 0 0 6px rgba(0,0,0,0.1);
       transition: 0.3s;
     }
+
     #search:focus {
       outline: none;
       box-shadow: 0 0 8px var(--accent);
       background: #fff3e0;
     }
+
+    a {
+      color: var(--accent);
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    .edit-banner {
+      position: sticky;
+      top: 0;
+      background: var(--edit-bg);
+      text-align: center;
+      font-weight: bold;
+      padding: 8px;
+      display: none;
+      z-index: 100;
+    }
+
     footer {
       text-align: center;
       margin-top: 40px;
@@ -150,7 +173,6 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-
     let modoEdicion = false;
 
     async function cargarCanciones() {
@@ -172,8 +194,8 @@
           <p contenteditable="${modoEdicion}">${data.acordes || ""}</p>
           <textarea style="display:${modoEdicion ? "block" : "none"}">${(data.imagenes || []).join("\n")}</textarea>
           ${(data.imagenes || []).map(url => `<img src="${url}" width="100%" style="margin-top:10px;border-radius:8px;">`).join('')}
-          ${data.audio ? `<p contenteditable="${modoEdicion}">${data.audio}</p>` : ""}
-          ${data.youtube ? `<p contenteditable="${modoEdicion}">${data.youtube}</p>` : ""}
+          ${data.audio ? `<p><a href="${data.audio}" target="_blank">🎧 Escuchar grabación</a></p>` : ""}
+          ${data.youtube ? `<p><a href="${data.youtube}" target="_blank">📺 Ver en YouTube</a></p>` : ""}
           ${modoEdicion ? `<button onclick="guardarEdicion('${docSnap.id}', this)">💾 Guardar cambios</button>` : ""}
         `;
         contenedor.appendChild(div);
@@ -188,13 +210,30 @@
       const titulo = tituloEl.innerText.trim();
       const acordes = acordesEl.innerText.trim();
       const imagenes = imagenesEl.value.trim().split("\n").filter(x => x);
-      const links = Array.from(card.querySelectorAll("p")).slice(1);
-      const audio = links[0]?.innerText.trim() || "";
-      const youtube = links[1]?.innerText.trim() || "";
+      const links = Array.from(card.querySelectorAll("a"));
+      const audio = links.find(a => a.textContent.includes("🎧"))?.href || "";
+      const youtube = links.find(a => a.textContent.includes("📺"))?.href || "";
 
       await updateDoc(doc(db, "canciones", id), { titulo, acordes, imagenes, audio, youtube });
       alert("✅ Cambios guardados");
       cargarCanciones();
+    }
+
+    async function agregarCancion() {
+      const titulo = document.getElementById("titulo").value.trim();
+      const acordes = document.getElementById("acordes").value.trim();
+      const youtube = document.getElementById("youtube").value.trim();
+      const imagenes = document.getElementById("imagenes").value.trim().split("\n").filter(x => x);
+      const audio = document.getElementById("audio").value.trim();
+
+      if (!titulo) return alert("El título es obligatorio");
+
+      await addDoc(collection(db, "canciones"), { titulo, acordes, youtube, imagenes, audio });
+
+      document.getElementById("formulario").reset();
+      document.getElementById("formulario").style.display = "none";
+      cargarCanciones();
+      alert("✅ Canción agregada correctamente");
     }
 
     async function cargarSeccion(tipo) {
@@ -205,13 +244,15 @@
 
       if (snap.exists()) {
         const data = snap.data();
-        contenedor.style.display = modoEdicion ? "block" : "none";
-        mostrar.style.display = "block";
         mostrar.innerHTML = `
           <h3>${data.titulo || ""}</h3>
           <ul>${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}</ul>
         `;
+      } else {
+        mostrar.innerHTML = "<p>Aún no hay información guardada.</p>";
       }
+
+      contenedor.style.display = modoEdicion ? "block" : "none";
     }
 
     async function guardarSeccion(tipo) {
@@ -224,21 +265,25 @@
 
     function toggleDark() {
       document.body.classList.toggle("dark");
-      const mode = document.body.classList.contains("dark") ? "Modo Claro ☀️" : "Modo Oscuro 🌙";
-      document.getElementById("modoBtn").textContent = mode;
+    }
+
+    function toggleFormulario() {
+      const form = document.getElementById("formulario");
+      form.style.display = form.style.display === "none" ? "block" : "none";
     }
 
     function activarEdicion() {
-      if (!modoEdicion) {
-        const pin = prompt("Introduce el PIN de edición:");
-        if (pin !== "2025") return alert("PIN incorrecto ❌");
+      const pin = prompt("Introduce el PIN para editar:");
+      if (pin === "2025") {
+        modoEdicion = !modoEdicion;
+        document.querySelector(".edit-banner").style.display = modoEdicion ? "block" : "none";
+        alert(modoEdicion ? "✏️ Modo edición activado" : "🔒 Modo edición desactivado");
+        cargarSeccion("semana");
+        cargarSeccion("mes");
+        cargarCanciones();
+      } else if (pin) {
+        alert("PIN incorrecto");
       }
-      modoEdicion = !modoEdicion;
-      document.getElementById("banda-edicion").style.display = modoEdicion ? "block" : "none";
-      document.getElementById("editarBtn").textContent = modoEdicion ? "🔒 Salir del modo edición" : "🎼 Editar ✏️";
-      cargarCanciones();
-      cargarSeccion("semana");
-      cargarSeccion("mes");
     }
 
     window.onload = () => {
@@ -248,30 +293,32 @@
       document.getElementById("search").addEventListener("input", cargarCanciones);
     };
 
+    window.agregarCancion = agregarCancion;
     window.guardarEdicion = guardarEdicion;
-    window.guardarSeccion = guardarSeccion;
     window.toggleDark = toggleDark;
+    window.toggleFormulario = toggleFormulario;
     window.activarEdicion = activarEdicion;
+    window.guardarSeccion = guardarSeccion;
   </script>
 </head>
 
 <body>
-  <div id="banda-edicion">✏️ Editar</div>
+  <div class="edit-banner">✏️ Modo edición activo</div>
 
   <header>
     <div class="logo">
       <img src="https://raw.githubusercontent.com/Lifebygrace/Repertorio-worship/main/logo.jpeg" alt="Logo Repertorio Worship" />
       <h1>Repertorio Worship</h1>
     </div>
-    <div class="header-buttons">
-      <button id="modoBtn" onclick="toggleDark()">Modo Oscuro 🌙</button>
-      <button id="editarBtn" onclick="activarEdicion()">🎼 Editar ✏️</button>
+    <div class="controls">
+      <button onclick="toggleDark()">🌙 / ☀️</button>
+      <button onclick="activarEdicion()">✏️ Editar</button>
       <button onclick="window.open('https://www.metronomeonline.com', '_blank')">🕒 Metrónomo</button>
     </div>
   </header>
 
   <main>
-    <input type="text" id="search" placeholder="🔍 Buscar canciones..." />
+    <input type="text" id="search" placeholder="🔍 Buscar canciones por título..." />
 
     <div class="section">
       <h2>🎶 Canciones para la semana</h2>
@@ -292,6 +339,20 @@
       </div>
       <div id="mostrar-mes" style="margin-top:10px;"></div>
     </div>
+
+    <button onclick="toggleFormulario()">➕ Agregar nueva canción</button>
+
+    <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
+      <div class="card">
+        <h2>Agregar canción</h2>
+        <input type="text" id="titulo" placeholder="Título de la canción" required />
+        <textarea id="acordes" placeholder="Acordes..."></textarea>
+        <textarea id="imagenes" placeholder="Links de imágenes (uno por línea)"></textarea>
+        <input type="text" id="audio" placeholder="Link de audio" />
+        <input type="text" id="youtube" placeholder="Link de YouTube" />
+        <button type="submit">Guardar canción</button>
+      </div>
+    </form>
 
     <div id="lista-canciones"></div>
 
