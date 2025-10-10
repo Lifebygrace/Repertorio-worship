@@ -35,7 +35,7 @@ body {
 header {
   background: var(--primary);
   color: white;
-  padding: 10px 14px;
+  padding: 12px 20px; /* 🔧 Ajuste para más espacio horizontal en móviles */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -50,28 +50,25 @@ header {
 }
 
 .logo img {
-  height: 60px;
+  height: 65px;
   border-radius: 8px;
 }
 
 .controls {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: nowrap; /* 🔧 Asegura que estén en línea */
+  gap: 10px;
 }
 
 button {
   background-color: var(--accent);
   color: white;
   border: none;
-  padding: 6px 10px; /* 🔧 un poquito más pequeño */
+  padding: 10px 16px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
-  font-size: 0.85em; /* 🔧 ligeramente más pequeño para que quepan */
   transition: background 0.2s, transform 0.1s;
-  white-space: nowrap;
 }
 
 button:hover {
@@ -119,6 +116,7 @@ input, textarea {
 .search-container {
   position: relative;
   margin-bottom: 20px;
+  max-width: 100%; /* 🔧 Evita que sobresalga en móviles */
 }
 
 #search {
@@ -198,7 +196,9 @@ mark {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import {
+  getFirestore, collection, addDoc, getDocs, doc, setDoc, getDoc, updateDoc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
@@ -214,21 +214,30 @@ const db = getFirestore(app);
 let modoEdicion = false;
 let cancionesCache = [];
 let debounceTimer;
-let cancionesVisible = false;
+let mostrarLista = false;
 
-function normalizar(texto){ return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
-function resaltar(texto, busqueda){ const regex = new RegExp(`(${busqueda})`, "gi"); return texto.replace(regex, "<mark>$1</mark>"); }
+function normalizar(texto){
+  return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function resaltar(texto, busqueda){
+  const regex = new RegExp(`(${busqueda})`, "gi");
+  return texto.replace(regex, "<mark>$1</mark>");
+}
 
 async function cargarCanciones() {
   const contenedor = document.getElementById("lista-canciones");
   contenedor.innerHTML = "";
+  if(!mostrarLista) return; // 🔒 Solo muestra canciones si mostrarLista = true
   const searchInput = document.getElementById("search").value;
   const search = normalizar(searchInput);
 
   cancionesCache.forEach((data)=>{
     if(!normalizar(data.titulo).includes(search)) return;
+
     const div = document.createElement("div");
     div.className = "card";
+
     div.innerHTML = `
       <h2 contenteditable="${modoEdicion}">${modoEdicion ? data.titulo : resaltar(data.titulo, searchInput)}</h2>
       <p contenteditable="${modoEdicion}">${modoEdicion ? (data.acordes || "") : data.acordes || ""}</p>
@@ -243,8 +252,6 @@ async function cargarCanciones() {
     contenedor.appendChild(div);
   });
 
-  const searchActive = search.length > 0;
-  contenedor.style.display = cancionesVisible || searchActive ? "block" : "none";
   document.getElementById("contador").textContent = `🎵 Total de canciones: ${cancionesCache.length}`;
 }
 
@@ -256,6 +263,7 @@ async function guardarEdicion(id, btn){
   const imagenes = imagenesEl.value.trim().split("\n").filter(x=>x);
   const audio = audioEl.value.trim();
   const youtube = youtubeEl.value.trim();
+
   await updateDoc(doc(db, "canciones", id), {titulo, acordes, imagenes, audio, youtube});
   alert("✅ Cambios guardados");
   cargarCanciones();
@@ -274,25 +282,44 @@ async function agregarCancion(){
   const youtube = document.getElementById("youtube").value.trim();
   const imagenes = document.getElementById("imagenes").value.trim().split("\n").filter(x=>x);
   const audio = document.getElementById("audio").value.trim();
+
   if(!titulo) return alert("El título es obligatorio");
+
   await addDoc(collection(db, "canciones"), {titulo, acordes, youtube, imagenes, audio});
   document.getElementById("formulario").reset();
   document.getElementById("formulario").style.display = "none";
 }
 
-function debounceBuscar(){ clearTimeout(debounceTimer); debounceTimer = setTimeout(cargarCanciones, 300); }
-function toggleDark(){ document.body.classList.toggle("dark"); }
-function toggleFormulario(){ const form = document.getElementById("formulario"); form.style.display = form.style.display === "none" ? "block" : "none"; }
+function debounceBuscar(){
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(cargarCanciones, 300);
+}
+
+function toggleDark(){
+  document.body.classList.toggle("dark");
+}
+
+function toggleFormulario(){
+  const form = document.getElementById("formulario");
+  form.style.display = form.style.display === "none" ? "block" : "none";
+}
 
 async function cargarSeccion(tipo){
   const contenedor = document.getElementById(`contenedor-${tipo}`);
   const mostrar = document.getElementById(`mostrar-${tipo}`);
   const docRef = doc(db,"secciones",tipo);
   const snap = await getDoc(docRef);
+
   if(snap.exists()){
     const data = snap.data();
-    mostrar.innerHTML = `<h3>${data.titulo || ""}</h3><ul>${(data.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>`;
-  } else { mostrar.innerHTML = "<p>Aún no hay información guardada.</p>"; }
+    mostrar.innerHTML = `
+      <h3>${data.titulo || ""}</h3>
+      <ul>${(data.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>
+    `;
+  }else{
+    mostrar.innerHTML = "<p>Aún no hay información guardada.</p>";
+  }
+
   contenedor.style.display = modoEdicion ? "block" : "none";
 }
 
@@ -306,6 +333,7 @@ async function guardarSeccion(tipo){
 
 function activarEdicion(){
   const addBtn = document.getElementById("btnAgregar");
+
   if(!modoEdicion){
     const pin = prompt("Introduce el PIN para editar:");
     if(pin==="2025"){
@@ -313,7 +341,10 @@ function activarEdicion(){
       document.querySelector(".edit-banner").style.display="block";
       addBtn.style.display="block";
       alert("✏️ Modo edición activado");
-    }else if(pin){ alert("PIN incorrecto"); return; }
+    }else if(pin){
+      alert("PIN incorrecto");
+      return;
+    }
   }else{
     modoEdicion=false;
     document.querySelector(".edit-banner").style.display="none";
@@ -325,9 +356,8 @@ function activarEdicion(){
   cargarCanciones();
 }
 
-function toggleCanciones() {
-  cancionesVisible = !cancionesVisible;
-  document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar lista" : "🎵 Mostrar lista";
+function toggleMostrarLista(){
+  mostrarLista = !mostrarLista;
   cargarCanciones();
 }
 
@@ -337,10 +367,12 @@ window.onload=()=>{
   cargarSeccion("mes");
   const searchInput = document.getElementById("search");
   const clearBtn = document.getElementById("clearSearch");
+  
   searchInput.addEventListener("input", ()=>{
     debounceBuscar();
     clearBtn.style.display = searchInput.value ? "block" : "none";
   });
+
   clearBtn.addEventListener("click", ()=>{
     searchInput.value = "";
     clearBtn.style.display = "none";
@@ -354,7 +386,7 @@ window.toggleDark=toggleDark;
 window.toggleFormulario=toggleFormulario;
 window.activarEdicion=activarEdicion;
 window.guardarSeccion=guardarSeccion;
-window.toggleCanciones=toggleCanciones;
+window.toggleMostrarLista=toggleMostrarLista;
 </script>
 
 <body>
@@ -369,7 +401,7 @@ window.toggleCanciones=toggleCanciones;
     <button onclick="toggleDark()">🌙 / ☀️</button>
     <button onclick="activarEdicion()">✏️ Editar</button>
     <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
-    <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵 Mostrar lista</button>
+    <button onclick="toggleMostrarLista()">📜 Mostrar lista</button> <!-- Nuevo botón -->
   </div>
 </header>
 
@@ -399,6 +431,7 @@ window.toggleCanciones=toggleCanciones;
     <div id="mostrar-mes" style="margin-top:10px;"></div>
   </div>
 
+  <!-- botón oculto hasta modo edición -->
   <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
 
   <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
@@ -413,7 +446,7 @@ window.toggleCanciones=toggleCanciones;
     </div>
   </form>
 
-  <div id="lista-canciones" style="display:none;"></div>
+  <div id="lista-canciones"></div>
 
   <footer>
     <p id="contador">🎵 Total de canciones: 0</p>
