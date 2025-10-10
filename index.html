@@ -35,11 +35,12 @@ body {
 header {
   background: var(--primary);
   color: white;
-  padding: 12px 16px;
+  padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
+  gap: 6px;
 }
 
 .logo {
@@ -49,24 +50,26 @@ header {
 }
 
 .logo img {
-  height: 65px;
+  height: 60px;
   border-radius: 8px;
 }
 
 .controls {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 button {
   background-color: var(--accent);
   color: white;
   border: none;
-  padding: 10px 16px;
+  padding: 8px 12px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
+  font-size: 0.9em; /* 🔧 Ligeramente más pequeño */
   transition: background 0.2s, transform 0.1s;
 }
 
@@ -192,7 +195,10 @@ mark {
 }
 </style>
 
+<!-- 🔧 Todo el mismo script anterior (idéntico) -->
 <script type="module">
+/* 🔥 El script es exactamente el mismo que el anterior, 
+   solo se cambia el texto del botón de “mostrar lista” */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import {
   getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, onSnapshot
@@ -249,7 +255,6 @@ async function cargarCanciones() {
     contenedor.appendChild(div);
   });
 
-  // 🔧 Mostrar canciones si hay búsqueda o si se presionó el botón
   const searchActive = search.length > 0;
   contenedor.style.display = cancionesVisible || searchActive ? "block" : "none";
   document.getElementById("contador").textContent = `🎵 Total de canciones: ${cancionesCache.length}`;
@@ -358,7 +363,7 @@ function activarEdicion(){
 
 function toggleCanciones() {
   cancionesVisible = !cancionesVisible;
-  document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar canciones" : "🎵 Mostrar canciones";
+  document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar lista" : "🎵 Mostrar lista";
   cargarCanciones();
 }
 
@@ -402,10 +407,11 @@ window.toggleCanciones=toggleCanciones;
     <button onclick="toggleDark()">🌙 / ☀️</button>
     <button onclick="activarEdicion()">✏️ Editar</button>
     <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
-    <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵 Mostrar canciones</button>
+    <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵 Mostrar lista</button>
   </div>
 </header>
 
+<!-- 🔥 El resto es idéntico al anterior -->
 <main>
   <div class="search-container">
     <input type="text" id="search" placeholder="🔍 Buscar canciones por título..." />
