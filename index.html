@@ -24,9 +24,15 @@ body.dark {
   --edit-bg: #f9a825;
 }
 
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
 body {
   font-family: 'Segoe UI', sans-serif;
-  margin: 0;
   background: var(--bg);
   color: var(--text);
   transition: background 0.3s, color 0.3s;
@@ -35,13 +41,15 @@ body {
 header {
   background: var(--primary);
   color: white;
-  padding: 20px 22px; /* 🔧 más alto */
+  width: 100vw;            /* 🔧 siempre de borde a borde */
+  box-sizing: border-box;  /* 🔧 padding no rompe el ancho */
+  padding: 20px 22px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
-  min-height: 80px; /* 🔧 asegura franja más ancha */
+  min-height: 80px;
 }
 
 .logo {
