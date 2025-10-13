@@ -35,12 +35,13 @@ body {
 header {
   background: var(--primary);
   color: white;
-  padding: 10px 22px;
+  padding: 20px 22px; /* 🔧 más alto */
   display: flex;
   justify-content: space-between;
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
+  min-height: 80px; /* 🔧 asegura franja más ancha */
 }
 
 .logo {
@@ -58,18 +59,18 @@ header {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex-wrap: nowrap; /* 🔧 Asegura que estén en línea */
+  flex-wrap: nowrap;
 }
 
 button {
   background-color: var(--accent);
   color: white;
   border: none;
-  padding: 6px 10px; /* 🔧 un poquito más pequeño */
+  padding: 6px 10px;
   border-radius: 8px;
   cursor: pointer;
   font-weight: bold;
-  font-size: 0.85em; /* 🔧 ligeramente más pequeño para que quepan */
+  font-size: 0.85em;
   transition: background 0.2s, transform 0.1s;
   white-space: nowrap;
 }
@@ -115,7 +116,6 @@ input, textarea {
   margin-top: 15px;
 }
 
-/* 🔍 Contenedor de búsqueda */
 .search-container {
   position: relative;
   margin-bottom: 20px;
@@ -137,7 +137,6 @@ input, textarea {
   background: #fff3e0;
 }
 
-/* ❌ Botón para limpiar búsqueda */
 #clearSearch {
   position: absolute;
   right: 15px;
@@ -195,6 +194,70 @@ mark {
   color: black;
 }
 </style>
+</head>
+<body>
+<div class="edit-banner">✏️ Modo edición activo</div>
+
+<header>
+  <div class="logo">
+    <img src="https://raw.githubusercontent.com/Lifebygrace/Repertorio-worship/main/logo.jpeg" alt="Logo Repertorio Worship" />
+    <h1>Repertorio Worship</h1>
+  </div>
+  <div class="controls">
+    <button onclick="toggleDark()">🌙 / ☀️</button>
+    <button onclick="activarEdicion()">✏️ Editar</button>
+    <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
+    <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵 Mostrar lista</button>
+  </div>
+</header>
+
+<main>
+  <div class="search-container">
+    <input type="text" id="search" placeholder="🔍 Buscar canciones por título..." />
+    <button id="clearSearch">❌</button>
+  </div>
+
+  <div class="section">
+    <h2>🎶 Canciones para la semana</h2>
+    <div id="contenedor-semana" style="display:none;">
+      <input type="text" id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
+      <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
+      <button onclick="guardarSeccion('semana')">Guardar sección</button>
+    </div>
+    <div id="mostrar-semana" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="section">
+    <h2>🆕 Canciones nuevas del mes</h2>
+    <div id="contenedor-mes" style="display:none;">
+      <input type="text" id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
+      <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
+      <button onclick="guardarSeccion('mes')">Guardar sección</button>
+    </div>
+    <div id="mostrar-mes" style="margin-top:10px;"></div>
+  </div>
+
+  <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
+
+  <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
+    <div class="card">
+      <h2>Agregar canción</h2>
+      <input type="text" id="titulo" placeholder="Título de la canción" required />
+      <textarea id="acordes" placeholder="Acordes..."></textarea>
+      <textarea id="imagenes" placeholder="Links de imágenes (uno por línea)"></textarea>
+      <input type="text" id="audio" placeholder="Link de audio" />
+      <input type="text" id="youtube" placeholder="Link de YouTube" />
+      <button type="submit">Guardar canción</button>
+    </div>
+  </form>
+
+  <div id="lista-canciones" style="display:none;"></div>
+
+  <footer>
+    <p id="contador">🎵 Total de canciones: 0</p>
+    <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
+  </footer> 
+</main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
@@ -281,7 +344,16 @@ async function agregarCancion(){
 }
 
 function debounceBuscar(){ clearTimeout(debounceTimer); debounceTimer = setTimeout(cargarCanciones, 300); }
-function toggleDark(){ document.body.classList.toggle("dark"); }
+
+function toggleDark(){
+  document.body.classList.toggle("dark");
+  if(document.body.classList.contains("dark")){
+    localStorage.setItem("theme", "dark");
+  } else {
+    localStorage.setItem("theme", "light");
+  }
+}
+
 function toggleFormulario(){ const form = document.getElementById("formulario"); form.style.display = form.style.display === "none" ? "block" : "none"; }
 
 async function cargarSeccion(tipo){
@@ -335,6 +407,13 @@ window.onload=()=>{
   inicializarCanciones();
   cargarSeccion("semana");
   cargarSeccion("mes");
+
+  // aplicar preferencia guardada de tema
+  const savedTheme = localStorage.getItem("theme");
+  if(savedTheme === "dark"){
+    document.body.classList.add("dark");
+  }
+
   const searchInput = document.getElementById("search");
   const clearBtn = document.getElementById("clearSearch");
   searchInput.addEventListener("input", ()=>{
@@ -356,69 +435,5 @@ window.activarEdicion=activarEdicion;
 window.guardarSeccion=guardarSeccion;
 window.toggleCanciones=toggleCanciones;
 </script>
-
-<body>
-<div class="edit-banner">✏️ Modo edición activo</div>
-
-<header>
-  <div class="logo">
-    <img src="https://raw.githubusercontent.com/Lifebygrace/Repertorio-worship/main/logo.jpeg" alt="Logo Repertorio Worship" />
-    <h1>Repertorio Worship</h1>
-  </div>
-  <div class="controls">
-    <button onclick="toggleDark()">🌙 / ☀️</button>
-    <button onclick="activarEdicion()">✏️ Editar</button>
-    <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
-    <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵 Mostrar lista</button>
-  </div>
-</header>
-
-<main>
-  <div class="search-container">
-    <input type="text" id="search" placeholder="🔍 Buscar canciones por título..." />
-    <button id="clearSearch">❌</button>
-  </div>
-
-  <div class="section">
-    <h2>🎶 Canciones para la semana</h2>
-    <div id="contenedor-semana" style="display:none;">
-      <input type="text" id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
-      <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('semana')">Guardar sección</button>
-    </div>
-    <div id="mostrar-semana" style="margin-top:10px;"></div>
-  </div>
-
-  <div class="section">
-    <h2>🆕 Canciones nuevas del mes</h2>
-    <div id="contenedor-mes" style="display:none;">
-      <input type="text" id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
-      <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('mes')">Guardar sección</button>
-    </div>
-    <div id="mostrar-mes" style="margin-top:10px;"></div>
-  </div>
-
-  <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
-
-  <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
-    <div class="card">
-      <h2>Agregar canción</h2>
-      <input type="text" id="titulo" placeholder="Título de la canción" required />
-      <textarea id="acordes" placeholder="Acordes..."></textarea>
-      <textarea id="imagenes" placeholder="Links de imágenes (uno por línea)"></textarea>
-      <input type="text" id="audio" placeholder="Link de audio" />
-      <input type="text" id="youtube" placeholder="Link de YouTube" />
-      <button type="submit">Guardar canción</button>
-    </div>
-  </form>
-
-  <div id="lista-canciones" style="display:none;"></div>
-
-  <footer>
-    <p id="contador">🎵 Total de canciones: 0</p>
-    <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
-  </footer>
-</main>
 </body>
 </html>
