@@ -1,10 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>Repertorio Worship</title>
-
 <style>
 :root {
   --primary: #002244;
@@ -15,7 +14,6 @@
   --card-bg: #ffffff;
   --edit-bg: #FFEB3B;
 }
-
 body.dark {
   --bg: #121212;
   --text: #f0f4f8;
@@ -23,254 +21,109 @@ body.dark {
   --section-bg: #2a2a2a;
   --edit-bg: #f9a825;
 }
-
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-}
-
-body {
-  font-family: 'Segoe UI', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  transition: background 0.3s, color 0.3s;
-}
-
-header {
-  background: var(--primary);
-  color: white;
-  width: 100vw;            /* 🔧 siempre de borde a borde */
-  box-sizing: border-box;  /* 🔧 padding no rompe el ancho */
-  padding: 20px 22px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-height: 80px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.logo img {
-  height: 60px;
-  border-radius: 8px;
-}
-
-.controls {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: nowrap;
-}
-
-button {
-  background-color: var(--accent);
-  color: white;
-  border: none;
-  padding: 6px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: bold;
-  font-size: 0.85em;
-  transition: background 0.2s, transform 0.1s;
-  white-space: nowrap;
-}
-
-button:hover {
-  background-color: #e65e00;
-  transform: scale(1.05);
-}
-
-main {
-  max-width: 850px;
-  margin: auto;
-  padding: 16px;
-}
-
-.card {
-  background: var(--card-bg);
-  padding: 16px;
-  border-radius: 12px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-  margin-bottom: 20px;
-}
-
-input, textarea {
-  width: 100%;
-  padding: 10px;
-  margin-bottom: 10px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  background: var(--bg);
-  color: var(--text);
-}
-
-.section {
-  background: var(--section-bg);
-  padding: 16px;
-  border-radius: 10px;
-  margin-bottom: 20px;
-}
-
-#formulario {
-  display: none;
-  margin-top: 15px;
-}
-
-.search-container {
-  position: relative;
-  margin-bottom: 20px;
-}
-
-#search {
-  width: 100%;
-  padding: 16px 45px 16px 14px;
-  border-radius: 10px;
-  border: 2px solid var(--accent);
-  font-size: 1.2em;
-  box-shadow: 0 0 6px rgba(0,0,0,0.1);
-  transition: 0.3s;
-}
-
-#search:focus {
-  outline: none;
-  box-shadow: 0 0 10px var(--accent);
-  background: #fff3e0;
-}
-
-#clearSearch {
-  position: absolute;
-  right: 15px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: transparent;
-  border: none;
-  color: var(--accent);
-  font-size: 1.4em;
-  cursor: pointer;
-  display: none;
-}
-
-a {
-  text-decoration: none;
-}
-
-.link-btn {
-  display: inline-block;
-  background-color: var(--accent);
-  color: white;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-weight: bold;
-  margin: 6px 5px 0 0;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  transition: 0.2s;
-}
-
-.link-btn:hover {
-  background-color: #e65e00;
-  transform: scale(1.05);
-}
-
-.edit-banner {
-  position: sticky;
-  top: 0;
-  background: var(--edit-bg);
-  text-align: center;
-  font-weight: bold;
-  padding: 8px;
-  display: none;
-  z-index: 100;
-}
-
-footer {
-  text-align: center;
-  margin-top: 40px;
-  padding: 20px;
-  font-size: 1em;
-}
-
-mark {
-  background-color: yellow;
-  color: black;
-}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%;font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);transition:background .3s,color .3s}
+header{background:var(--primary);color:#fff;width:100vw;box-sizing:border-box;padding:20px 22px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;min-height:80px}
+.logo{display:flex;align-items:center;gap:10px}
+.logo img{height:60px;border-radius:8px}
+.controls{display:flex;align-items:center;gap:6px;flex-wrap:nowrap}
+button{background-color:var(--accent);color:white;border:none;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:bold;font-size:.85em;transition:background .2s,transform .1s;white-space:nowrap}
+button:hover{background-color:#e65e00;transform:scale(1.03)}
+main{max-width:900px;margin:auto;padding:16px}
+.card{background:var(--card-bg);padding:16px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.08);margin-bottom:20px}
+.section{background:var(--section-bg);padding:16px;border-radius:10px;margin-bottom:20px}
+#proximo-domingo ul,#historial ul{padding-left:20px}
+input,textarea{width:100%;padding:10px;margin:6px 0;border-radius:8px;border:1px solid #ccc;background:var(--bg);color:var(--text)}
+.edit-banner{position:sticky;top:0;background:var(--edit-bg);text-align:center;font-weight:bold;padding:8px;display:none;z-index:100}
+.nota{font-size:.85em;color:#333}
+.week-card{border-radius:10px;padding:10px;margin:8px 0;background:rgba(255,255,255,.9);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.week-controls{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.small{font-size:.9em;padding:6px 8px;border-radius:8px}
+.mark-played{background:#4caf50}
+.bad{background:#e53935}
+.footer-row{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.note-small{font-size:.9em;color:#555}
+.search-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+#lista-mes{display:none}
 </style>
 </head>
 <body>
-<div class="edit-banner">✏️ Modo edición activo</div>
+  <div class="edit-banner">✏️ Modo edición activo</div>
 
-<header>
-  <div class="logo">
-    <img src="https://raw.githubusercontent.com/Lifebygrace/Repertorio-worship/main/logo.jpeg" alt="Logo Repertorio Worship" />
-    <h1>Repertorio Worship</h1>
-  </div>
-  <div class="controls">
-    <button onclick="toggleDark()">🌙 / ☀️</button>
-    <button onclick="activarEdicion()">✏️ Editar</button>
-    <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
-    <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵 Mostrar lista</button>
-  </div>
-</header>
-
-<main>
-  <div class="search-container">
-    <input type="text" id="search" placeholder="🔍 Buscar canciones por título..." />
-    <button id="clearSearch">❌</button>
-  </div>
-
-  <div class="section">
-    <h2>🎶 Canciones para la semana</h2>
-    <div id="contenedor-semana" style="display:none;">
-      <input type="text" id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
-      <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('semana')">Guardar sección</button>
+  <header>
+    <div class="logo">
+      <img src="https://raw.githubusercontent.com/Lifebygrace/Repertorio-worship/main/logo.jpeg" alt="Logo Repertorio Worship" />
+      <h1>Repertorio Worship</h1>
     </div>
-    <div id="mostrar-semana" style="margin-top:10px;"></div>
-  </div>
-
-  <div class="section">
-    <h2>🆕 Canciones nuevas del mes</h2>
-    <div id="contenedor-mes" style="display:none;">
-      <input type="text" id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
-      <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('mes')">Guardar sección</button>
+    <div class="controls">
+      <button id="themeBtn">🌙 / ☀️</button>
+      <button id="editBtn">✏️ Editar</button>
+      <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
+      <button id="toggleListaBtn">🎵 Mostrar lista</button>
     </div>
-    <div id="mostrar-mes" style="margin-top:10px;"></div>
-  </div>
+  </header>
 
-  <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
+  <main>
+    <section class="card section">
+      <h2>🎵 Próximo domingo</h2>
+      <div id="proximo-domingo" class="card"></div>
+    </section>
 
-  <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();">
-    <div class="card">
-      <h2>Agregar canción</h2>
-      <input type="text" id="titulo" placeholder="Título de la canción" required />
-      <textarea id="acordes" placeholder="Acordes..."></textarea>
-      <textarea id="imagenes" placeholder="Links de imágenes (uno por línea)"></textarea>
-      <input type="text" id="audio" placeholder="Link de audio" />
-      <input type="text" id="youtube" placeholder="Link de YouTube" />
-      <button type="submit">Guardar canción</button>
-    </div>
-  </form>
+    <section class="card section">
+      <h2>🗓️ Repertorio mensual (crear/editar semanas)</h2>
 
-  <div id="lista-canciones" style="display:none;"></div>
+      <div style="margin-bottom:8px;" class="search-row">
+        <label style="display:flex;align-items:center;gap:8px;">
+          Mes:
+          <input type="month" id="select-month" />
+        </label>
+        <div class="note-small">Selecciona un mes para ver/editar las semanas de ese mes</div>
+      </div>
 
-  <footer>
-    <p id="contador">🎵 Total de canciones: 0</p>
-    <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
-  </footer> 
-</main>
+      <div id="editor-mes" style="display:none;">
+        <p><strong>Agregar / actualizar semana (fecha del domingo)</strong></p>
+        <label>Fecha (domingo): <input type="date" id="input-fecha" /></label>
+        <label>Canciones (una por línea):</label>
+        <textarea id="input-canciones" placeholder="Título de la canción — una por línea"></textarea>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button id="btnGuardarSemana">💾 Guardar semana</button>
+          <button id="btnEliminarSemana">🗑️ Eliminar semana</button>
+          <button id="btnCrearMes" title="Crea todos los domingos del mes como semanas vacías">🗓️ Crear semanas del mes</button>
+        </div>
+        <p class="nota">La fecha debe corresponder a un domingo. El PIN requerido para editar es <strong>2025</strong>.</p>
+      </div>
 
+      <div id="lista-mes"></div>
+    </section>
+
+    <section class="card section">
+      <h2>📜 Historial de domingos anteriores</h2>
+      <div id="historial"></div>
+    </section>
+
+    <footer>
+      <div class="footer-row">
+        <p id="contador">🎵 Total de semanas guardadas: 0</p>
+        <div>
+          <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
+        </div>
+      </div>
+    </footer>
+  </main>
+
+<!-- Firebase + App script -->
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+/* ==========================
+   App integrado (un archivo)
+   ========================== */
 
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import {
+  getFirestore, collection, doc, setDoc, getDoc, getDocs,
+  query, where, orderBy, addDoc, serverTimestamp, deleteDoc
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
+/* ---------- CONFIG FIREBASE (usa tu config actual) ---------- */
 const firebaseConfig = {
   apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
   authDomain: "repertorioworship.firebaseapp.com",
@@ -279,169 +132,361 @@ const firebaseConfig = {
   messagingSenderId: "493050453266",
   appId: "1:493050453266:web:cf07ce9fbb471122f167cb"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+
+/* ---------- UTILIDADES DE FECHA ---------- */
+function formatDateISO(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth()+1).padStart(2,'0');
+  const d = String(date.getDate()).padStart(2,'0');
+  return `${y}-${m}-${d}`;
+}
+function getLastSundayISO() {
+  const d = new Date();
+  const diff = (d.getDay() + 7 - 0) % 7; // 0 = Sunday
+  d.setDate(d.getDate() - diff);
+  return formatDateISO(d);
+}
+function getNextSundayISO() {
+  const d = new Date();
+  const daysUntilNextSunday = ((7 - d.getDay()) % 7) || 7;
+  d.setDate(d.getDate() + daysUntilNextSunday);
+  return formatDateISO(d);
+}
+function isMondayLocal() { return (new Date()).getDay() === 1; }
+function monthKeyFromISO(isoDate) { return isoDate.slice(0,7); } // YYYY-MM
+function escapeHtml(str){
+  return String(str || '').replace(/[&<>"']/g, s=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[s]));
+}
+
+/* ---------- ELEMENTOS UI ---------- */
+const proximoDiv = document.getElementById('proximo-domingo');
+const listaMesDiv = document.getElementById('lista-mes');
+const historialDiv = document.getElementById('historial');
+const contadorEl = document.getElementById('contador');
+
+const editBanner = document.querySelector('.edit-banner');
+const editorMes = document.getElementById('editor-mes');
+const btnGuardarSemana = document.getElementById('btnGuardarSemana');
+const btnEliminarSemana = document.getElementById('btnEliminarSemana');
+const btnCrearMes = document.getElementById('btnCrearMes');
+const inputFecha = document.getElementById('input-fecha');
+const inputCanciones = document.getElementById('input-canciones');
+const editBtn = document.getElementById('editBtn');
+const themeBtn = document.getElementById('themeBtn');
+const toggleListaBtn = document.getElementById('toggleListaBtn');
+const selectMonth = document.getElementById('select-month');
+
 let modoEdicion = false;
-let cancionesCache = [];
-let debounceTimer;
-let cancionesVisible = false;
+let semanasCache = [];
+let mostrarLista = false;
 
-function normalizar(texto){ return texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase(); }
-function resaltar(texto, busqueda){ const regex = new RegExp(`(${busqueda})`, "gi"); return texto.replace(regex, "<mark>$1</mark>"); }
+/* ---------- Firestore - operaciones ---------- */
+// Colección 'semanas' (id = 'YYYY-MM-DD') y 'registro' (id = 'YYYY-MM-DD')
 
-async function cargarCanciones() {
-  const contenedor = document.getElementById("lista-canciones");
-  contenedor.innerHTML = "";
-  const searchInput = document.getElementById("search").value;
-  const search = normalizar(searchInput);
+async function guardarSemana(dateISO, cancionesArr) {
+  if (!dateISO) throw new Error('Fecha vacía');
+  const d = new Date(dateISO + 'T00:00:00');
+  if (d.getDay() !== 0) throw new Error('La fecha seleccionada no es domingo');
+  const docRef = doc(db, 'semanas', dateISO);
+  await setDoc(docRef, {
+    date: dateISO,
+    monthKey: monthKeyFromISO(dateISO),
+    canciones: cancionesArr,
+    createdBy: 'web-editor',
+    createdAt: serverTimestamp()
+  }, { merge: true });
+}
 
-  cancionesCache.forEach((data)=>{
-    if(!normalizar(data.titulo).includes(search)) return;
-    const div = document.createElement("div");
-    div.className = "card";
-    div.innerHTML = `
-      <h2 contenteditable="${modoEdicion}">${modoEdicion ? data.titulo : resaltar(data.titulo, searchInput)}</h2>
-      <p contenteditable="${modoEdicion}">${modoEdicion ? (data.acordes || "") : data.acordes || ""}</p>
-      <textarea style="display:${modoEdicion ? "block" : "none"}" placeholder="Links de imágenes (uno por línea)">${(data.imagenes || []).join("\n")}</textarea>
-      <input style="display:${modoEdicion ? "block" : "none"}" value="${data.audio || ""}" placeholder="Link de audio">
-      <input style="display:${modoEdicion ? "block" : "none"}" value="${data.youtube || ""}" placeholder="Link de YouTube">
-      ${(data.imagenes || []).map(url => `<img src="${url}" width="100%" style="margin-top:10px;border-radius:8px;">`).join('')}
-      ${!modoEdicion && data.audio ? `<a class="link-btn" href="${data.audio}" target="_blank">🎧 Escuchar grabación</a>` : ""}
-      ${!modoEdicion && data.youtube ? `<a class="link-btn" href="${data.youtube}" target="_blank">📺 Ver en YouTube</a>` : ""}
-      ${modoEdicion ? `<button onclick="guardarEdicion('${data.id}', this)">💾 Guardar cambios</button>` : ""}
+async function eliminarSemana(dateISO) {
+  await deleteDoc(doc(db, 'semanas', dateISO));
+}
+
+async function cargarSemanasDeMes(monthKey) {
+  const q = query(collection(db, 'semanas'), where('monthKey', '==', monthKey), orderBy('date', 'asc'));
+  const snap = await getDocs(q);
+  const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  semanasCache = arr;
+  renderListaMes(arr, monthKey);
+  contadorEl.textContent = `🎵 Total de semanas guardadas: ${arr.length}`;
+}
+
+function renderListaMes(arr, monthKey) {
+  if (!arr.length) {
+    listaMesDiv.innerHTML = `<p>No hay semanas guardadas para <strong>${monthKey}</strong>.</p>`;
+    return;
+  }
+  listaMesDiv.innerHTML = arr.map(w => {
+    const cancionesHtml = (w.canciones || []).map(c => `<li>${escapeHtml(c)}</li>`).join('');
+    const playedTag = w.played ? `<span class="small mark-played">Tocada</span>` : '';
+    return `
+      <div class="week-card">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+          <strong>${w.date}</strong>
+          <div>${playedTag}</div>
+        </div>
+        <ul>${cancionesHtml}</ul>
+        <div class="week-controls">
+          <button class="small" data-edit="${w.date}">✏️ Editar</button>
+          <button class="small" data-copy="${w.date}">📋 Copiar</button>
+        </div>
+      </div>
     `;
-    contenedor.appendChild(div);
+  }).join('');
+  // listeners
+  listaMesDiv.querySelectorAll('[data-edit]').forEach(btn=>{
+    btn.addEventListener('click', (e)=>{
+      const date = e.currentTarget.dataset.edit;
+      const week = semanasCache.find(s=>s.date===date);
+      if(!week) return;
+      inputFecha.value = week.date;
+      inputCanciones.value = (week.canciones || []).join('\n');
+      editorMes.scrollIntoView({behavior:'smooth'});
+    });
   });
-
-  const searchActive = search.length > 0;
-  contenedor.style.display = cancionesVisible || searchActive ? "block" : "none";
-  document.getElementById("contador").textContent = `🎵 Total de canciones: ${cancionesCache.length}`;
-}
-
-async function guardarEdicion(id, btn){
-  const card = btn.closest(".card");
-  const [tituloEl, acordesEl, imagenesEl, audioEl, youtubeEl] = card.querySelectorAll("h2, p, textarea, input:nth-of-type(1), input:nth-of-type(2)");
-  const titulo = tituloEl.innerText.trim();
-  const acordes = acordesEl.innerText.trim();
-  const imagenes = imagenesEl.value.trim().split("\n").filter(x=>x);
-  const audio = audioEl.value.trim();
-  const youtube = youtubeEl.value.trim();
-  await updateDoc(doc(db, "canciones", id), {titulo, acordes, imagenes, audio, youtube});
-  alert("✅ Cambios guardados");
-  cargarCanciones();
-}
-
-async function inicializarCanciones(){
-  onSnapshot(collection(db, "canciones"), (snapshot)=>{
-    cancionesCache = snapshot.docs.map(d=>({id:d.id, ...d.data()}));
-    cargarCanciones();
+  listaMesDiv.querySelectorAll('[data-copy]').forEach(btn=>{
+    btn.addEventListener('click', async (e)=>{
+      const date = e.currentTarget.dataset.copy;
+      const week = semanasCache.find(s=>s.date===date);
+      if(!week) return;
+      try {
+        await navigator.clipboard.writeText((week.canciones||[]).join('\n'));
+        alert('✅ Canciones copiadas al portapapeles');
+      } catch(e){ alert('❌ No se pudo copiar.'); }
+    });
   });
 }
 
-async function agregarCancion(){
-  const titulo = document.getElementById("titulo").value.trim();
-  const acordes = document.getElementById("acordes").value.trim();
-  const youtube = document.getElementById("youtube").value.trim();
-  const imagenes = document.getElementById("imagenes").value.trim().split("\n").filter(x=>x);
-  const audio = document.getElementById("audio").value.trim();
-  if(!titulo) return alert("El título es obligatorio");
-  await addDoc(collection(db, "canciones"), {titulo, acordes, youtube, imagenes, audio});
-  document.getElementById("formulario").reset();
-  document.getElementById("formulario").style.display = "none";
+/* ---------- Próximo domingo: mostrar y acciones ---------- */
+async function mostrarProximoDomingo() {
+  const next = getNextSundayISO();
+  const semanaSnap = await getDoc(doc(db, 'semanas', next));
+  if (!semanaSnap.exists()) {
+    proximoDiv.innerHTML = `<p>No hay repertorio creado para el próximo domingo (${next}).</p>
+      ${modoEdicion ? `<p>Puedes crear la semana con fecha ${next} desde el panel de edición.</p>` : ''}`;
+    return;
+  }
+  const data = semanaSnap.data();
+  const cancionesHtml = (data.canciones || []).map(c => `<li>${escapeHtml(c)}</li>`).join('');
+  proximoDiv.innerHTML = `
+    <h3>${data.date}</h3>
+    <ul>${cancionesHtml}</ul>
+    <div style="margin-top:10px">
+      ${modoEdicion ? `<button id="editarProximo" class="small">✏️ Editar próximo domingo</button>` : ''}
+      <button id="marcarTocado" class="small">✅ Marcar como tocado (mover a historial)</button>
+    </div>
+  `;
+  const editarBtn = document.getElementById('editarProximo');
+  if (editarBtn) {
+    editarBtn.addEventListener('click', ()=>{
+      inputFecha.value = data.date;
+      inputCanciones.value = (data.canciones || []).join('\n');
+      editorMes.scrollIntoView({behavior:'smooth'});
+    });
+  }
+  document.getElementById('marcarTocado').addEventListener('click', async ()=>{
+    const confirmMsg = confirm('¿Confirmas que este repertorio se tocó y quieres guardarlo en el historial?');
+    if(!confirmMsg) return;
+    await registrarDomingoPasadoManual(data.date);
+    await refreshAll();
+  });
 }
 
-function debounceBuscar(){ clearTimeout(debounceTimer); debounceTimer = setTimeout(cargarCanciones, 300); }
+/* ---------- Historial ---------- */
+async function cargarHistorial() {
+  const q = query(collection(db, 'registro'), orderBy('fecha', 'desc'));
+  const snap = await getDocs(q);
+  const arr = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  historialDiv.innerHTML = arr.length ? arr.map(r => {
+    const cancionesHtml = (r.canciones || []).map(c => `<li>${escapeHtml(c)}</li>`).join('');
+    return `<div class="week-card"><strong>${r.fecha}</strong><ul>${cancionesHtml}</ul></div>`;
+  }).join('') : '<p>No hay registros aún.</p>';
+}
 
-function toggleDark(){
-  document.body.classList.toggle("dark");
-  if(document.body.classList.contains("dark")){
-    localStorage.setItem("theme", "dark");
+/* ---------- Registro automático (lunes) ---------- */
+async function registrarDomingoPasado() {
+  if (!isMondayLocal()) return;
+  const last = getLastSundayISO();
+  const regDoc = await getDoc(doc(db, 'registro', last));
+  if (regDoc.exists()) return;
+  const semanaSnap = await getDoc(doc(db, 'semanas', last));
+  if (!semanaSnap.exists()) return;
+  const data = semanaSnap.data();
+  await setDoc(doc(db, 'registro', last), {
+    fecha: last,
+    canciones: data.canciones || [],
+    creadoEn: serverTimestamp()
+  });
+  await setDoc(doc(db, 'semanas', last), { played: true }, { merge: true });
+  console.log('✅ Domingo pasado registrado automáticamente:', last);
+}
+
+async function registrarDomingoPasadoManual(dateISO) {
+  const last = dateISO;
+  const regDoc = await getDoc(doc(db, 'registro', last));
+  if (regDoc.exists()) {
+    alert('Ya existe un registro para esa fecha.');
+    return;
+  }
+  const semanaSnap = await getDoc(doc(db, 'semanas', last));
+  if (!semanaSnap.exists()) { alert('No existe la semana seleccionada.'); return; }
+  const data = semanaSnap.data();
+  await setDoc(doc(db, 'registro', last), {
+    fecha: last,
+    canciones: data.canciones || [],
+    creadoEn: serverTimestamp()
+  });
+  await setDoc(doc(db, 'semanas', last), { played: true }, { merge: true });
+  alert('✅ Registrado en historial.');
+}
+
+/* ---------- Botones y eventos UI ---------- */
+editBtn.addEventListener('click', ()=> {
+  if (!modoEdicion) {
+    const pin = prompt('Introduce el PIN para editar:');
+    if (pin === '2025') {
+      modoEdicion = true;
+      editBanner.style.display = 'block';
+      editorMes.style.display = 'block';
+      editBtn.textContent = '🔒 Salir edición';
+      refreshAll();
+      alert('✏️ Modo edición activado');
+    } else if (pin) {
+      alert('PIN incorrecto');
+    }
   } else {
-    localStorage.setItem("theme", "light");
+    modoEdicion = false;
+    editBanner.style.display = 'none';
+    editorMes.style.display = 'none';
+    editBtn.textContent = '✏️ Editar';
+    refreshAll();
   }
-}
+});
 
-function toggleFormulario(){ const form = document.getElementById("formulario"); form.style.display = form.style.display === "none" ? "block" : "none"; }
+themeBtn.addEventListener('click', ()=>{
+  document.body.classList.toggle('dark');
+  const saved = document.body.classList.contains('dark') ? 'dark' : 'light';
+  localStorage.setItem('theme', saved);
+});
 
-async function cargarSeccion(tipo){
-  const contenedor = document.getElementById(`contenedor-${tipo}`);
-  const mostrar = document.getElementById(`mostrar-${tipo}`);
-  const docRef = doc(db,"secciones",tipo);
-  const snap = await getDoc(docRef);
-  if(snap.exists()){
-    const data = snap.data();
-    mostrar.innerHTML = `<h3>${data.titulo || ""}</h3><ul>${(data.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>`;
-  } else { mostrar.innerHTML = "<p>Aún no hay información guardada.</p>"; }
-  contenedor.style.display = modoEdicion ? "block" : "none";
-}
-
-async function guardarSeccion(tipo){
-  const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
-  const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").filter(x=>x);
-  await setDoc(doc(db,"secciones",tipo), {titulo, canciones});
-  alert("✅ Sección guardada");
-  cargarSeccion(tipo);
-}
-
-function activarEdicion(){
-  const addBtn = document.getElementById("btnAgregar");
-  if(!modoEdicion){
-    const pin = prompt("Introduce el PIN para editar:");
-    if(pin==="2025"){
-      modoEdicion=true;
-      document.querySelector(".edit-banner").style.display="block";
-      addBtn.style.display="block";
-      alert("✏️ Modo edición activado");
-    }else if(pin){ alert("PIN incorrecto"); return; }
-  }else{
-    modoEdicion=false;
-    document.querySelector(".edit-banner").style.display="none";
-    addBtn.style.display="none";
-    alert("🔒 Modo edición desactivado");
+btnGuardarSemana.addEventListener('click', async ()=>{
+  try {
+    const dateISO = inputFecha.value;
+    const cancionesArr = inputCanciones.value.split('\n').map(s=>s.trim()).filter(Boolean);
+    if(!dateISO) return alert('Selecciona la fecha del domingo');
+    const d = new Date(dateISO + 'T00:00:00');
+    if (d.getDay() !== 0) return alert('La fecha seleccionada debe ser un domingo');
+    await guardarSemana(dateISO, cancionesArr);
+    alert('✅ Semana guardada');
+    inputFecha.value = '';
+    inputCanciones.value = '';
+    await cargarSemanasDeMes(monthKeyFromISO(dateISO));
+    await refreshAll();
+  } catch(e) {
+    alert('❌ Error: ' + (e.message || e));
   }
-  cargarSeccion("semana");
-  cargarSeccion("mes");
-  cargarCanciones();
-}
+});
 
-function toggleCanciones() {
-  cancionesVisible = !cancionesVisible;
-  document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar lista" : "🎵 Mostrar lista";
-  cargarCanciones();
-}
+btnEliminarSemana.addEventListener('click', async ()=>{
+  const fecha = inputFecha.value;
+  if(!fecha) return alert('Selecciona la semana para eliminar');
+  if (!confirm('¿Eliminar la semana ' + fecha + ' ? Esta acción quitará el documento semana.')) return;
+  await eliminarSemana(fecha);
+  alert('🗑️ Semana eliminada');
+  inputFecha.value = '';
+  inputCanciones.value = '';
+  await cargarSemanasDeMes(monthKeyFromISO(fecha));
+  await refreshAll();
+});
 
-window.onload=()=>{
-  inicializarCanciones();
-  cargarSeccion("semana");
-  cargarSeccion("mes");
+// Toggle visible lista mensual
+toggleListaBtn.addEventListener('click', ()=>{
+  mostrarLista = !mostrarLista;
+  toggleListaBtn.textContent = mostrarLista ? '🎵 Ocultar lista' : '🎵 Mostrar lista';
+  document.getElementById('lista-mes').style.display = mostrarLista ? 'block' : 'none';
+});
 
-  // aplicar preferencia guardada de tema
-  const savedTheme = localStorage.getItem("theme");
-  if(savedTheme === "dark"){
-    document.body.classList.add("dark");
+// Select month change
+selectMonth.addEventListener('change', async (e)=>{
+  const val = e.target.value; // "YYYY-MM"
+  if (!val) return;
+  await cargarSemanasDeMes(val);
+  // mostrar lista automáticamente
+  mostrarLista = true;
+  document.getElementById('lista-mes').style.display = 'block';
+  toggleListaBtn.textContent = mostrarLista ? '🎵 Ocultar lista' : '🎵 Mostrar lista';
+});
+
+// Crear todas las semanas (domingos) del mes seleccionado como documentos vacíos
+btnCrearMes.addEventListener('click', async ()=>{
+  if (!modoEdicion) return alert('Activa el modo edición para crear semanas del mes.');
+  const month = selectMonth.value;
+  if (!month) return alert('Selecciona un mes primero.');
+  const [y, m] = month.split('-').map(Number);
+  const generated = [];
+  const d = new Date(y, m-1, 1);
+  while (d.getMonth() === (m-1)) {
+    if (d.getDay() === 0) { // domingo
+      const iso = formatDateISO(d);
+      generated.push(iso);
+    }
+    d.setDate(d.getDate() + 1);
   }
+  if (!generated.length) return alert('No se encontraron domingos en ese mes (imposible).');
+  const confirmMsg = confirm(`Se crearán ${generated.length} semanas (domingos) para ${month}. ¿Continuar?`);
+  if (!confirmMsg) return;
+  try {
+    for (const iso of generated) {
+      // crea semana sólo si no existe
+      const snap = await getDoc(doc(db, 'semanas', iso));
+      if (!snap.exists()) {
+        await guardarSemana(iso, []);
+      }
+    }
+    alert('✅ Semanas del mes creadas (las que faltaban).');
+    await cargarSemanasDeMes(month);
+    await refreshAll();
+  } catch(e) {
+    alert('❌ Error creando semanas: ' + (e.message || e));
+  }
+});
 
-  const searchInput = document.getElementById("search");
-  const clearBtn = document.getElementById("clearSearch");
-  searchInput.addEventListener("input", ()=>{
-    debounceBuscar();
-    clearBtn.style.display = searchInput.value ? "block" : "none";
-  });
-  clearBtn.addEventListener("click", ()=>{
-    searchInput.value = "";
-    clearBtn.style.display = "none";
-    cargarCanciones();
-  });
+/* ---------- Refresh general ---------- */
+async function refreshAll() {
+  await mostrarProximoDomingo();
+  await cargarHistorial();
+  const today = new Date();
+  const currentMonthKey = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+  // if a month is selected, load that instead
+  const selected = selectMonth.value || currentMonthKey;
+  await cargarSemanasDeMes(selected);
 }
 
-window.agregarCancion=agregarCancion;
-window.guardarEdicion=guardarEdicion;
-window.toggleDark=toggleDark;
-window.toggleFormulario=toggleFormulario;
-window.activarEdicion=activarEdicion;
-window.guardarSeccion=guardarSeccion;
-window.toggleCanciones=toggleCanciones;
+/* ---------- Inicialización al cargar la página ---------- */
+window.addEventListener('load', async () => {
+  const savedTheme = localStorage.getItem('theme');
+  if (savedTheme === 'dark') document.body.classList.add('dark');
+
+  // Si hoy es lunes, intentar registrar el domingo pasado (automático)
+  try {
+    if (isMondayLocal()) {
+      await registrarDomingoPasado();
+    }
+  } catch(e){ console.error('Error al registrar domingo automáticamente:', e); }
+
+  // colocar month selector al mes actual por defecto
+  const today = new Date();
+  const ym = `${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}`;
+  selectMonth.value = ym;
+
+  await refreshAll();
+});
+
+/* ---------- Helpers Firestore missing imports (getDoc used inside) ---------- */
+/* We import getDoc lazily here to avoid reimport lines at top (but keep modular). */
+import { getDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+
 </script>
 </body>
 </html>
