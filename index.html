@@ -27,18 +27,16 @@ input,textarea{width:100%;padding:10px;margin-bottom:10px;border-radius:8px;bord
 #clearSearch{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:var(--accent);font-size:1.2rem;display:none}
 .link-btn{display:inline-block;background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none}
 .edit-banner{position:sticky;top:0;background:var(--edit-bg);padding:8px;text-align:center;font-weight:bold;display:none;z-index:50}
-footer{text-align:center;margin-top:24px;padding:16px;display:flex;flex-direction:column;gap:8px;align-items:center}
+footer{text-align:center;margin-top:24px;padding:16px}
 table{width:100%;border-collapse:collapse;margin-top:8px}
 th,td{border:1px solid #ccc;padding:8px;text-align:center}
-th{background:var(--primary);color:#fff}
+th{background:var(--accent);color:#fff}
 ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
-.fechas-box{min-width:180px;text-align:left}
-.small {font-size:0.9rem;padding:4px 6px;border-radius:6px}
-.modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.6);justify-content:center;align-items:center;z-index:100}
-.modal-content{background:#fff;padding:20px;border-radius:10px;max-width:400px;width:90%;max-height:80%;overflow:auto}
-.modal-content h3{margin-top:0}
-.modal-content ul{list-style:none;padding:0;margin:0}
-.modal-content button{margin-top:12px}
+.fechas-box{min-width:180px}
+.small {font-size:0.9rem;padding:6px 8px;border-radius:6px}
+.modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);display:none;justify-content:center;align-items:center;z-index:200}
+.modal-content{background:#fff;color:#000;padding:20px;border-radius:12px;max-height:80%;overflow-y:auto;min-width:250px}
+.modal-content.dark{background:#1e1e1e;color:#f0f4f8}
 </style>
 </head>
 <body>
@@ -115,19 +113,18 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
     </table>
   </div>
 
-  <!-- Modal fechas -->
-  <div id="modal-fechas" class="modal">
-    <div class="modal-content">
+  <div id="modal-fechas" class="modal-bg" onclick="cerrarModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
       <h3>Fechas de la canción</h3>
-      <ul id="lista-todas-fechas"></ul>
+      <ul id="lista-fechas"></ul>
       <button onclick="cerrarModal()">Cerrar</button>
     </div>
   </div>
 
   <footer>
     <p id="contador">🎵 Total de canciones: 0</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button onclick="window.scrollTo({top:0,behavior:'smooth'})">⬆️ Volver al inicio</button>
+    <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+      <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
       <button onclick="toggleRegistro()">📊 Registro de canciones</button>
     </div>
   </footer>
@@ -149,18 +146,12 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let modoEdicion=false;
-let cancionesCache=[];
-let registroCache={};
-let debounceTimer;
-let cancionesVisible=false;
-let ordenActual={campo:'titulo',sentido:'desc'};
+let modoEdicion=false, cancionesCache=[], registroCache={}, debounceTimer, cancionesVisible=false, ordenActual={campo:'titulo', sentido:'desc'};
 
-/* Utilidades */
-function normalizar(text){return (text||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
-function resaltar(text,q){if(!q) return text; try{const r=new RegExp(`(${q})`,"gi"); return text.replace(r,"<mark>$1</mark>");}catch(e){return text;}}
+function normalizar(text){ return (text||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
+function resaltar(text,q){ if(!q) return text; try{const r=new RegExp(`(${q})`,"gi"); return text.replace(r,"<mark>$1</mark>");}catch(e){return text;}}
 
-/* --- CANCIONES --- */
+/* === Canciones === */
 async function inicializarCanciones(){
   onSnapshot(collection(db,"canciones"), snapshot=>{
     cancionesCache=snapshot.docs.map(d=>({id:d.id,...d.data()}));
@@ -173,15 +164,15 @@ function construirCard(d){
   const div=document.createElement("div");
   div.className="card";
   div.innerHTML=`
-    <h2 contenteditable="${modoEdicion}">${modoEdicion?d.titulo:resaltar(d.titulo,document.getElementById("search").value)}</h2>
-    <p contenteditable="${modoEdicion}">${modoEdicion?(d.acordes||""):(d.acordes||"")}</p>
+    <h2 contenteditable="${modoEdicion}">${modoEdicion?d.titulo:resaltar(d.titulo,document.getElementById('search').value)}</h2>
+    <p contenteditable="${modoEdicion}">${modoEdicion?d.acordes||"":d.acordes||""}</p>
     <textarea style="display:${modoEdicion?"block":"none"}" placeholder="Links de imágenes (uno por línea)">${(d.imagenes||[]).join("\n")}</textarea>
     <input style="display:${modoEdicion?"block":"none"}" value="${d.audio||""}" placeholder="Link de audio">
     <input style="display:${modoEdicion?"block":"none"}" value="${d.youtube||""}" placeholder="Link de YouTube">
     ${(d.imagenes||[]).map(u=>`<img src="${u}" width="100%" style="margin-top:8px;border-radius:8px;">`).join('')}
-    ${!modoEdicion && d.audio?`<a class="link-btn" href="${d.audio}" target="_blank">🎧 Escuchar</a>`:""}
-    ${!modoEdicion && d.youtube?`<a class="link-btn" href="${d.youtube}" target="_blank">📺 YouTube</a>`:""}
-    ${modoEdicion?`<div style="margin-top:8px"><button onclick="guardarEdicion('${d.id}',this)">💾 Guardar cambios</button></div>`:""}
+    ${!modoEdicion&&d.audio?`<a class="link-btn" href="${d.audio}" target="_blank">🎧 Escuchar</a>`:""}
+    ${!modoEdicion&&d.youtube?`<a class="link-btn" href="${d.youtube}" target="_blank">📺 YouTube</a>`:""}
+    ${modoEdicion?`<div style="margin-top:8px"><button onclick="guardarEdicion('${d.id}', this)">💾 Guardar cambios</button></div>`:""}
   `;
   return div;
 }
@@ -189,16 +180,15 @@ function construirCard(d){
 async function cargarCanciones(){
   const cont=document.getElementById("lista-canciones");
   cont.innerHTML="";
-  const q=document.getElementById("search").value||"";
-  const s=normalizar(q);
-  cancionesCache.forEach(d=>{if(!normalizar(d.titulo).includes(s)) return; cont.appendChild(construirCard(d));});
-  cont.style.display=cancionesVisible||s.length>0?"block":"none";
+  const q=normalizar(document.getElementById("search").value||"");
+  cancionesCache.forEach(d=>{if(normalizar(d.titulo).includes(q)) cont.appendChild(construirCard(d));});
+  cont.style.display=cancionesVisible||q.length>0?"block":"none";
   document.getElementById("contador").textContent=`🎵 Total de canciones: ${cancionesCache.length}`;
 }
 
 async function agregarCancion(){
   const titulo=document.getElementById("titulo").value.trim();
-  if(!titulo) return alert("El título es obligatorio");
+  if(!titulo)return alert("El título es obligatorio");
   await addDoc(collection(db,"canciones"),{
     titulo,
     acordes: document.getElementById("acordes").value.trim(),
@@ -213,25 +203,26 @@ async function agregarCancion(){
 async function guardarEdicion(id,btn){
   const card=btn.closest(".card");
   const [tituloEl,acordesEl,imagenesEl,audioEl,youtubeEl]=card.querySelectorAll("h2,p,textarea,input:nth-of-type(1),input:nth-of-type(2)");
-  await updateDoc(doc(db,"canciones",id),{
-    titulo:tituloEl.innerText.trim(),
-    acordes:acordesEl.innerText.trim(),
-    imagenes:imagenesEl.value.trim().split("\n").filter(x=>x),
-    audio:audioEl.value.trim(),
-    youtube:youtubeEl.value.trim()
-  });
+  const titulo=tituloEl.innerText.trim();
+  const acordes=acordesEl.innerText.trim();
+  const imagenes=imagenesEl.value.trim().split("\n").filter(x=>x);
+  const audio=audioEl.value.trim();
+  const youtube=youtubeEl.value.trim();
+  await updateDoc(doc(db,"canciones",id),{titulo,acordes,imagenes,audio,youtube});
   alert("✅ Cambios guardados");
 }
 
-/* --- SECCIONES --- */
+/* === Secciones semana/mes === */
 async function cargarSeccion(tipo){
-  const snap=await getDoc(doc(db,"secciones",tipo));
-  const cont=document.getElementById(`mostrar-${tipo}`);
-  if(snap.exists()){
-    const data=snap.data();
-    cont.innerHTML=`<h3>${data.titulo||""}</h3><ul>${(data.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>`;
-  }else cont.innerHTML="<p>Aún no hay información guardada.</p>";
-  document.getElementById(`contenedor-${tipo}`).style.display=modoEdicion?"block":"none";
+  try{
+    const snap=await getDoc(doc(db,"secciones",tipo));
+    const cont=document.getElementById(`mostrar-${tipo}`);
+    if(snap.exists()){
+      const data=snap.data();
+      cont.innerHTML=`<h3>${data.titulo||""}</h3><ul>${(data.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>`;
+    }else cont.innerHTML="<p>Aún no hay información guardada.</p>";
+    document.getElementById(`contenedor-${tipo}`).style.display=modoEdicion?"block":"none";
+  }catch(e){console.error("Error cargarSeccion:",e);}
 }
 async function guardarSeccion(tipo){
   const titulo=document.getElementById(`titulo-${tipo}`).value.trim();
@@ -241,7 +232,7 @@ async function guardarSeccion(tipo){
   cargarSeccion(tipo);
 }
 
-/* --- EDICIÓN --- */
+/* === Modo edición === */
 function activarEdicion(){
   const addBtn=document.getElementById("btnAgregar");
   if(!modoEdicion){
@@ -251,7 +242,7 @@ function activarEdicion(){
       document.querySelector(".edit-banner").style.display="block";
       addBtn.style.display="block";
       alert("✏️ Modo edición activado");
-    }else if(pin) alert("PIN incorrecto"); return;
+    }else if(pin){alert("PIN incorrecto");return;}
   }else{
     modoEdicion=false;
     document.querySelector(".edit-banner").style.display="none";
@@ -264,75 +255,43 @@ function activarEdicion(){
   cargarRegistro();
 }
 
-/* --- BÚSQUEDA --- */
-function debounceBuscar(){clearTimeout(debounceTimer);debounceTimer=setTimeout(cargarCanciones,300);}
+/* === Búsqueda === */
+function debounceBuscar(){clearTimeout(debounceTimer); debounceTimer=setTimeout(cargarCanciones,300);}
 
-/* --- UI Toggles --- */
-function toggleDark(){
-  document.body.classList.toggle("dark");
-  localStorage.setItem("theme",document.body.classList.contains("dark")?"dark":"light");
-}
-function toggleFormulario(){
-  const f=document.getElementById("formulario");
-  f.style.display=f.style.display==="none"?"block":"none";
-}
-function toggleCanciones(){
-  cancionesVisible=!cancionesVisible;
-  document.getElementById("toggleCancionesBtn").textContent=cancionesVisible?"🎵 Ocultar lista":"🎵 Mostrar lista";
-  cargarCanciones();
-}
+/* === Toggles UI === */
+function toggleDark(){document.body.classList.toggle("dark");localStorage.setItem("theme",document.body.classList.contains("dark")?"dark":"light");}
+function toggleFormulario(){const f=document.getElementById("formulario");f.style.display=f.style.display==="none"?"block":"none";}
+function toggleCanciones(){cancionesVisible=!cancionesVisible;document.getElementById("toggleCancionesBtn").textContent=cancionesVisible?"🎵 Ocultar lista":"🎵 Mostrar lista";cargarCanciones();}
 
-/* --- REGISTRO --- */
+/* === Registro canciones (última fecha + ver más) === */
 async function cargarRegistro(){
   registroCache={};
-  const snap=await getDocs(collection(db,"registro"));
-  snap.forEach(d=>registroCache[d.id]=d.data());
-
-  const combinado=cancionesCache.map(c=>{
-    const r=registroCache[c.id]||{veces:0,fechas:[]};
-    return {id:c.id,titulo:c.titulo||"Sin título",veces:Number(r.veces||0),fechas:Array.isArray(r.fechas)?r.fechas:[]};
-  });
-
+  try{(await getDocs(collection(db,"registro"))).forEach(d=>{registroCache[d.id]=d.data();});}catch(e){console.warn(e);}
+  const combinado=cancionesCache.map(c=>{const r=registroCache[c.id]||{veces:0,fechas:[]};return{id:c.id,titulo:c.titulo||"Sin título",veces:Number(r.veces||0),fechas:Array.isArray(r.fechas)?r.fechas:[]};});
   combinado.sort((a,b)=>{
-    const campo=ordenActual.campo;
-    const sentido=ordenActual.sentido==="asc"?1:-1;
-    if(campo==="veces") return (a.veces-b.veces)*sentido;
-    if(campo==="ultima"){
-      const da=a.fechas.length?Date.parse(a.fechas[a.fechas.length-1]):0;
-      const dbt=b.fechas.length?Date.parse(b.fechas[b.fechas.length-1]):0;
-      return (da-dbt)*sentido;
-    }
+    const campo=ordenActual.campo, sentido=ordenActual.sentido==='asc'?1:-1;
+    if(campo==='veces') return (a.veces-b.veces)*sentido;
+    if(campo==='ultima'){const da=a.fechas.length?Date.parse(a.fechas[a.fechas.length-1]):0; const dbt=b.fechas.length?Date.parse(b.fechas[b.fechas.length-1]):0; return (da-dbt)*sentido;}
     return a.titulo.localeCompare(b.titulo)*sentido;
   });
-
   const tbody=document.querySelector("#tabla-registro tbody");
   tbody.innerHTML="";
   combinado.forEach(r=>{
-    let ultFecha=r.fechas.length?r.fechas[r.fechas.length-1]:"-";
-    const verMasBtn=r.fechas.length>1?` <button class="small" onclick="verTodasFechas('${r.id}')">Ver más</button>`:"";
+    const ultimaFecha=r.fechas.length?r.fechas[r.fechas.length-1]:"-";
     const tr=document.createElement("tr");
     tr.innerHTML=`
       <td style="text-align:left">${r.titulo}</td>
       <td contenteditable="${modoEdicion}">${r.veces}</td>
-      <td>${ultFecha}${verMasBtn}</td>
-      <td>${modoEdicion?`<button onclick="borrarRegistro('${r.id}')">🗑️ Borrar registro</button> <button onclick="guardarRegistro('${r.id}',this)">💾 Guardar</button>`:""}</td>
+      <td>
+        ${ultimaFecha}
+        ${r.fechas.length>1?` <button class="small" onclick="verMasFechas('${r.id}')">Ver más</button>`:""}
+        ${modoEdicion?`<div style="margin-top:6px"><button class="small" onclick="agregarFecha('${r.id}')">➕ Añadir fecha (hoy)</button></div>`:""}
+      </td>
+      <td>${modoEdicion?`<button onclick="borrarRegistro('${r.id}')">🗑️ Borrar registro</button> <button onclick="guardarRegistro('${r.id}', this)">💾 Guardar</button>`:""}</td>
     `;
     tbody.appendChild(tr);
   });
 }
-
-async function verTodasFechas(id){
-  const data=registroCache[id]||{fechas:[]};
-  const ul=document.getElementById("lista-todas-fechas");
-  ul.innerHTML="";
-  data.fechas.forEach(f=>{
-    const li=document.createElement("li");
-    li.textContent=f;
-    ul.appendChild(li);
-  });
-  document.getElementById("modal-fechas").style.display="flex";
-}
-function cerrarModal(){document.getElementById("modal-fechas").style.display="none";}
 
 async function agregarFecha(id,fecha){
   const hoy=fecha?fecha:new Date().toISOString().split("T")[0];
@@ -343,54 +302,36 @@ async function agregarFecha(id,fecha){
   await setDoc(ref,{veces:(Number(data.veces)||0)+1,fechas:nuevas});
   await cargarRegistro();
 }
-async function borrarRegistro(id){
-  if(!confirm("¿Seguro que quieres borrar el registro completo?")) return;
-  await setDoc(doc(db,"registro",id),{veces:0,fechas:[]});
-  await cargarRegistro();
-}
-async function guardarRegistro(id,btn){
-  const row=btn.closest("tr");
-  const cells=row.querySelectorAll("td");
-  const veces=parseInt(cells[1].innerText.trim())||0;
-  const ref=doc(db,"registro",id);
-  const snap=await getDoc(ref);
-  const data=snap.exists()?snap.data():{fechas:[]};
-  await setDoc(ref,{veces,fechas:Array.isArray(data.fechas)?data.fechas:[]});
-  alert("✅ Registro guardado");
-  await cargarRegistro();
-}
-function setOrden(campo){
-  if(ordenActual.campo===campo) ordenActual.sentido=ordenActual.sentido==="asc"?"desc":"asc";
-  else {ordenActual.campo=campo;ordenActual.sentido="desc";}
-  cargarRegistro();
-}
 
-/* --- BOOT --- */
-window.addEventListener("load",()=>{
+async function borrarRegistro(id){if(!confirm("¿Seguro que quieres borrar el registro completo?"))return;await setDoc(doc(db,"registro",id),{veces:0,fechas:[]});cargarRegistro();}
+async function guardarRegistro(id,btn){const row=btn.closest("tr"); const veces=parseInt(row.cells[1].innerText.trim())||0; const ref=doc(db,"registro",id); const snap=await getDoc(ref); const data=snap.exists()?snap.data():{fechas:[]}; await setDoc(ref,{veces,fechas:Array.isArray(data.fechas)?data.fechas:[]}); alert("✅ Registro guardado"); cargarRegistro();}
+
+/* Modal ver más fechas */
+function verMasFechas(id){
+  const modal=document.getElementById("modal-fechas");
+  const lista=document.getElementById("lista-fechas");
+  lista.innerHTML="";
+  (registroCache[id].fechas||[]).forEach(f=>{const li=document.createElement("li");li.innerText=f; lista.appendChild(li);});
+  if(document.body.classList.contains("dark")) modal.querySelector(".modal-content").classList.add("dark"); else modal.querySelector(".modal-content").classList.remove("dark");
+  modal.style.display="flex";
+}
+function cerrarModal(){document.getElementById("modal-fechas").style.display="none";}
+
+/* Orden */
+function setOrden(campo){if(ordenActual.campo===campo) ordenActual.sentido=ordenActual.sentido==='asc'?'desc':'asc'; else {ordenActual.campo=campo;ordenActual.sentido='desc';} cargarRegistro();}
+
+/* Boot */
+window.addEventListener('load',()=>{
   if(localStorage.getItem("theme")==="dark") document.body.classList.add("dark");
-  const searchInput=document.getElementById("search");
-  const clearBtn=document.getElementById("clearSearch");
-  searchInput.addEventListener("input",()=>{debounceBuscar();clearBtn.style.display=searchInput.value?"block":"none";});
-  clearBtn.addEventListener("click",()=>{searchInput.value="";clearBtn.style.display="none";cargarCanciones();});
-
-  inicializarCanciones();
-  cargarSeccion("semana");
-  cargarSeccion("mes");
-
-  window.agregarCancion=agregarCancion;
-  window.guardarEdicion=guardarEdicion;
-  window.toggleDark=toggleDark;
-  window.toggleFormulario=toggleFormulario;
-  window.activarEdicion=activarEdicion;
-  window.guardarSeccion=guardarSeccion;
-  window.toggleCanciones=toggleCanciones;
-  window.toggleRegistro=async function(){const el=document.getElementById("registro-canciones");el.style.display=el.style.display==="block"?"none":"block";if(el.style.display==="block") await cargarRegistro();};
-  window.agregarFecha=agregarFecha;
-  window.borrarRegistro=borrarRegistro;
-  window.guardarRegistro=guardarRegistro;
-  window.setOrden=setOrden;
-  window.verTodasFechas=verTodasFechas;
-  window.cerrarModal=cerrarModal;
+  const searchInput=document.getElementById("search"), clearBtn=document.getElementById("clearSearch");
+  searchInput.addEventListener("input",()=>{debounceBuscar(); clearBtn.style.display=searchInput.value?"block":"none";});
+  clearBtn.addEventListener("click",()=>{searchInput.value=""; clearBtn.style.display="none"; cargarCanciones();});
+  inicializarCanciones(); cargarSeccion("semana"); cargarSeccion("mes");
+  window.agregarCancion=agregarCancion; window.guardarEdicion=guardarEdicion; window.toggleDark=toggleDark; window.toggleFormulario=toggleFormulario;
+  window.activarEdicion=activarEdicion; window.guardarSeccion=guardarSeccion; window.toggleCanciones=toggleCanciones;
+  window.toggleRegistro=async()=>{const el=document.getElementById("registro-canciones"); el.style.display=el.style.display==="block"?"none":"block"; if(el.style.display==="block") await cargarRegistro();};
+  window.agregarFecha=agregarFecha; window.borrarRegistro=borrarRegistro; window.guardarRegistro=guardarRegistro; window.setOrden=setOrden;
+  window.verMasFechas=verMasFechas; window.cerrarModal=cerrarModal;
 });
 </script>
 </body>
