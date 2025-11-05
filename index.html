@@ -16,7 +16,6 @@ header{background:var(--primary);color:#fff;padding:18px 20px;display:flex;justi
 .logo{display:flex;align-items:center;gap:12px}
 .logo img{height:56px;border-radius:8px}
 .controls{display:flex;gap:8px;align-items:center}
-.controls button{flex:1;min-width:40px}
 button{background:var(--accent);color:#fff;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700}
 button:hover{transform:scale(1.03)}
 main{max-width:900px;margin:18px auto;padding:12px}
@@ -28,24 +27,31 @@ input,textarea{width:100%;padding:10px;margin-bottom:10px;border-radius:8px;bord
 #clearSearch{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:var(--accent);font-size:1.2rem;display:none}
 .link-btn{display:inline-block;background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none}
 .edit-banner{position:sticky;top:0;background:var(--edit-bg);padding:8px;text-align:center;font-weight:bold;display:none;z-index:50}
-footer{text-align:center;margin-top:24px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px;flex-wrap:wrap}
+footer{text-align:center;margin-top:24px;padding:16px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
 table{width:100%;border-collapse:collapse;margin-top:8px}
 th,td{border:1px solid #ccc;padding:6px;text-align:center}
 th{background:var(--accent);color:#fff;cursor:pointer}
 ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
 .fechas-box{min-width:180px}
 .small {font-size:0.8rem;padding:4px 6px;border-radius:6px;margin-left:2px}
-#contadorFinal{font-weight:700;color:#555;margin-bottom:8px}
-@media(max-width:600px){.controls{flex-wrap:wrap}.controls button{flex:auto;min-width:45%}}
+.meta-line{font-size:0.9rem;color:#555;display:flex;gap:10px;align-items:center;margin-top:8px}
+.meta-line .plays, .meta-line .last{display:inline-block}
+.tocada-btn{background:#0077cc;padding:6px 8px;border-radius:6px;color:#fff;border:0;cursor:pointer;font-weight:700}
+.tocada-btn:hover{opacity:0.95}
+.counter-badge{background:rgba(255,255,255,0.12);padding:6px 10px;border-radius:10px;font-weight:700;margin-left:8px}
+.th-sortable{position:relative}
+.th-sortable .sort-ind{font-size:0.9rem;opacity:0.9;margin-left:6px}
 </style>
 </head>
 <body>
 <div class="edit-banner">✏️ Modo edición activo</div>
 
 <header>
-  <div class="logo">
+  <div class="logo" style="align-items:center">
     <img src="https://raw.githubusercontent.com/Lifebygrace/Repertorio-worship/main/logo.jpeg" alt="Logo" />
-    <h1>Repertorio Worship</h1>
+    <div>
+      <h1 style="margin:0;display:flex;align-items:center;gap:8px">Repertorio Worship</h1>
+    </div>
   </div>
   <div class="controls">
     <button onclick="toggleDark()">🌙 / ☀️</button>
@@ -104,25 +110,31 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
       <table id="tabla-registro">
         <thead>
           <tr>
-            <th onclick="setOrden('titulo')">Título</th>
-            <th onclick="setOrden('veces')">Veces tocada</th>
-            <th onclick="setOrden('ultima')">Última fecha</th>
+            <th class="th-sortable" onclick="setOrden('titulo')">Título <span class="sort-ind" id="sortTitulo"></span></th>
+            <th class="th-sortable" onclick="setOrden('veces')">Veces tocada <span class="sort-ind" id="sortVeces"></span></th>
+            <th class="th-sortable" onclick="setOrden('ultima')">Última fecha <span class="sort-ind" id="sortUltima"></span></th>
           </tr>
         </thead>
         <tbody></tbody>
       </table>
     </div>
   </div>
-</main>
 
-<footer>
-  <div id="contadorFinal">canciones totales 🎶: 0</div>
-  <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
-</footer>
+  <!-- Contador al final -->
+  <div id="contadorCanciones" style="text-align:center; font-size:0.9rem; color:#555; margin-top:24px;">
+    🎶 Canciones totales: 0
+  </div>
+
+  <footer>
+    <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
+  </footer>
+</main>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, onSnapshot, getDocs } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import {
+  getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, onSnapshot, getDocs
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
@@ -137,100 +149,52 @@ const db = getFirestore(app);
 
 let modoEdicion=false;
 let cancionesCache=[];
+let registroCache={};
+let debounceTimer;
+let cancionesVisible=false;
+let ordenActual={campo:'titulo',sentido:'desc'};
 
-/* === UTILIDADES === */
 function normalizar(t){return (t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
-function actualizarContador(){document.getElementById("contadorFinal").textContent = `canciones totales 🎶: ${cancionesCache.length}`;}
-function debounce(fn,delay){let t;return (...args)=>{clearTimeout(t); t=setTimeout(()=>fn(...args),delay);}}
+function resaltar(t,q){if(!q)return t;try{const r=new RegExp(`(${q})`,"gi");return t.replace(r,"<mark>$1</mark>")}catch(e){return t;}}
+function pad(n){return String(n).padStart(2,'0');}
+function isoToday(){const d=new Date();return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;}
+function isoToDisplay(iso){if(!iso) return '—';if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`;}const dt=new Date(iso);if(isNaN(dt.getTime())) return iso;return `${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${pad(dt.getFullYear())}`;}
 
-/* === CARGA CANCIONES === */
-function construirCard(d){
-  const div=document.createElement("div"); div.className="card";
-  div.innerHTML=`
-    <h2 contenteditable="${modoEdicion}">${d.titulo}</h2>
-    <p contenteditable="${modoEdicion}">${d.acordes||""}</p>
-    <textarea style="display:${modoEdicion?"block":"none"}">${(d.imagenes||[]).join("\n")}</textarea>
-    <input style="display:${modoEdicion?"block":"none"}" value="${d.audio||""}">
-    <input style="display:${modoEdicion?"block":"none"}" value="${d.youtube||""}">
-    ${(d.imagenes||[]).map(u=>`<img src="${u}" width="100%" style="margin-top:8px;border-radius:8px;">`).join('')}
-    ${!modoEdicion && d.audio?`<a class="link-btn" href="${d.audio}" target="_blank">🎧 Escuchar</a>`:""}
-    ${!modoEdicion && d.youtube?`<a class="link-btn" href="${d.youtube}" target="_blank">📺 YouTube</a>`:""}
-    ${modoEdicion?`<button onclick="guardarEdicion('${d.id}',this)">💾 Guardar</button>`:""}
-  `;
-  return div;
-}
-
-function cargarCanciones(){
-  const cont=document.getElementById("lista-canciones");
-  const q=normalizar(document.getElementById("search").value||"");
-  cont.innerHTML="";
-  cancionesCache.filter(d=>normalizar(d.titulo).includes(q)).forEach(d=>cont.appendChild(construirCard(d)));
-  cont.style.display = cancionesCache.length>0?"block":"none";
-  actualizarContador();
-}
-
-/* === FIRESTORE === */
 async function inicializarCanciones(){
-  const col=collection(db,"canciones");
+  const col = collection(db,"canciones");
   onSnapshot(col,snap=>{
     cancionesCache = snap.docs.map(d=>({id:d.id,...d.data()}));
+    actualizarContador();
     cargarCanciones();
+    if(document.getElementById("registro-canciones").style.display==="block") cargarRegistro();
   });
 }
 
-/* === AGREGAR Y EDITAR === */
-async function agregarCancion(){
-  const titulo=document.getElementById("titulo").value.trim();
-  if(!titulo) return alert("El título es obligatorio");
-  await addDoc(collection(db,"canciones"),{
-    titulo,
-    acordes:document.getElementById("acordes").value.trim(),
-    imagenes:document.getElementById("imagenes").value.trim().split("\n").filter(x=>x),
-    audio:document.getElementById("audio").value.trim(),
-    youtube:document.getElementById("youtube").value.trim()
-  });
-  document.getElementById("formulario").reset(); document.getElementById("formulario").style.display="none";
+function actualizarContador(){
+  const el = document.getElementById("contadorCanciones");
+  const n = cancionesCache.length || 0;
+  el.textContent = `🎶 Canciones totales: ${n}`;
 }
 
-async function guardarEdicion(id,btn){
-  const card=btn.closest(".card");
-  const [tituloEl,acordesEl,imagenesEl,audioEl,youtubeEl]=card.querySelectorAll("h2,p,textarea,input:nth-of-type(1),input:nth-of-type(2)");
-  await updateDoc(doc(db,"canciones",id),{
-    titulo:tituloEl.innerText.trim(),
-    acordes:acordesEl.innerText.trim(),
-    imagenes:imagenesEl.value.trim().split("\n").filter(x=>x),
-    audio:audioEl.value.trim(),
-    youtube:youtubeEl.value.trim()
-  });
-  alert("✅ Cambios guardados");
-}
+/* =====================
+   AQUÍ VAN TODAS TUS FUNCIONES PREVIAS
+   construirCard, actualizarRegistroCard, marcarTocada,
+   cargarCanciones, agregarCancion, guardarEdicion, borrarCancion,
+   cargarSeccion, guardarSeccion, activarEdicion, debounceBuscar,
+   toggleDark, toggleFormulario, toggleCanciones, toggleRegistro,
+   cargarRegistro, agregarFechaManual, borrarFecha, modificarFecha,
+   setOrden
+   ===================== */
 
-/* === MODO EDICIÓN === */
-function activarEdicion(){
-  if(!modoEdicion){
-    const pin=prompt("Introduce el PIN para editar:");
-    if(pin==="2025"){modoEdicion=true; document.querySelector(".edit-banner").style.display="block"; document.getElementById("btnAgregar").style.display="block"; alert("✏️ Modo edición activado");}
-    else if(pin) return alert("PIN incorrecto");
-  } else {modoEdicion=false; document.querySelector(".edit-banner").style.display="none"; document.getElementById("btnAgregar").style.display="none"; alert("🔒 Modo edición desactivado");}
-  cargarCanciones();
-}
-
-/* === TOGGLES === */
-function toggleDark(){document.body.classList.toggle("dark"); localStorage.setItem("theme",document.body.classList.contains("dark")?"dark":"light");}
-function toggleFormulario(){const f=document.getElementById("formulario"); f.style.display=f.style.display==="none"?"block":"none";}
-function toggleCanciones(){const c=document.getElementById("lista-canciones"); c.style.display=c.style.display==="none"?"block":"none";}
-document.getElementById("search").addEventListener("input",debounce(cargarCanciones,300));
-
-/* === INICIALIZAR === */
-window.addEventListener("load",()=>{
-  if(localStorage.getItem("theme")==="dark") document.body.classList.add("dark");
+window.addEventListener('load',()=>{
+  const saved=localStorage.getItem("theme");
+  if(saved==="dark") document.body.classList.add("dark");
+  const searchInput=document.getElementById("search");
+  const clearBtn=document.getElementById("clearSearch");
+  searchInput.addEventListener("input",()=>{clearTimeout(debounceTimer);debounceTimer=setTimeout(cargarCanciones,300);clearBtn.style.display=searchInput.value?"block":"none";});
+  clearBtn.addEventListener("click",()=>{searchInput.value="";clearBtn.style.display="none";cargarCanciones();});
   inicializarCanciones();
-  window.agregarCancion=agregarCancion;
-  window.guardarEdicion=guardarEdicion;
-  window.toggleFormulario=toggleFormulario;
-  window.activarEdicion=activarEdicion;
-  window.toggleDark=toggleDark;
-  window.toggleCanciones=toggleCanciones;
+  cargarSeccion("semana");cargarSeccion("mes");
 });
 </script>
 </body>
