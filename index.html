@@ -38,7 +38,7 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
 .meta-line .plays, .meta-line .last{display:inline-block}
 .tocada-btn{background:#0077cc;padding:6px 8px;border-radius:6px;color:#fff;border:0;cursor:pointer;font-weight:700}
 .tocada-btn:hover{opacity:0.95}
-.counter-footer{font-size:0.85rem;color:#555;margin-top:24px;text-align:center;}
+.counter-footer{margin-top:20px;font-size:0.9rem;color:#555;font-weight:700}
 .th-sortable{position:relative}
 .th-sortable .sort-ind{font-size:0.9rem;opacity:0.9;margin-left:6px}
 </style>
@@ -120,18 +120,17 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
     </div>
   </div>
 
-  <footer>
-    <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
-  </footer>
-
-  <!-- CONTADOR EN EL PIE DE PÁGINA -->
-  <div id="contadorCancionesFooter" class="counter-footer">canciones totales 🎶: 0</div>
 </main>
+
+<footer>
+  <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
+  <div id="contadorCanciones" class="counter-footer">(0 canciones)</div>
+</footer>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import {
-  getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, onSnapshot, getDocs
+  getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, onSnapshot, getDocs, deleteDoc
 } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -156,22 +155,22 @@ function normalizar(t){return (t||"").normalize("NFD").replace(/[\u0300-\u036f]/
 function resaltar(t,q){if(!q)return t;try{const r=new RegExp(`(${q})`,"gi");return t.replace(r,"<mark>$1</mark>")}catch(e){return t;}}
 function pad(n){return String(n).padStart(2,'0');}
 function isoToday(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
-function isoToDisplay(iso){ if(!iso) return '—'; if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){ const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`;} const dt=new Date(iso); if(isNaN(dt.getTime())) return iso; return `${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()}`; }
+function isoToDisplay(iso){ if(!iso) return '—'; if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`;} const dt=new Date(iso); if(isNaN(dt.getTime())) return iso; return `${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${pad(dt.getFullYear())}`;}
 
 async function inicializarCanciones(){
   const col = collection(db,"canciones");
   onSnapshot(col,snap=>{
     cancionesCache = snap.docs.map(d=>({id:d.id,...d.data()}));
-    actualizarContadorFooter();
+    actualizarContador();
     cargarCanciones();
     if(document.getElementById("registro-canciones").style.display==="block") cargarRegistro();
   });
 }
 
-function actualizarContadorFooter(){
-  const el = document.getElementById("contadorCancionesFooter");
+function actualizarContador(){
+  const el = document.getElementById("contadorCanciones");
   const n = cancionesCache.length || 0;
-  el.textContent = `canciones totales 🎶: ${n}`;
+  el.textContent = `🎶 Canciones totales: ${n}`;
 }
 
 function construirCard(d){
@@ -197,7 +196,10 @@ function construirCard(d){
   `;
   actualizarRegistroCard(d.id);
   if(modoEdicion){
-    setTimeout(()=>{ const btn = document.getElementById(`tocadaBtn-${d.id}`); if(btn) btn.addEventListener('click', ()=> marcarTocada(d.id)); },0);
+    setTimeout(()=>{
+      const btn = document.getElementById(`tocadaBtn-${d.id}`);
+      if(btn) btn.addEventListener('click', ()=> marcarTocada(d.id));
+    },0);
   }
   return div;
 }
@@ -210,17 +212,17 @@ async function actualizarRegistroCard(id){
     const lastEl = document.getElementById(`last-${id}`);
     if(!playsEl || !lastEl) return;
     if(!snap.exists()){
-      playsEl.innerHTML = `🎵 <strong>Veces tocada:</strong> 0`;
-      lastEl.innerHTML = `| <strong>Última vez:</strong> —`;
+      playsEl.innerHTML = `🎵 Veces tocada: 0`;
+      lastEl.innerHTML = `| Última vez: —`;
       return;
     }
     const data = snap.data();
     const veces = Number(data.veces || 0);
     const fechas = Array.isArray(data.fechas) ? data.fechas : [];
     const ultimaIso = fechas.length ? fechas[fechas.length-1] : null;
-    playsEl.innerHTML = `🎵 <strong>Veces tocada:</strong> ${veces}`;
-    lastEl.innerHTML = `| <strong>Última vez:</strong> ${ultimaIso ? isoToDisplay(ultimaIso) : '—'}`;
-  } catch(e){ console.error('Error actualizando registro card', e);}
+    playsEl.innerHTML = `🎵 Veces tocada: ${veces}`;
+    lastEl.innerHTML = `| Última vez: ${ultimaIso ? isoToDisplay(ultimaIso) : '—'}`;
+  } catch(e){console.error('Error actualizando registro card', e);}
 }
 
 async function marcarTocada(songId){
@@ -234,7 +236,7 @@ async function marcarTocada(songId){
     await setDoc(ref, {veces: nuevasVeces, fechas: nuevasFechas});
     actualizarRegistroCard(songId);
     if(document.getElementById("registro-canciones").style.display==="block") cargarRegistro();
-  } catch(e){ console.error('Error marcando tocada', e); alert('Error al marcar como tocada. Revisa consola.');}
+  } catch(e){console.error('Error marcando tocada', e);}
 }
 
 async function cargarCanciones(){
@@ -271,13 +273,17 @@ async function guardarEdicion(id,btn){
 }
 
 async function borrarCancion(id){
-  if(!confirm("¿Borrar canción?")) return;
+  if(!confirm("¿Borrar completamente esta canción?")) return;
   try{
-    await setDoc(doc(db,"canciones",id), {titulo:'(eliminada)', acordes:''});
-    alert('Canción marcada como eliminada.');
-  } catch(e){ console.error(e); }
+    await deleteDoc(doc(db,"canciones",id));
+    alert('✅ Canción eliminada correctamente');
+  } catch(e){
+    console.error('Error borrando canción', e);
+    alert('❌ Error al borrar la canción. Revisa consola.');
+  }
 }
 
+/* ====== Secciones ====== */
 async function cargarSeccion(tipo){
   const snap = await getDoc(doc(db,"secciones",tipo));
   const cont=document.getElementById(`mostrar-${tipo}`);
@@ -287,7 +293,6 @@ async function cargarSeccion(tipo){
   } else cont.innerHTML="<p>Aún no hay información guardada.</p>";
   document.getElementById(`contenedor-${tipo}`).style.display = modoEdicion?"block":"none";
 }
-
 async function guardarSeccion(tipo){
   const titulo=document.getElementById(`titulo-${tipo}`).value.trim();
   const canciones=document.getElementById(`canciones-${tipo}`).value.trim().split("\n").filter(x=>x);
@@ -296,6 +301,7 @@ async function guardarSeccion(tipo){
   cargarSeccion(tipo);
 }
 
+/* ====== Edición, búsqueda, toggles ====== */
 function activarEdicion(){
   if(!modoEdicion){
     const pin=prompt("Introduce el PIN para editar:");
@@ -304,8 +310,7 @@ function activarEdicion(){
       document.querySelector(".edit-banner").style.display="block";
       document.getElementById("btnAgregar").style.display="block";
       alert("✏️ Modo edición activado");
-    }
-    else if(pin) return alert("PIN incorrecto");
+    } else if(pin) return alert("PIN incorrecto");
   } else {
     modoEdicion=false;
     document.querySelector(".edit-banner").style.display="none";
@@ -321,6 +326,7 @@ function toggleFormulario(){const f=document.getElementById("formulario");f.styl
 function toggleCanciones(){cancionesVisible=!cancionesVisible;document.getElementById("toggleCancionesBtn").textContent=cancionesVisible?"🎵 Ocultar lista":"🎵 Mostrar lista";cargarCanciones();}
 function toggleRegistro(){const el=document.getElementById("registro-canciones");el.style.display=el.style.display==="block"?"none":"block";if(el.style.display==="block") cargarRegistro();}
 
+/* ====== Registro ====== */
 async function cargarRegistro(){
   registroCache={};
   const snap=await getDocs(collection(db,"registro"));
@@ -338,7 +344,7 @@ async function cargarRegistro(){
     if(campo==="ultima"){
       const da=a.fechas.length?a.fechas[a.fechas.length-1]:"";
       const db=b.fechas.length?b.fechas[b.fechas.length-1]:"";
-      return ((da||'')<(db||'')?-1:((da||'')>(db||'')?1:0))*sentido;
+      return ( (da||'') < (db||'') ? -1 : ( (da||'') > (db||'') ? 1 : 0) ) * sentido;
     }
     return a.titulo.localeCompare(b.titulo)*sentido;
   });
@@ -366,41 +372,11 @@ async function cargarRegistro(){
   document.getElementById('sortUltima').textContent = ordenActual.campo==='ultima' ? (ordenActual.sentido==='asc' ? '🔼' : '🔽') : '';
 }
 
-async function agregarFechaManual(id){
-  const fecha=prompt("Introduce la fecha (YYYY-MM-DD):");
-  if(!fecha) return;
-  const ref=doc(db,"registro",id);
-  const snap=await getDoc(ref);
-  const data=snap.exists()?snap.data():{veces:0,fechas:[]};
-  const nuevas=Array.isArray(data.fechas)?[...data.fechas,fecha]:[fecha];
-  await setDoc(ref,{veces:nuevas.length,fechas:nuevas});
-  cargarRegistro();
-}
-async function borrarFecha(id,idx){
-  if(!confirm("Borrar esta fecha?")) return;
-  const ref=doc(db,"registro",id);
-  const snap=await getDoc(ref);
-  if(!snap.exists()) return;
-  const data=snap.data();
-  const nuevas=Array.isArray(data.fechas)?data.fechas.filter((_,i)=>i!==idx):[];
-  await setDoc(ref,{veces:nuevas.length,fechas:nuevas});
-  cargarRegistro();
-}
-async function modificarFecha(id,idx,val){
-  const ref=doc(db,"registro",id);
-  const snap=await getDoc(ref);
-  if(!snap.exists()) return;
-  const data=snap.data();
-  const nuevas=Array.isArray(data.fechas)?[...data.fechas]:[];
-  nuevas[idx]=val;
-  await setDoc(ref,{veces:nuevas.length,fechas:nuevas});
-  cargarRegistro();
-}
-function setOrden(campo){
-  if(ordenActual.campo===campo) ordenActual.sentido=ordenActual.sentido==="asc"?"desc":"asc";
-  else {ordenActual.campo=campo;ordenActual.sentido="desc";}
-  cargarRegistro();
-}
+/* Funciones de fechas (igual que antes) */
+async function agregarFechaManual(id){ const fecha=prompt("Introduce la fecha (YYYY-MM-DD):"); if(!fecha) return; const ref=doc(db,"registro",id); const snap=await getDoc(ref); const data=snap.exists()?snap.data():{veces:0,fechas:[]}; const nuevas=Array.isArray(data.fechas)?[...data.fechas,fecha]:[fecha]; await setDoc(ref,{veces:nuevas.length,fechas:nuevas}); cargarRegistro(); }
+async function borrarFecha(id,idx){ if(!confirm("Borrar esta fecha?")) return; const ref=doc(db,"registro",id); const snap=await getDoc(ref); if(!snap.exists()) return; const data=snap.data(); const nuevas=Array.isArray(data.fechas)?data.fechas.filter((_,i)=>i!==idx):[]; await setDoc(ref,{veces:nuevas.length,fechas:nuevas}); cargarRegistro(); }
+async function modificarFecha(id,idx,val){ const ref=doc(db,"registro",id); const snap=await getDoc(ref); if(!snap.exists()) return; const data=snap.data(); const nuevas=Array.isArray(data.fechas)?[...data.fechas]:[]; nuevas[idx]=val; await setDoc(ref,{veces:nuevas.length,fechas:nuevas}); cargarRegistro(); }
+function setOrden(campo){ if(ordenActual.campo===campo) ordenActual.sentido=ordenActual.sentido==="asc"?"desc":"asc"; else {ordenActual.campo=campo;ordenActual.sentido="desc";} cargarRegistro(); }
 
 window.addEventListener('load',()=>{
   const saved=localStorage.getItem("theme");
@@ -424,8 +400,9 @@ window.addEventListener('load',()=>{
   window.borrarFecha=borrarFecha;
   window.modificarFecha=modificarFecha;
   window.setOrden=setOrden;
-  window.marcarTocada = marcarTocada;
-  window.actualizarRegistroCard = actualizarRegistroCard;
+  window.marcarTocada=marcarTocada;
+  window.actualizarRegistroCard=actualizarRegistroCard;
+  window.borrarCancion=borrarCancion;
 });
 </script>
 </body>
