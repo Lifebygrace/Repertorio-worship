@@ -68,6 +68,25 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
 .clear-btn:active {
   transform: scale(0.95);
 }
+.delete-btn {
+  background-color: #e74c3c; /* rojo principal */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.delete-btn:hover {
+  background-color: #c0392b; /* rojo más oscuro al pasar el mouse */
+  transform: scale(1.05);
+}
+
+.delete-btn:active {
+  transform: scale(0.95);
+}
 </style>
 </head>
 <body>
@@ -238,7 +257,12 @@ function construirCard(d){
   const youtubeHtml = modoEdicion ? `<input type="text" class="edit-youtube edit-input" value="${(d.youtube||'').replace(/"/g,'&quot;')}" placeholder="Link de YouTube">` : (d.youtube ? `<a class="link-btn" href="${d.youtube}" target="_blank">📺 YouTube</a>` : "");
 
   // edit buttons
-  const editButtons = modoEdicion ? `<div style="margin-top:10px"><button onclick="guardarEdicion('${d.id}', this)">💾 Guardar</button> <button onclick="borrarCancion('${d.id}')">🗑️ Borrar</button></div>` : "";
+const editButtons = modoEdicion 
+  ? `<div style="margin-top:10px">
+       <button onclick="guardarEdicion('${d.id}', this)">💾 Guardar</button> 
+       <button class="delete-btn" onclick="borrarCancion('${d.id}')">🗑️ Borrar</button>
+     </div>` 
+  : "";
 
   div.innerHTML = tituloHtml + metaHtml + acordesHtml + `<div style="margin-top:8px">${imagenesHtml}</div>` + `<div style="margin-top:8px">${audioHtml} ${youtubeHtml}</div>` + editButtons;
 
