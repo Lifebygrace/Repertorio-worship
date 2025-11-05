@@ -1,608 +1,337 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Repertorio Worship — Demo (con PIN y contador)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Repertorio Worship</title>
 <style>
-  :root{
-    --blue:#0b5ed7;
-    --bg:#f6f7fb;
-    --card:#ffffff;
-    --text:#222;
-    --muted:#666;
-    --accent:#0b66d6;
-    --hover: rgba(11,94,215,0.12);
-  }
-  [data-theme="dark"]{
-    --bg:#0f1720;
-    --card:#0b1220;
-    --text:#e6eef8;
-    --muted:#9fb0c8;
-    --blue:#0b66d6;
-    --hover: rgba(11,102,214,0.12);
-  }
-
-  html,body{height:100%;margin:0;font-family:Inter,system-ui,Arial,sans-serif;background:var(--bg);color:var(--text);}
-  .header{
-    background:var(--blue);
-    color:white;
-    padding:10px 12px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-    box-shadow:0 2px 6px rgba(0,0,0,0.12);
-    position:sticky;
-    top:0;
-    z-index:60;
-    justify-content:space-between;
-    flex-wrap:nowrap;
-  }
-  .header .left,.header .center,.header .right{
-    display:flex;
-    align-items:center;
-    min-width:0;
-  }
-  .header .left{flex:0 0 auto;}
-  .header .center{flex:1 1 auto; justify-content:center;}
-  .header .right{flex:0 0 auto;}
-  .btn{
-    background:transparent;border:0;color:inherit;padding:8px 10px;border-radius:8px;font-size:15px;cursor:pointer;
-  }
-  .btn:focus{outline:2px solid rgba(255,255,255,0.25)}
-  .btn.primary{background:rgba(255,255,255,0.08);backdrop-filter:blur(2px)}
-  .btn.icon{font-size:18px;padding:8px;}
-  main{max-width:980px;margin:18px auto;padding:0 14px;}
-  .controls-row{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
-  .card{background:var(--card);padding:14px;border-radius:10px;box-shadow:0 6px 18px rgba(3,10,20,0.06);margin-bottom:12px;}
-  h2{margin:0 0 8px 0;font-size:18px;display:flex;align-items:center;gap:8px}
-  .title-counter{font-size:14px;color:var(--muted)}
-  label{display:block;font-size:14px;margin-bottom:6px;color:var(--muted)}
-  input[type="text"], textarea{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(0,0,0,0.08);font-size:14px;background:transparent;color:var(--text)}
-  .song-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
-  .song{padding:10px;border-radius:8px;background:linear-gradient(180deg, rgba(0,0,0,0.02), transparent);position:relative}
-  .song h3{margin:0 0 6px 0;font-size:16px}
-  .meta-line{font-size:13px;color:var(--muted);display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-  .song-actions{position:absolute;right:10px;top:10px;display:flex;gap:6px}
-  .small{font-size:13px;padding:6px 8px;border-radius:6px;cursor:pointer}
-  .muted{color:var(--muted)}
-  /* Order bar (mini table controls) */
-  .order-bar{display:flex;gap:8px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
-  .order-btn{
-    display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);
-    background:transparent;cursor:pointer;font-size:14px;color:var(--text)
-  }
-  .order-btn:hover{background:var(--hover)}
-  .order-btn .arrow{font-size:12px;opacity:0.4}
-  .order-btn.active{border-color:var(--accent);box-shadow:0 4px 12px rgba(11,102,214,0.06)}
-  .order-legend{font-size:13px;color:var(--muted);margin-left:auto}
-  /* Modal PIN */
-  .overlay{position:fixed;inset:0;background:rgba(3,6,10,0.45);display:flex;align-items:center;justify-content:center;z-index:100;opacity:0;pointer-events:none;transition:opacity .18s}
-  .overlay.show{opacity:1;pointer-events:auto}
-  .pin-box{background:var(--card);padding:18px;border-radius:12px;min-width:320px;max-width:90%;box-shadow:0 8px 30px rgba(2,6,23,0.4)}
-  .pin-box h3{margin-top:0;margin-bottom:8px}
-  .pin-row{display:flex;gap:8px;align-items:center}
-  .text-danger{color:#c53030;margin-top:8px}
-  /* Responsive */
-  @media (max-width:420px){
-    .header{padding:8px}
-    .btn{padding:6px 8px;font-size:14px}
-    .pin-box{min-width:260px}
-    .order-legend{display:none}
-  }
-  footer{max-width:980px;margin:18px auto;text-align:center;color:var(--muted);font-size:13px}
+:root{
+  --primary:#002244;--accent:#ff8c42;--bg:#f0f4f8;--text:#002244;
+  --section-bg:#fff8e1;--card-bg:#ffffff;--edit-bg:#FFEB3B;
+}
+body.dark{--bg:#121212;--text:#f0f4f8;--card-bg:#1e1e1e;--section-bg:#2a2a2a;--edit-bg:#f9a825}
+html,body{height:100%;margin:0;padding:0}
+body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);transition:background .25s,color .25s}
+header{background:var(--primary);color:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.logo{display:flex;align-items:center;gap:12px}
+.logo img{height:56px;border-radius:8px}
+.controls{display:flex;gap:8px;align-items:center}
+button{background:var(--accent);color:#fff;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700}
+button:hover{transform:scale(1.03)}
+main{max-width:900px;margin:18px auto;padding:12px}
+.card{background:var(--card-bg);padding:14px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.08);margin-bottom:16px}
+.section{background:var(--section-bg);padding:14px;border-radius:10px;margin-bottom:16px}
+input,textarea{width:100%;padding:10px;margin-bottom:10px;border-radius:8px;border:1px solid #ccc;background:transparent;color:inherit}
+.search-container{position:relative;margin-bottom:16px}
+#search{padding:14px 44px 14px 14px;border-radius:10px;border:2px solid var(--accent);font-size:1.05rem}
+#clearSearch{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:var(--accent);font-size:1.2rem;display:none}
+.link-btn{display:inline-block;background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none}
+.edit-banner{position:sticky;top:0;background:var(--edit-bg);padding:8px;text-align:center;font-weight:bold;display:none;z-index:50}
+footer{text-align:center;margin-top:24px;padding:16px;display:flex;justify-content:center;gap:10px;flex-wrap:wrap}
+table{width:100%;border-collapse:collapse;margin-top:8px}
+th,td{border:1px solid #ccc;padding:6px;text-align:center}
+th{background:var(--accent);color:#fff;cursor:pointer}
+ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
+.fechas-box{min-width:180px}
+.small {font-size:0.8rem;padding:4px 6px;border-radius:6px;margin-left:2px}
 </style>
 </head>
 <body>
+<div class="edit-banner">✏️ Modo edición activo</div>
 
-<header class="header" role="banner" aria-label="Barra Superior">
-  <div class="left" style="gap:6px;">
-    <button id="metBtn" class="btn primary" title="Metrónomo (activar / parar)">
-      ⏱️ <span id="metLabel" style="margin-left:6px;font-weight:600">Metrónomo</span>
-    </button>
+<header>
+  <div class="logo">
+    <img src="https://raw.githubusercontent.com/Lifebygrace/Repertorio-worship/main/logo.jpeg" alt="Logo" />
+    <h1>Repertorio Worship</h1>
   </div>
-
-  <div class="center" style="justify-content:center;">
-    <button id="editBtn" class="btn primary" aria-pressed="false" title="Editar">
-      Editar ✏️
-    </button>
-  </div>
-
-  <div class="right" style="gap:6px;">
-    <button id="themeBtn" class="btn primary" title="Cambiar tema">
-      🌙
-    </button>
+  <div class="controls">
+    <button onclick="toggleDark()">🌙 / ☀️</button>
+    <button onclick="activarEdicion()">✏️ Editar</button>
+    <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
+    <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵 Mostrar lista</button>
   </div>
 </header>
 
 <main>
-  <section class="card">
-    <h2>
-      Repertorio
-      <span id="counter" class="title-counter">(0 canciones)</span>
-    </h2>
-    <div class="muted" style="margin-bottom:8px">Lista de canciones (usa el modo edición para agregar/editar/borrar).</div>
+  <div class="search-container">
+    <input id="search" placeholder="🔍 Buscar canciones por título..." />
+    <button id="clearSearch">❌</button>
+  </div>
 
-    <!-- Order controls -->
-    <div class="order-bar" role="toolbar" aria-label="Ordenar canciones">
-      <button class="order-btn" id="orderTitle" data-key="title" title="Ordenar por título">
-        🔤 Título <span class="arrow" id="arrowTitle">🔽</span>
-      </button>
-      <button class="order-btn" id="orderPlays" data-key="plays" title="Ordenar por veces tocada">
-        🔁 Veces tocada <span class="arrow" id="arrowPlays">🔽</span>
-      </button>
-      <button class="order-btn" id="orderDate" data-key="lastPlayed" title="Ordenar por última fecha">
-        🕓 Última fecha <span class="arrow" id="arrowDate">🔽</span>
-      </button>
-      <div class="order-legend">Haz clic en un encabezado para ordenar (clic repetido cambia dirección)</div>
+  <div class="section">
+    <h2>🎶 Canciones para la semana</h2>
+    <div id="contenedor-semana" style="display:none;">
+      <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
+      <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
+      <button onclick="guardarSeccion('semana')">Guardar sección</button>
     </div>
+    <div id="mostrar-semana" style="margin-top:8px"></div>
+  </div>
 
-    <div id="songList" class="song-list" aria-live="polite">
-      <!-- Songs injected here -->
+  <div class="section">
+    <h2>🆕 Canciones nuevas del mes</h2>
+    <div id="contenedor-mes" style="display:none;">
+      <input id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
+      <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
+      <button onclick="guardarSeccion('mes')">Guardar sección</button>
     </div>
-  </section>
+    <div id="mostrar-mes" style="margin-top:8px"></div>
+  </div>
 
-  <section id="newSongSection" class="card" style="display:none;">
-    <h2>🔧 Nueva canción</h2>
-    <label for="songTitle">Título</label>
-    <input id="songTitle" type="text" placeholder="Nombre de la canción">
-    <label for="songNotes">Notas / Acordes</label>
-    <textarea id="songNotes" rows="4" placeholder="Por ejemplo: Verso, Coro, notas..."></textarea>
-    <div style="margin-top:10px;text-align:right">
-      <button id="addSongBtn" class="btn primary small">Añadir canción</button>
+  <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
+
+  <form id="formulario" onsubmit="event.preventDefault(); agregarCancion();" style="display:none;margin-top:12px;">
+    <div class="card">
+      <h2>Agregar canción</h2>
+      <input id="titulo" placeholder="Título de la canción" required />
+      <textarea id="acordes" placeholder="Acordes..."></textarea>
+      <textarea id="imagenes" placeholder="Links de imágenes (uno por línea)"></textarea>
+      <input id="audio" placeholder="Link de audio" />
+      <input id="youtube" placeholder="Link de YouTube" />
+      <button type="submit">Guardar canción</button>
     </div>
-  </section>
+  </form>
 
-  <section id="weekSection" class="card" style="display:none;">
-    <h2>📋 Canciones para la semana</h2>
-    <label for="weekList">Contenido (editable en modo edición)</label>
-    <textarea id="weekList" rows="6" placeholder="Lista de canciones para el próximo servicio..."></textarea>
-    <div style="margin-top:10px;text-align:right">
-      <button id="saveWeekBtn" class="btn small">Guardar</button>
+  <div id="lista-canciones" style="display:none;margin-top:12px;"></div>
+
+  <div id="registro-canciones-container" style="margin-top:12px;">
+    <button style="background:var(--accent);" onclick="toggleRegistro()">📊 Registro de canciones</button>
+    <div id="registro-canciones" class="section" style="display:none;">
+      <h2>📋 Registro de canciones</h2>
+      <table id="tabla-registro">
+        <thead>
+          <tr>
+            <th onclick="setOrden('titulo')">Título</th>
+            <th onclick="setOrden('veces')">Veces tocada</th>
+            <th onclick="setOrden('ultima')">Última fecha</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
     </div>
-  </section>
+  </div>
 
-  <section class="card">
-    <h2>Información</h2>
-    <p class="muted">Modo edición controlado por PIN. El PIN por defecto es <strong>2025</strong>. Datos guardados en local (localStorage).</p>
-  </section>
+  <footer>
+    <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
+  </footer>
 </main>
 
-<footer>
-  Repertorio — Demo. Guardado local (localStorage).
-</footer>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import {
+  getFirestore, collection, addDoc, doc, setDoc, getDoc, updateDoc, onSnapshot, getDocs
+} from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
-<!-- PIN modal overlay -->
-<div id="pinOverlay" class="overlay" role="dialog" aria-modal="true" aria-hidden="true">
-  <div class="pin-box" role="document">
-    <h3>Introduce el PIN para editar</h3>
-    <p class="muted">Se requiere PIN para activar el modo edición.</p>
-    <div class="pin-row" style="margin-top:10px">
-      <input id="pinInput" type="password" placeholder="PIN" style="flex:1;padding:8px;border-radius:8px;border:1px solid #ddd" />
-      <button id="pinSubmit" class="btn primary">Entrar</button>
-    </div>
-    <div style="display:flex;gap:8px;margin-top:10px;justify-content:flex-end">
-      <button id="pinCancel" class="btn">Cancelar</button>
-    </div>
-    <div id="pinMsg" class="text-danger" style="display:none"></div>
-  </div>
-</div>
+const firebaseConfig = {
+  apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
+  authDomain: "repertorioworship.firebaseapp.com",
+  projectId: "repertorioworship",
+  storageBucket: "repertorioworship.firebasestorage.app",
+  messagingSenderId: "493050453266",
+  appId: "1:493050453266:web:cf07ce9fbb471122f167cb"
+};
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 
-<script>
-/* ====== Config y estado ====== */
-const PIN_CODE = '2025';
-let editMode = false;
-const storageKey = 'rw_songs_v2'; // nueva versión con plays/lastPlayed
-const weekKey = 'rw_week_v1';
+let modoEdicion=false;
+let cancionesCache=[];
+let registroCache={};
+let debounceTimer;
+let cancionesVisible=false;
+let ordenActual={campo:'titulo',sentido:'desc'};
 
-/* Sorting state */
-let sortKey = 'title';
-let sortDir = 'asc'; // 'asc' or 'desc'
+/* === UTILIDADES === */
+function normalizar(t){return (t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
+function resaltar(t,q){if(!q)return t;try{const r=new RegExp(`(${q})`,"gi");return t.replace(r,"<mark>$1</mark>")}catch(e){return t;}}
 
-/* ====== Elementos ====== */
-const editBtn = document.getElementById('editBtn');
-const pinOverlay = document.getElementById('pinOverlay');
-const pinInput = document.getElementById('pinInput');
-const pinSubmit = document.getElementById('pinSubmit');
-const pinCancel = document.getElementById('pinCancel');
-const pinMsg = document.getElementById('pinMsg');
-
-const newSongSection = document.getElementById('newSongSection');
-const weekSection = document.getElementById('weekSection');
-const songListEl = document.getElementById('songList');
-const addSongBtn = document.getElementById('addSongBtn');
-const songTitle = document.getElementById('songTitle');
-const songNotes = document.getElementById('songNotes');
-const weekList = document.getElementById('weekList');
-const saveWeekBtn = document.getElementById('saveWeekBtn');
-
-const themeBtn = document.getElementById('themeBtn');
-const metBtn = document.getElementById('metBtn');
-const metLabel = document.getElementById('metLabel');
-const counterEl = document.getElementById('counter');
-
-const orderTitle = document.getElementById('orderTitle');
-const orderPlays = document.getElementById('orderPlays');
-const orderDate = document.getElementById('orderDate');
-const arrowTitle = document.getElementById('arrowTitle');
-const arrowPlays = document.getElementById('arrowPlays');
-const arrowDate = document.getElementById('arrowDate');
-
-/* ====== Metronome simple ====== */
-let metPlaying = false;
-let metTimer = null;
-let audioCtx = null;
-let bpm = 80;
-
-function clickSound(time){
-  const osc = audioCtx.createOscillator();
-  const gain = audioCtx.createGain();
-  osc.type = 'sine';
-  osc.frequency.value = 1000;
-  gain.gain.setValueAtTime(0.0001, time);
-  gain.gain.exponentialRampToValueAtTime(0.25, time + 0.001);
-  gain.gain.exponentialRampToValueAtTime(0.0001, time + 0.1);
-  osc.connect(gain);
-  gain.connect(audioCtx.destination);
-  osc.start(time);
-  osc.stop(time + 0.12);
-}
-
-function startMetronome(){
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const interval = 60 / bpm * 1000;
-  metPlaying = true;
-  metLabel.textContent = 'Metrónomo (ON)';
-  metBtn.setAttribute('aria-pressed','true');
-  playBeat(); // immediate beat
-  metTimer = setInterval(playBeat, interval);
-}
-function playBeat(){
-  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  const now = audioCtx.currentTime;
-  clickSound(now);
-}
-function stopMetronome(){
-  metPlaying = false;
-  metLabel.textContent = 'Metrónomo';
-  metBtn.setAttribute('aria-pressed','false');
-  if(metTimer) { clearInterval(metTimer); metTimer = null; }
-}
-
-metBtn.addEventListener('click', ()=>{
-  if(metPlaying) stopMetronome();
-  else startMetronome();
-});
-
-/* ====== Theme toggle ====== */
-function setTheme(t){
-  if(t === 'dark') document.documentElement.setAttribute('data-theme','dark');
-  else document.documentElement.removeAttribute('data-theme');
-  localStorage.setItem('rw_theme','' + (t === 'dark'));
-}
-themeBtn.addEventListener('click', ()=>{
-  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  setTheme(isDark ? 'light' : 'dark');
-});
-if(localStorage.getItem('rw_theme') === 'true') setTheme('dark');
-
-/* ====== Songs data (localStorage) ====== */
-function defaultSongs(){
-  return [
-    {id: cryptoRandomId(), title:'Grande Eres Tú', notes:'Verso / Coro / Puente', plays:3, lastPlayed: sampleDate(-3)},
-    {id: cryptoRandomId(), title:'Aquí Estoy', notes:'Intro: G C Em D', plays:1, lastPlayed: sampleDate(-7)},
-    {id: cryptoRandomId(), title:'Mi Salvador', notes:'Ton: D — Coro', plays:5, lastPlayed: sampleDate(-1)}
-  ];
-}
-function sampleDate(daysAgo){
-  const d = new Date();
-  d.setDate(d.getDate() + daysAgo);
-  return formatDate(d);
-}
-function cryptoRandomId(){
-  return 'id_' + Math.random().toString(36).slice(2,9);
-}
-function loadSongs(){
-  const raw = localStorage.getItem(storageKey);
-  if(!raw) { const d = defaultSongs(); localStorage.setItem(storageKey, JSON.stringify(d)); return d; }
-  try { return JSON.parse(raw); } catch(e){ return defaultSongs(); }
-}
-function saveSongs(arr){
-  localStorage.setItem(storageKey, JSON.stringify(arr));
-}
-
-/* ====== Sorting helpers ====== */
-function compareValues(a,b,k){
-  if(k === 'title'){
-    const A = (a.title || '').toLowerCase();
-    const B = (b.title || '').toLowerCase();
-    if(A < B) return -1;
-    if(A > B) return 1;
-    return 0;
-  }
-  if(k === 'plays'){
-    return (a.plays || 0) - (b.plays || 0);
-  }
-  if(k === 'lastPlayed'){
-    // parse dd/mm/yyyy to timestamp for comparison; nulls treated as older
-    const pa = parseDateToTs(a.lastPlayed);
-    const pb = parseDateToTs(b.lastPlayed);
-    return (pa - pb);
-  }
-  return 0;
-}
-function parseDateToTs(ddmmyy){
-  if(!ddmmyy) return 0;
-  const parts = ddmmyy.split('/');
-  if(parts.length !== 3) return 0;
-  const d = new Date(+parts[2], +parts[1]-1, +parts[0]);
-  return d.getTime();
-}
-
-/* ====== Render UI ====== */
-function updateCounter(){
-  const songs = loadSongs();
-  const count = songs.length;
-  counterEl.textContent = `(${count} ${count === 1 ? 'canción' : 'canciones'})`;
-}
-
-function renderOrderUI(){
-  // update buttons' active state and arrows
-  [orderTitle, orderPlays, orderDate].forEach(btn => btn.classList.remove('active'));
-  if(sortKey === 'title') orderTitle.classList.add('active');
-  if(sortKey === 'plays') orderPlays.classList.add('active');
-  if(sortKey === 'lastPlayed') orderDate.classList.add('active');
-
-  // arrows
-  arrowTitle.textContent = (sortKey==='title' && sortDir==='asc') ? '🔼' : '🔽';
-  arrowPlays.textContent = (sortKey==='plays' && sortDir==='asc') ? '🔼' : '🔽';
-  arrowDate.textContent = (sortKey==='lastPlayed' && sortDir==='asc') ? '🔼' : '🔽';
-}
-
-function getSortedSongs(){
-  const songs = loadSongs().slice(); // clone
-  songs.sort((a,b)=>{
-    const val = compareValues(a,b,sortKey);
-    return sortDir === 'asc' ? val : -val;
+/* === CANCIONES === */
+async function inicializarCanciones(){
+  const col = collection(db,"canciones");
+  onSnapshot(col,snap=>{
+    cancionesCache = snap.docs.map(d=>({id:d.id,...d.data()}));
+    cargarCanciones();
+    if(document.getElementById("registro-canciones").style.display==="block") cargarRegistro();
   });
-  return songs;
+}
+function construirCard(d){
+  const div=document.createElement("div");div.className="card";
+  div.innerHTML=`
+    <h2 contenteditable="${modoEdicion}">${modoEdicion?d.titulo:resaltar(d.titulo,document.getElementById("search").value)}</h2>
+    <p contenteditable="${modoEdicion}">${modoEdicion?(d.acordes||""):(d.acordes||"")}</p>
+    <textarea style="display:${modoEdicion?"block":"none"}">${(d.imagenes||[]).join("\n")}</textarea>
+    <input style="display:${modoEdicion?"block":"none"}" value="${d.audio||""}">
+    <input style="display:${modoEdicion?"block":"none"}" value="${d.youtube||""}">
+    ${(d.imagenes||[]).map(u=>`<img src="${u}" width="100%" style="margin-top:8px;border-radius:8px;">`).join('')}
+    ${!modoEdicion && d.audio?`<a class="link-btn" href="${d.audio}" target="_blank">🎧 Escuchar</a>`:""}
+    ${!modoEdicion && d.youtube?`<a class="link-btn" href="${d.youtube}" target="_blank">📺 YouTube</a>`:""}
+    ${modoEdicion?`<button onclick="guardarEdicion('${d.id}',this)">💾 Guardar</button>`:""}
+  `;
+  return div;
+}
+async function cargarCanciones(){
+  const cont=document.getElementById("lista-canciones");
+  cont.innerHTML="";
+  const q=document.getElementById("search").value||"";
+  const s=normalizar(q);
+  cancionesCache.forEach(d=>{if(normalizar(d.titulo).includes(s)) cont.appendChild(construirCard(d));});
+  cont.style.display = cancionesVisible||s.length>0?"block":"none";
+}
+async function agregarCancion(){
+  const titulo=document.getElementById("titulo").value.trim();
+  if(!titulo) return alert("El título es obligatorio");
+  await addDoc(collection(db,"canciones"),{
+    titulo,
+    acordes:document.getElementById("acordes").value.trim(),
+    imagenes:document.getElementById("imagenes").value.trim().split("\n").filter(x=>x),
+    audio:document.getElementById("audio").value.trim(),
+    youtube:document.getElementById("youtube").value.trim()
+  });
+  document.getElementById("formulario").reset();document.getElementById("formulario").style.display="none";
+}
+async function guardarEdicion(id,btn){
+  const card=btn.closest(".card");
+  const [tituloEl,acordesEl,imagenesEl,audioEl,youtubeEl]=card.querySelectorAll("h2,p,textarea,input:nth-of-type(1),input:nth-of-type(2)");
+  const titulo=tituloEl.innerText.trim();
+  const acordes=acordesEl.innerText.trim();
+  const imagenes=imagenesEl.value.trim().split("\n").filter(x=>x);
+  const audio=audioEl.value.trim();
+  const youtube=youtubeEl.value.trim();
+  await updateDoc(doc(db,"canciones",id),{titulo,acordes,imagenes,audio,youtube});
+  alert("✅ Cambios guardados");
 }
 
-function renderSongs(){
-  const songs = getSortedSongs();
-  songListEl.innerHTML = '';
-  for(const s of songs){
-    const wrap = document.createElement('div');
-    wrap.className = 'song card';
-    const h = document.createElement('h3');
-    h.textContent = s.title;
-    const p = document.createElement('p');
-    p.textContent = s.notes || '';
-    wrap.appendChild(h);
-    wrap.appendChild(p);
+/* === SECCIONES === */
+async function cargarSeccion(tipo){
+  const snap = await getDoc(doc(db,"secciones",tipo));
+  const cont=document.getElementById(`mostrar-${tipo}`);
+  if(snap.exists()){
+    const data=snap.data();
+    cont.innerHTML=`<h3>${data.titulo||""}</h3><ul>${(data.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>`;
+  } else cont.innerHTML="<p>Aún no hay información guardada.</p>";
+  document.getElementById(`contenedor-${tipo}`).style.display = modoEdicion?"block":"none";
+}
+async function guardarSeccion(tipo){
+  const titulo=document.getElementById(`titulo-${tipo}`).value.trim();
+  const canciones=document.getElementById(`canciones-${tipo}`).value.trim().split("\n").filter(x=>x);
+  await setDoc(doc(db,"secciones",tipo),{titulo,canciones});
+  alert("✅ Sección guardada");
+  cargarSeccion(tipo);
+}
 
-    // meta line
-    const meta = document.createElement('div');
-    meta.className = 'meta-line';
-    const playsSpan = document.createElement('span');
-    playsSpan.innerHTML = `🎵 <strong>Veces tocada:</strong> ${s.plays || 0}`;
-    const dateSpan = document.createElement('span');
-    dateSpan.innerHTML = `| <strong>Última vez:</strong> ${s.lastPlayed || '—'}`;
-    meta.appendChild(playsSpan);
-    meta.appendChild(dateSpan);
+/* === MODO EDICIÓN === */
+function activarEdicion(){
+  if(!modoEdicion){
+    const pin=prompt("Introduce el PIN para editar:");
+    if(pin==="2025"){modoEdicion=true;document.querySelector(".edit-banner").style.display="block";document.getElementById("btnAgregar").style.display="block";alert("✏️ Modo edición activado");}
+    else if(pin) return alert("PIN incorrecto");
+  } else {modoEdicion=false;document.querySelector(".edit-banner").style.display="none";document.getElementById("btnAgregar").style.display="none";alert("🔒 Modo edición desactivado");}
+  cargarSeccion("semana");cargarSeccion("mes");cargarCanciones();cargarRegistro();
+}
 
-    // "Tocada +1" (only in editMode)
-    if(editMode){
-      const tocadaBtn = document.createElement('button');
-      tocadaBtn.className = 'btn small';
-      tocadaBtn.textContent = 'Tocada +1';
-      tocadaBtn.addEventListener('click', ()=> {
-        incrementPlayed(s.id);
-      });
-      meta.appendChild(tocadaBtn);
+/* === BÚSQUEDA === */
+function debounceBuscar(){clearTimeout(debounceTimer);debounceTimer=setTimeout(cargarCanciones,300);}
+
+/* === TOGGLES === */
+function toggleDark(){document.body.classList.toggle("dark");localStorage.setItem("theme",document.body.classList.contains("dark")?"dark":"light");}
+function toggleFormulario(){const f=document.getElementById("formulario");f.style.display=f.style.display==="none"?"block":"none";}
+function toggleCanciones(){cancionesVisible=!cancionesVisible;document.getElementById("toggleCancionesBtn").textContent=cancionesVisible?"🎵 Ocultar lista":"🎵 Mostrar lista";cargarCanciones();}
+function toggleRegistro(){const el=document.getElementById("registro-canciones");el.style.display=el.style.display==="block"?"none":"block";if(el.style.display==="block") cargarRegistro();}
+
+/* === REGISTRO === */
+async function cargarRegistro(){
+  registroCache={};
+  const snap=await getDocs(collection(db,"registro"));
+  snap.forEach(d=>{registroCache[d.id]=d.data();});
+
+  const combinado=cancionesCache.map(c=>{
+    const r=registroCache[c.id]||{veces:0,fechas:[]};
+    return {id:c.id,titulo:c.titulo||"Sin título",veces:Number(r.veces||0),fechas:Array.isArray(r.fechas)?r.fechas:[]};
+  });
+
+  combinado.sort((a,b)=>{
+    const campo=ordenActual.campo; const sentido=ordenActual.sentido==="asc"?1:-1;
+    if(campo==="veces") return (a.veces-b.veces)*sentido;
+    if(campo==="ultima"){const da=a.fechas.length?Date.parse(a.fechas[a.fechas.length-1]):0; const db= b.fechas.length?Date.parse(b.fechas[b.fechas.length-1]):0; return (da-db)*sentido;}
+    return a.titulo.localeCompare(b.titulo)*sentido;
+  });
+
+  const tbody=document.querySelector("#tabla-registro tbody");tbody.innerHTML="";
+  combinado.forEach(r=>{
+    const tr=document.createElement("tr");
+    let fechasHtml="";
+    if(modoEdicion){
+      fechasHtml=`<div class="fechas-box">${r.fechas.map((f,idx)=>`<div><input type="date" value="${f}" onchange="modificarFecha('${r.id}',${idx},this.value)"> <button class="small" onclick="borrarFecha('${r.id}',${idx})">❌</button></div>`).join("")}<div style="margin-top:4px"><button class="small" onclick="agregarFechaManual('${r.id}')">➕ Añadir fecha</button></div></div>`;
+    } else {
+      const ultima=r.fechas.length?r.fechas[r.fechas.length-1]:"";
+      fechasHtml=`<div class="fechas-box">${ultima} ${r.fechas.length>1?`<button class="small" onclick="alert('Historial de fechas:\\n${r.fechas.join("\\n")}')">Ver más</button>`:""}</div>`;
     }
-    wrap.appendChild(meta);
-
-    // actions (edit/delete) visible only in editMode
-    if(editMode){
-      const actions = document.createElement('div');
-      actions.className = 'song-actions';
-      const ebtn = document.createElement('button');
-      ebtn.className = 'btn small';
-      ebtn.textContent = 'Editar';
-      ebtn.addEventListener('click', ()=> openEditSong(s.id));
-      const dbtn = document.createElement('button');
-      dbtn.className = 'btn small';
-      dbtn.textContent = 'Borrar';
-      dbtn.addEventListener('click', ()=> {
-        if(confirm('¿Borrar canción?')) {
-          deleteSong(s.id);
-        }
-      });
-      actions.appendChild(ebtn);
-      actions.appendChild(dbtn);
-      wrap.appendChild(actions);
-    }
-
-    songListEl.appendChild(wrap);
-  }
-  updateCounter();
-  renderOrderUI();
+    tr.innerHTML=`
+      <td style="text-align:left">${r.titulo}</td>
+      <td>${r.veces}</td>
+      <td>${fechasHtml}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+async function agregarFechaManual(id){
+  const fecha=prompt("Introduce la fecha (YYYY-MM-DD):");
+  if(!fecha) return;
+  const ref=doc(db,"registro",id);
+  const snap=await getDoc(ref);
+  const data=snap.exists()?snap.data():{veces:0,fechas:[]};
+  const nuevas=Array.isArray(data.fechas)?[...data.fechas,fecha]:[fecha];
+  await setDoc(ref,{veces:nuevas.length,fechas:nuevas});
+  cargarRegistro();
+}
+async function borrarFecha(id,idx){
+  if(!confirm("Borrar esta fecha?")) return;
+  const ref=doc(db,"registro",id);
+  const snap=await getDoc(ref);
+  if(!snap.exists()) return;
+  const data=snap.data();
+  const nuevas=Array.isArray(data.fechas)?data.fechas.filter((_,i)=>i!==idx):[];
+  await setDoc(ref,{veces:nuevas.length,fechas:nuevas});
+  cargarRegistro();
+}
+async function modificarFecha(id,idx,val){
+  const ref=doc(db,"registro",id);
+  const snap=await getDoc(ref);
+  if(!snap.exists()) return;
+  const data=snap.data();
+  const nuevas=Array.isArray(data.fechas)?[...data.fechas]:[];
+  nuevas[idx]=val;
+  await setDoc(ref,{veces:nuevas.length,fechas:nuevas});
+  cargarRegistro();
+}
+function setOrden(campo){
+  if(ordenActual.campo===campo) ordenActual.sentido=ordenActual.sentido==="asc"?"desc":"asc";
+  else {ordenActual.campo=campo;ordenActual.sentido="desc";}
+  cargarRegistro();
 }
 
-/* ====== Song operations ====== */
-function incrementPlayed(id){
-  const songs = loadSongs();
-  const s = songs.find(x=>x.id===id);
-  if(!s) return;
-  s.plays = (s.plays || 0) + 1;
-  s.lastPlayed = todayFormatted();
-  saveSongs(songs);
-  renderSongs();
-}
+/* === BOOT === */
+window.addEventListener('load',()=>{
+  const saved=localStorage.getItem("theme");
+  if(saved==="dark") document.body.classList.add("dark");
+  const searchInput=document.getElementById("search");
+  const clearBtn=document.getElementById("clearSearch");
+  searchInput.addEventListener("input",()=>{debounceBuscar();clearBtn.style.display=searchInput.value?"block":"none";});
+  clearBtn.addEventListener("click",()=>{searchInput.value="";clearBtn.style.display="none";cargarCanciones();});
+  inicializarCanciones();
+  cargarSeccion("semana");cargarSeccion("mes");
 
-function openEditSong(id){
-  const songs = loadSongs();
-  const s = songs.find(x=>x.id===id);
-  if(!s) return alert('No encontrado');
-  // fill form and scroll to it
-  songTitle.value = s.title;
-  songNotes.value = s.notes;
-  window.scrollTo({top:0,behavior:'smooth'});
-  // replace add button behavior to "guardar edición"
-  addSongBtn.textContent = 'Guardar cambios';
-  addSongBtn.removeEventListener('click', handleAddSong);
-  function saveEd(){
-    const t = songTitle.value.trim();
-    if(!t) return alert('Pon título');
-    s.title = t;
-    s.notes = songNotes.value;
-    saveSongs(songs);
-    renderSongs();
-    // reset form and button
-    songTitle.value = ''; songNotes.value = '';
-    addSongBtn.textContent = 'Añadir canción';
-    addSongBtn.removeEventListener('click', saveEd);
-    addSongBtn.addEventListener('click', handleAddSong);
-  }
-  addSongBtn.addEventListener('click', saveEd);
-}
-
-function deleteSong(id){
-  let songs = loadSongs();
-  songs = songs.filter(s => s.id !== id);
-  saveSongs(songs);
-  renderSongs();
-}
-
-/* ====== Add song handler ====== */
-function handleAddSong(){
-  const t = songTitle.value.trim();
-  if(!t) return alert('Pon título');
-  const notes = songNotes.value.trim();
-  const songs = loadSongs();
-  songs.unshift({id: cryptoRandomId(), title: t, notes, plays:0, lastPlayed:null});
-  saveSongs(songs);
-  songTitle.value = ''; songNotes.value = '';
-  renderSongs();
-}
-addSongBtn.addEventListener('click', handleAddSong);
-
-/* ====== Week list persistence ====== */
-saveWeekBtn.addEventListener('click', ()=>{
-  localStorage.setItem(weekKey, weekList.value || '');
-  alert('Guardado');
-});
-
-function loadWeek(){
-  const w = localStorage.getItem(weekKey) || '';
-  weekList.value = w;
-}
-
-/* ====== Date formatting ====== */
-function todayFormatted(){
-  const d = new Date();
-  const dd = String(d.getDate()).padStart(2,'0');
-  const mm = String(d.getMonth()+1).padStart(2,'0');
-  const yyyy = d.getFullYear();
-  return `${dd}/${mm}/${yyyy}`;
-}
-
-/* ====== PIN modal and edit mode ====== */
-function openPinModal(){
-  pinOverlay.classList.add('show');
-  pinOverlay.setAttribute('aria-hidden','false');
-  pinInput.value = '';
-  pinMsg.style.display = 'none';
-  pinInput.focus();
-}
-function closePinModal(){
-  pinOverlay.classList.remove('show');
-  pinOverlay.setAttribute('aria-hidden','true');
-}
-pinCancel.addEventListener('click', closePinModal);
-pinOverlay.addEventListener('click', (e)=>{
-  if(e.target === pinOverlay) closePinModal();
-});
-pinSubmit.addEventListener('click', ()=>{
-  const v = (pinInput.value || '').trim();
-  if(v === PIN_CODE){
-    pinMsg.style.display = 'none';
-    closePinModal();
-    toggleEditMode(true);
-  } else {
-    pinMsg.textContent = 'PIN incorrecto';
-    pinMsg.style.display = 'block';
-    pinInput.focus();
-  }
-});
-pinInput.addEventListener('keydown', (e)=>{
-  if(e.key === 'Enter') pinSubmit.click();
-});
-
-/* Toggle edit mode (on/off or set explicit) */
-function toggleEditMode(force){
-  if(typeof force === 'boolean') editMode = force;
-  else editMode = !editMode;
-  // update UI
-  newSongSection.style.display = editMode ? 'block' : 'none';
-  weekSection.style.display = editMode ? 'block' : 'none';
-  // change edit button text
-  if(editMode){
-    editBtn.textContent = 'Salir del modo edición ✖️';
-    editBtn.setAttribute('aria-pressed','true');
-  } else {
-    editBtn.textContent = 'Editar ✏️';
-    editBtn.setAttribute('aria-pressed','false');
-    // ensure add button returns to normal
-    addSongBtn.textContent = 'Añadir canción';
-    // remove any dangling event listeners by re-creating it (simple approach)
-    addSongBtn.replaceWith(addSongBtn.cloneNode(true));
-    // rebind
-    const newAdd = document.getElementById('addSongBtn');
-    newAdd.addEventListener('click', handleAddSong);
-  }
-  // hide per-song action buttons by re-rendering
-  renderSongs();
-}
-
-/* Clicking edit button opens modal if not in editMode, or exits if already in editMode */
-editBtn.addEventListener('click', ()=>{
-  if(!editMode) openPinModal();
-  else {
-    if(confirm('Salir del modo edición?')) toggleEditMode(false);
-  }
-});
-
-/* ====== Sorting controls events ====== */
-function changeSort(key){
-  if(sortKey === key){
-    // toggle direction
-    sortDir = (sortDir === 'asc') ? 'desc' : 'asc';
-  } else {
-    sortKey = key;
-    sortDir = 'asc';
-  }
-  renderSongs();
-}
-orderTitle.addEventListener('click', ()=> changeSort('title'));
-orderPlays.addEventListener('click', ()=> changeSort('plays'));
-orderDate.addEventListener('click', ()=> changeSort('lastPlayed'));
-
-/* ====== Init ====== */
-(function init(){
-  loadWeek();
-  renderSongs();
-  // ensure addSongBtn has default handler (in case replaced)
-  const btn = document.getElementById('addSongBtn');
-  if(btn) btn.addEventListener('click', handleAddSong);
-})();
-
-/* Accessibility: close modal on ESC */
-document.addEventListener('keydown', (e)=> {
-  if(e.key === 'Escape'){
-    if(pinOverlay.classList.contains('show')) closePinModal();
-  }
+  window.agregarCancion=agregarCancion;
+  window.guardarEdicion=guardarEdicion;
+  window.toggleDark=toggleDark;
+  window.toggleFormulario=toggleFormulario;
+  window.activarEdicion=activarEdicion;
+  window.guardarSeccion=guardarSeccion;
+  window.toggleCanciones=toggleCanciones;
+  window.toggleRegistro=toggleRegistro;
+  window.agregarFechaManual=agregarFechaManual;
+  window.borrarFecha=borrarFecha;
+  window.modificarFecha=modificarFecha;
+  window.setOrden=setOrden;
 });
 </script>
 </body>
