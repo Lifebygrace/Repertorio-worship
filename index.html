@@ -214,14 +214,20 @@ function isoToDisplay(iso){ if(!iso) return '—'; if(/^\d{4}-\d{2}-\d{2}$/.test
 
 /* Inicialización: escucha realtime de canciones */
 async function inicializarCanciones(){
-  const col = collection(db,"canciones");
-  onSnapshot(col, snap => {
+  const col = collection(db, "canciones");
+  try {
+    const snap = await getDocs(col);
     cancionesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     console.log("✅ Canciones cargadas:", cancionesCache);
+
     actualizarContador();
     cargarCanciones();
-    if(document.getElementById("registro-canciones").style.display === "block") cargarRegistro();
-  });
+    if (document.getElementById("registro-canciones").style.display === "block") {
+      cargarRegistro();
+    }
+  } catch (error) {
+    console.error("❌ Error cargando canciones:", error);
+  }
 }
 
 /* 🔹 Inicialización completa de la página */
