@@ -221,16 +221,17 @@ async function inicializarCanciones(){
     cargarCanciones();
     if(document.getElementById("registro-canciones").style.display === "block") cargarRegistro();
   });
-  // 🔹 Inicialización completa de la página
+}
+
+/* 🔹 Inicialización completa de la página */
 async function inicializarPagina() {
-  await inicializarCanciones();  // primero carga todas las canciones en tiempo real
-  await cargarSeccion("semana"); // luego muestra la sección semanal
-  await cargarSeccion("mes");    // finalmente la del mes
+  await inicializarCanciones();  // primero carga canciones
+  await cargarSeccion("semana"); // luego la sección semanal
+  await cargarSeccion("mes");    // y finalmente la del mes
 }
 
 // 🚀 Ejecutamos la inicialización al cargar la página
 inicializarPagina();
-}
 
 /* Contador en tiempo real (texto exacto pedido) */
 function actualizarContador(){
@@ -604,10 +605,6 @@ window.addEventListener('load', ()=>{
   window.setOrden = setOrden;
   window.marcarTocada = marcarTocada;
   window.actualizarRegistroCard = actualizarRegistroCard;
-
-  inicializarCanciones();
-  cargarSeccion("semana");
-  cargarSeccion("mes");
 });
 </script>
 <script>
