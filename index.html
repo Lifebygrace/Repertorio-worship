@@ -196,7 +196,10 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+// 🔧 Desactiva persistencia y canales en tiempo real
+import { disableNetwork } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
+disableNetwork(db).catch(() => console.log("⚠️ Red desactivada (modo lectura local)"));
 /* Estado */
 let modoEdicion = false;
 let cancionesCache = [];
