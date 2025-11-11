@@ -402,12 +402,55 @@ async function cargarSeccion(tipo){
   try{
     const snap = await getDoc(doc(db,"secciones",tipo));
     const cont = document.getElementById(`mostrar-${tipo}`);
-    if(snap.exists()){
-      const data = snap.data();
-      cont.innerHTML = `<h3>${data.titulo||""}</h3><ul>${(data.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>`;
-    } else cont.innerHTML = "<p>Aún no hay información guardada.</p>";
+
+    if(!snap.exists()){
+      cont.innerHTML = "<p>Aún no hay información guardada.</p>";
+      document.getElementById(`contenedor-${tipo}`).style.display = modoEdicion ? "block" : "none";
+      return;
+    }
+
+    const data = snap.data();
+    const cancionesSemana = data.canciones || [];
+
+    // ✳️ Mostrar título, número de canciones y lista simple
+    let html = `
+      <h3>${data.titulo || ""}</h3>
+      <p>🎶 ${cancionesSemana.length} canciones esta semana</p>
+      <ol>
+        ${cancionesSemana.map(c => `<li>${c}</li>`).join("")}
+      </ol>
+      <button id="btnWorshipPack">🎵 Worship Pack</button>
+      <div id="packSemana" style="display:none; margin-top:12px;"></div>
+    `;
+
+    cont.innerHTML = html;
+
+    // 🎚️ Botón que muestra/oculta el pack completo
+    const btn = document.getElementById("btnWorshipPack");
+    const divPack = document.getElementById("packSemana");
+
+    btn.addEventListener("click", ()=>{
+      if(divPack.style.display === "none"){
+        divPack.style.display = "block";
+        btn.textContent = "🔽 Ocultar Worship Pack";
+        // Mostrar tarjetas completas
+        divPack.innerHTML = "";
+        cancionesSemana.forEach(nombre=>{
+          const c = cancionesCache.find(x => x.titulo.toLowerCase().trim() === nombre.toLowerCase().trim());
+          if(c) divPack.appendChild(construirCard(c));
+          else divPack.innerHTML += `<p>⚠️ No se encontró: ${nombre}</p>`;
+        });
+      } else {
+        divPack.style.display = "none";
+        btn.textContent = "🎵 Worship Pack";
+      }
+    });
+
+    // Mostrar u ocultar el contenedor de edición
     document.getElementById(`contenedor-${tipo}`).style.display = modoEdicion ? "block" : "none";
-  } catch(e){ console.error("Error cargarSeccion:", e); }
+  } catch(e){
+    console.error("Error cargarSeccion:", e);
+  }
 }
 async function guardarSeccion(tipo){
   const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
