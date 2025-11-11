@@ -4,14 +4,6 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Repertorio Worship</title>
-<link rel="manifest" href="manifest.json"> <!-- Compatibilidad con iOS / iPhone -->
-<link rel="apple-touch-icon" sizes="180x180" href="logo-180.png">
-<link rel="apple-touch-icon" sizes="152x152" href="logo-152.png">
-<link rel="apple-touch-icon" sizes="120x120" href="logo-120.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Repertorio Worship">
-<link rel="apple-touch-icon" href="logo.jpeg">
 <style>
 :root{
   --primary:#002244;--accent:#ff8c42;--bg:#f0f4f8;--text:#002244;
@@ -128,8 +120,6 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
     </div>
     <div id="mostrar-semana" style="margin-top:8px"></div>
   </div>
-  <!-- 🔹 Aquí se mostrarán las canciones del Worship Pack -->
-<div id="lista-canciones-semana"></div>
 
   <div class="section">
     <h2>🆕 Canciones nuevas del mes</h2>
@@ -198,14 +188,10 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-// 🔧 Desactiva persistencia y canales en tiempo real
-import { disableNetwork } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-disableNetwork(db).catch(() => console.log("⚠️ Red desactivada (modo lectura local)"));
 /* Estado */
 let modoEdicion = false;
-let cancionesCache = {};
-let canciones = []; // 🔹 Añade esta línea
+let cancionesCache = [];
 let registroCache = {};
 let debounceTimer;
 let cancionesVisible = false;
@@ -220,31 +206,14 @@ function isoToDisplay(iso){ if(!iso) return '—'; if(/^\d{4}-\d{2}-\d{2}$/.test
 
 /* Inicialización: escucha realtime de canciones */
 async function inicializarCanciones(){
-  const col = collection(db, "canciones");
-  try {
-    const snap = await getDocs(col);
+  const col = collection(db,"canciones");
+  onSnapshot(col, snap => {
     cancionesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    console.log("✅ Canciones cargadas:", cancionesCache);
-
     actualizarContador();
     cargarCanciones();
-    if (document.getElementById("registro-canciones").style.display === "block") {
-      cargarRegistro();
-    }
-  } catch (error) {
-    console.error("❌ Error cargando canciones:", error);
-  }
+    if(document.getElementById("registro-canciones").style.display === "block") cargarRegistro();
+  });
 }
-
-/* 🔹 Inicialización completa de la página */
-async function inicializarPagina() {
-  await inicializarCanciones();  // primero carga canciones
-  await cargarSeccion("semana"); // luego la sección semanal
-  await cargarSeccion("mes");    // y finalmente la del mes
-}
-
-// 🚀 Ejecutamos la inicialización al cargar la página
-inicializarPagina();
 
 /* Contador en tiempo real (texto exacto pedido) */
 function actualizarContador(){
@@ -425,55 +394,12 @@ async function cargarSeccion(tipo){
   try{
     const snap = await getDoc(doc(db,"secciones",tipo));
     const cont = document.getElementById(`mostrar-${tipo}`);
-
-    if(!snap.exists()){
-      cont.innerHTML = "<p>Aún no hay información guardada.</p>";
-      document.getElementById(`contenedor-${tipo}`).style.display = modoEdicion ? "block" : "none";
-      return;
-    }
-
-    const data = snap.data();
-    const cancionesSemana = data.canciones || [];
-
-    // ✳️ Mostrar título, número de canciones y lista simple
-    let html = `
-      <h3>${data.titulo || ""}</h3>
-      <p>🎶 ${cancionesSemana.length} canciones esta semana</p>
-      <ol>
-        ${cancionesSemana.map(c => `<li>${c}</li>`).join("")}
-      </ol>
-      <button id="btnWorshipPack">🎵 Worship Pack</button>
-      <div id="packSemana" style="display:none; margin-top:12px;"></div>
-    `;
-
-    cont.innerHTML = html;
-
-    // 🎚️ Botón que muestra/oculta el pack completo
-    const btn = document.getElementById("btnWorshipPack");
-    const divPack = document.getElementById("packSemana");
-
-    btn.addEventListener("click", ()=>{
-      if(divPack.style.display === "none"){
-        divPack.style.display = "block";
-        btn.textContent = "🔽 Ocultar Worship Pack";
-        // Mostrar tarjetas completas
-        divPack.innerHTML = "";
-        cancionesSemana.forEach(nombre=>{
-          const c = cancionesCache.find(x => x.titulo.toLowerCase().trim() === nombre.toLowerCase().trim());
-          if(c) divPack.appendChild(construirCard(c));
-          else divPack.innerHTML += `<p>⚠️ No se encontró: ${nombre}</p>`;
-        });
-      } else {
-        divPack.style.display = "none";
-        btn.textContent = "🎵 Worship Pack";
-      }
-    });
-
-    // Mostrar u ocultar el contenedor de edición
+    if(snap.exists()){
+      const data = snap.data();
+      cont.innerHTML = `<h3>${data.titulo||""}</h3><ul>${(data.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>`;
+    } else cont.innerHTML = "<p>Aún no hay información guardada.</p>";
     document.getElementById(`contenedor-${tipo}`).style.display = modoEdicion ? "block" : "none";
-  } catch(e){
-    console.error("Error cargarSeccion:", e);
-  }
+  } catch(e){ console.error("Error cargarSeccion:", e); }
 }
 async function guardarSeccion(tipo){
   const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
@@ -618,54 +544,11 @@ window.addEventListener('load', ()=>{
   window.setOrden = setOrden;
   window.marcarTocada = marcarTocada;
   window.actualizarRegistroCard = actualizarRegistroCard;
+
+  inicializarCanciones();
+  cargarSeccion("semana");
+  cargarSeccion("mes");
 });
-// === Mostrar todas las canciones de la semana ===
-
-// 🔹 función para obtener canciones de la semana actual
-function obtenerCancionesSemana() {
-  const hoy = new Date();
-  const inicioSemana = new Date(hoy);
-  inicioSemana.setDate(hoy.getDate() - hoy.getDay()); // Domingo
-  const finSemana = new Date(inicioSemana);
-  finSemana.setDate(inicioSemana.getDate() + 6); // Sábado
-
-  // Filtra las canciones cuya fecha está dentro de esta semana
-  return cancionesCache.filter(c => {
-    if (!c.fecha) return false;
-    const fechaCancion = new Date(c.fecha);
-    return fechaCancion >= inicioSemana && fechaCancion <= finSemana;
-  });
-}
-
-// 🔹 evento del botón Worship Pack
-document.getElementById('worshipPackBtn').addEventListener('click', () => {
-  const contenedor = document.getElementById('lista-canciones-semana');
-  contenedor.innerHTML = ''; // limpia antes de mostrar
-
-  const cancionesSemana = obtenerCancionesSemana();
-
-  if (cancionesSemana.length === 0) {
-    contenedor.innerHTML = '<p>No hay canciones registradas para esta semana.</p>';
-    return;
-  }
-
-  const lista = document.createElement('ul');
-  cancionesSemana.forEach(c => {
-    const li = document.createElement('li');
-    li.textContent = c.titulo || 'Canción sin nombre';
-    lista.appendChild(li);
-  });
-
-  contenedor.appendChild(lista);
-});
-</script>
-<script>
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker
-      .register("./service-worker.js")
-      .then(() => console.log("✅ Service Worker registrado correctamente"))
-      .catch(err => console.log("❌ Error al registrar el Service Worker:", err));
-  }
 </script>
 </body>
 </html>
