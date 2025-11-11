@@ -202,7 +202,8 @@ import { disableNetwork } from "https://www.gstatic.com/firebasejs/10.12.0/fireb
 disableNetwork(db).catch(() => console.log("⚠️ Red desactivada (modo lectura local)"));
 /* Estado */
 let modoEdicion = false;
-let cancionesCache = [];
+let cancionesCache = {};
+let canciones = []; // 🔹 Añade esta línea
 let registroCache = {};
 let debounceTimer;
 let cancionesVisible = false;
