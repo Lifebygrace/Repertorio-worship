@@ -217,6 +217,7 @@ async function inicializarCanciones(){
   const col = collection(db,"canciones");
   onSnapshot(col, snap => {
     cancionesCache = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    console.log("✅ Canciones cargadas:", cancionesCache);
     actualizarContador();
     cargarCanciones();
     if(document.getElementById("registro-canciones").style.display === "block") cargarRegistro();
