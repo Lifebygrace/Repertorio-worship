@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+=<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="utf-8" />
@@ -522,6 +522,49 @@ function setOrden(campo){
   cargarRegistro();
 }
 
+/* Mostrar/Ocultar Worship Pack (canciones de la semana) */
+async function toggleWorshipPack() {
+  const contenedor = document.getElementById("worshipPackContainer");
+  const btn = document.getElementById("btnWorshipPack");
+  const visible = contenedor.style.display === "block";
+
+  if (visible) {
+    contenedor.style.display = "none";
+    btn.textContent = "🎁 Worship Pack";
+    return;
+  }
+
+  // obtener la lista de canciones de la semana desde Firestore
+  try {
+    const snap = await getDoc(doc(db, "secciones", "semana"));
+    if (!snap.exists()) {
+      contenedor.innerHTML = "<p>No hay canciones guardadas para esta semana.</p>";
+      contenedor.style.display = "block";
+      btn.textContent = "❌ Cerrar pack";
+      return;
+    }
+
+    const data = snap.data();
+    const lista = Array.isArray(data.canciones) ? data.canciones.map(t => t.trim().toLowerCase()) : [];
+
+    // filtrar cancionesCache por coincidencia de título
+    const cancionesSemana = cancionesCache.filter(c => lista.includes((c.titulo || "").trim().toLowerCase()));
+
+    if (cancionesSemana.length === 0) {
+      contenedor.innerHTML = "<p>No se encontraron coincidencias con las canciones guardadas.</p>";
+    } else {
+      contenedor.innerHTML = "";
+      cancionesSemana.forEach(c => contenedor.appendChild(construirCard(c)));
+    }
+
+    contenedor.style.display = "block";
+    btn.textContent = "❌ Cerrar pack";
+  } catch (e) {
+    console.error("Error al mostrar Worship Pack:", e);
+    contenedor.innerHTML = "<p>Error cargando el Worship Pack.</p>";
+    contenedor.style.display = "block";
+  }
+}
 /* BOOT */
 window.addEventListener('load', ()=>{
   const saved = localStorage.getItem("theme");
