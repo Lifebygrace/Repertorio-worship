@@ -64,10 +64,7 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
   background-color: #c0392b; /* rojo más oscuro */
   transform: scale(1.1);
 }
-
-.clear-btn:active {
-  transform: scale(0.95);
-}
+.clear-btn:active { transform: scale(0.95); }
 .delete-btn {
   background-color: #e74c3c; /* rojo principal */
   color: white;
@@ -78,14 +75,29 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
   font-weight: bold;
   transition: background-color 0.2s ease, transform 0.1s ease;
 }
+.delete-btn:hover { background-color: #c0392b; transform: scale(1.05); }
+.delete-btn:active { transform: scale(0.95); }
 
-.delete-btn:hover {
-  background-color: #c0392b; /* rojo más oscuro al pasar el mouse */
-  transform: scale(1.05);
+/* Styles para Worship Pack */
+.pack-contenedor {
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 8px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4));
 }
-
-.delete-btn:active {
-  transform: scale(0.95);
+.song-card {
+  margin-bottom: 12px;
+  padding: 10px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.9);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+.song-card img{max-width:120px;border-radius:6px;margin-right:8px}
+.notas-pack textarea{width:100%;min-height:90px;padding:8px;border-radius:6px;border:1px solid #ccc;background:transparent;color:inherit;margin-top:8px}
+.notas-pack p{white-space:pre-wrap}
+@media (max-width:600px){
+  .preview-img{max-width:220px}
 }
 </style>
 </head>
@@ -108,27 +120,43 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
 <main>
   <div class="search-container">
     <input id="search" placeholder="🔍 Buscar canciones por título..." />
-<button id="clearSearch" class="clear-btn">✂️borrar❌</button>
+    <button id="clearSearch" class="clear-btn">✂️borrar❌</button>
   </div>
 
   <div class="section">
     <h2>🎶 Canciones para la semana</h2>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <button onclick="mostrarWorshipPack('semana')">🎵 Worship Pack</button>
+      <button onclick="document.getElementById('contenedor-semana').style.display = document.getElementById('contenedor-semana').style.display === 'none' ? 'block' : 'none'">✏️ Editar sección</button>
+    </div>
+
     <div id="contenedor-semana" style="display:none;">
       <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
       <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
       <button onclick="guardarSeccion('semana')">Guardar sección</button>
     </div>
     <div id="mostrar-semana" style="margin-top:8px"></div>
+
+    <!-- aquí se mostrará el worship pack semanal -->
+    <div id="worshipPackSemana" class="pack-contenedor" style="display:none;margin-top:10px"></div>
   </div>
 
   <div class="section">
     <h2>🆕 Canciones nuevas del mes</h2>
+    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
+      <button onclick="mostrarWorshipPack('mes')">🌱 Worship Pack</button>
+      <button onclick="document.getElementById('contenedor-mes').style.display = document.getElementById('contenedor-mes').style.display === 'none' ? 'block' : 'none'">✏️ Editar sección</button>
+    </div>
+
     <div id="contenedor-mes" style="display:none;">
       <input id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
       <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
       <button onclick="guardarSeccion('mes')">Guardar sección</button>
     </div>
     <div id="mostrar-mes" style="margin-top:8px"></div>
+
+    <!-- aquí se mostrará el worship pack mensual -->
+    <div id="worshipPackMes" class="pack-contenedor" style="display:none;margin-top:10px"></div>
   </div>
 
   <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
@@ -456,7 +484,7 @@ async function cargarRegistro(){
     if(campo === "ultima"){
       const da = a.fechas.length ? a.fechas[a.fechas.length-1] : "";
       const db = b.fechas.length ? b.fechas[b.fechas.length-1] : "";
-      return ((da||'') < (db||'') ? -1 : ((da||'') > (db||'') ? 1 : 0)) * sentido;
+      return ((da||'') < (db||'') ? -1 : ((da||'') > (db||') ? 1 : 0)) * sentido;
     }
     return a.titulo.localeCompare(b.titulo) * sentido;
   });
@@ -519,6 +547,127 @@ function setOrden(campo){
   cargarRegistro();
 }
 
+/* ============================
+   🎵 WORSHIP PACK SYSTEM
+   - muestra tarjetas basadas en secciones/semana y secciones/mes
+============================ */
+
+async function mostrarWorshipPack(tipo){
+  const contenedor = tipo === 'semana' 
+    ? document.getElementById('worshipPackSemana') 
+    : document.getElementById('worshipPackMes');
+
+  contenedor.innerHTML = ''; // limpiar
+  contenedor.style.display = 'block';
+
+  try {
+    const seccionSnap = await getDoc(doc(db, "secciones", tipo));
+    if(!seccionSnap.exists()){
+      contenedor.innerHTML = `<p>No hay ${tipo === 'semana' ? 'canciones para la semana' : 'canciones nuevas del mes'} registradas.</p>`;
+      return;
+    }
+    const data = seccionSnap.data();
+    const tit = data.titulo || (tipo === 'semana' ? 'Canciones para la semana' : 'Canciones nuevas');
+    const lista = Array.isArray(data.canciones) ? data.canciones : [];
+
+    // título del pack
+    const header = document.createElement('div');
+    header.style.display = "flex";
+    header.style.justifyContent = "space-between";
+    header.style.alignItems = "center";
+    header.style.marginBottom = "8px";
+    header.innerHTML = `<strong style="font-size:1.05rem">${tipo==='semana' ? 'Worship Pack Semanal' : 'Worship Pack Mensual'} — ${tit}</strong>
+                        <div style="display:flex;gap:8px">
+                          <button onclick="window.scrollTo({top:0,behavior:'smooth'})">🔝</button>
+                          ${modoEdicion ? `<button onclick="document.getElementById('contenedor-${tipo}').style.display='block'">✏️ Editar sección</button>` : ''}
+                        </div>`;
+    contenedor.appendChild(header);
+
+    if(lista.length === 0){
+      contenedor.innerHTML += `<p>No hay canciones listadas en esta sección.</p>`;
+    }
+
+    // para cada nombre de canción tratamos de encontrar su documento en cancionesCache
+    for(const titulo of lista){
+      const encontrado = cancionesCache.find(c => normalizar(c.titulo) === normalizar(titulo));
+      if(encontrado){
+        // reutilizamos construirCard para mantener exactamente el mismo estilo
+        const card = construirCard(encontrado);
+        card.classList.add('song-card');
+        contenedor.appendChild(card);
+      } else {
+        // si no existe la canción en la colección, mostramos una tarjeta simple con el texto
+        const placeholder = document.createElement('div');
+        placeholder.className = 'song-card';
+        placeholder.innerHTML = `<h3>${titulo}</h3><p><em>Esta canción aún no está en la colección "canciones". Agrégala para incluir acordes, imágenes y audio.</em></p>`;
+        contenedor.appendChild(placeholder);
+      }
+    }
+
+    // Si es el pack mensual añadimos el bloque de notas específicas
+    if(tipo === 'mes'){
+      const notasDiv = document.createElement('div');
+      notasDiv.className = 'notas-pack';
+      notasDiv.style.marginTop = "10px";
+      notasDiv.innerHTML = `
+        <h4>📝 Notas para el grupo (Worship Pack Mensual)</h4>
+        <textarea id="notasMesInput" placeholder="Escribe aquí notas específicas para el mes..."></textarea>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button onclick="guardarNotasMes()">💾 Guardar notas</button>
+          <button onclick="cargarNotasMes()">🔄 Cargar notas</button>
+        </div>
+        <div id="notasMesGuardadas" style="margin-top:8px"></div>
+      `;
+      contenedor.appendChild(notasDiv);
+      // cargamos notas existentes
+      cargarNotasMes();
+    }
+
+    contenedor.scrollIntoView({ behavior: 'smooth' });
+  } catch(e){
+    console.error("Error mostrarWorshipPack:", e);
+    contenedor.innerHTML = `<p>Error cargando worship pack (ver consola)</p>`;
+  }
+}
+
+/* NOTAS DEL WORSHIP PACK MENSUAL */
+async function guardarNotasMes() {
+  const textoEl = document.getElementById('notasMesInput');
+  if(!textoEl) return alert('Área de notas no encontrada.');
+  const texto = textoEl.value.trim();
+  if (!texto) return alert('Escribe algo antes de guardar.');
+  try {
+    await setDoc(doc(db, "notas", "worshipPackMes"), { texto, updatedAt: new Date().toISOString() });
+    alert('✅ Notas guardadas.');
+    cargarNotasMes();
+  } catch(e){
+    console.error("Error guardarNotasMes:", e);
+    alert("Error guardando notas (ver consola).");
+  }
+}
+
+async function cargarNotasMes() {
+  const div = document.getElementById('notasMesGuardadas');
+  if (!div) return;
+  try {
+    const snap = await getDoc(doc(db, "notas", "worshipPackMes"));
+    if (snap.exists()) {
+      const data = snap.data();
+      // si existe, mostrar texto en el div y cargar también el textarea si está presente
+      div.innerHTML = `<p>${(data.texto||'').replace(/\n/g,'<br>')}</p><small>Última actualización: ${data.updatedAt ? isoToDisplay(data.updatedAt.split('T')[0]) : '—'}</small>`;
+      const ta = document.getElementById('notasMesInput');
+      if(ta) ta.value = data.texto || '';
+    } else {
+      div.innerHTML = `<p>No hay notas guardadas aún.</p>`;
+      const ta = document.getElementById('notasMesInput');
+      if(ta) ta.value = '';
+    }
+  } catch (err) {
+    console.error("Error cargarNotasMes:", err);
+    div.innerHTML = `<p>Error cargando notas (ver consola)</p>`;
+  }
+}
+
 /* BOOT */
 window.addEventListener('load', ()=>{
   const saved = localStorage.getItem("theme");
@@ -544,10 +693,16 @@ window.addEventListener('load', ()=>{
   window.setOrden = setOrden;
   window.marcarTocada = marcarTocada;
   window.actualizarRegistroCard = actualizarRegistroCard;
+  window.mostrarWorshipPack = mostrarWorshipPack;
+  window.guardarNotasMes = guardarNotasMes;
+  window.cargarNotasMes = cargarNotasMes;
 
   inicializarCanciones();
   cargarSeccion("semana");
   cargarSeccion("mes");
+  // cargamos notas en background (si existe)
+  // no dependemos de worship pack visible; esto precarga el textarea si luego abres el pack
+  cargarNotasMes();
 });
 </script>
 </body>
