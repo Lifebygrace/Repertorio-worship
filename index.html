@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Repertorio Worship</title>
 <style>
 :root{
@@ -24,17 +24,18 @@ main{max-width:900px;margin:18px auto;padding:12px}
 .preview-img{max-width:350px;border-radius:8px;margin:8px 8px 0 0;display:inline-block;box-shadow:0 0 6px rgba(0,0,0,0.15)}
 footer{text-align:center;margin-top:24px;padding:16px}
 .counter-badge{background:rgba(0,0,0,0.06);padding:6px 12px;border-radius:10px;font-weight:700}
+input,textarea{width:100%;padding:6px;margin:6px 0;border-radius:6px;border:1px solid #ccc}
 </style>
 </head>
 <body>
 <header>
   <div class="logo">
-    <img src="logo.jpeg" alt="Logo" />
+    <img src="logo.jpeg" alt="Logo">
     <h1>Repertorio Worship</h1>
   </div>
   <div class="controls">
     <button onclick="toggleDark()">🌙 / ☀️</button>
-    <button onclick="toggleEdicion()">✏️ Editar</button>
+    <button onclick="promptPin()">✏️ Editar</button>
     <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
   </div>
 </header>
@@ -44,40 +45,37 @@ footer{text-align:center;margin-top:24px;padding:16px}
   <div class="section">
     <h2>🎶 Canciones para la semana</h2>
     <div id="editar-semana" style="display:none;">
-      <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
+      <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)">
       <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
+      <input type="file" id="imagenes-semana" multiple>
+      <input type="file" id="audio-semana" accept="audio/*">
       <button onclick="guardarSeccion('semana')">Guardar</button>
     </div>
     <div id="mostrar-semana"></div>
-    <!-- añade justo después de <div id="mostrar-semana" style="margin-top:8px"></div> -->
-<div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-  <button onclick="mostrarWorshipPack('semana')">🎵 Worship Pack</button>
-  <button onclick="document.getElementById('worshipPackSemana').style.display = document.getElementById('worshipPackSemana').style.display === 'none' ? 'block' : 'none'">🔽 Mostrar/ocultar</button>
-</div>
-<div id="worshipPackSemana" class="pack-contenedor" style="display:none;margin-top:10px"></div>
-    <button onclick="mostrarWorshipPack('semana')">🎼 Worship Pack</button>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <button onclick="mostrarWorshipPack('semana')">🎵 Worship Pack</button>
+      <button onclick="document.getElementById('worshipPackSemana').style.display = document.getElementById('worshipPackSemana').style.display === 'none' ? 'block' : 'none'">🔽 Mostrar/ocultar</button>
+    </div>
+    <div id="worshipPackSemana" class="pack-contenedor" style="display:none;margin-top:10px"></div>
   </div>
 
   <!-- Sección Mes -->
   <div class="section">
     <h2>🆕 Canciones nuevas del mes</h2>
     <div id="editar-mes" style="display:none;">
-      <input id="titulo-mes" placeholder="Título (ej. Noviembre 2025)" />
+      <input id="titulo-mes" placeholder="Título (ej. Noviembre 2025)">
       <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
+      <input type="file" id="imagenes-mes" multiple>
+      <input type="file" id="audio-mes" accept="audio/*">
       <button onclick="guardarSeccion('mes')">Guardar</button>
     </div>
     <div id="mostrar-mes"></div>
-    <!-- añade justo después de <div id="mostrar-mes" style="margin-top:8px"></div> -->
-<div style="margin-top:8px;display:flex;gap:8px;align-items:center">
-  <button onclick="mostrarWorshipPack('mes')">🎵 Worship Pack</button>
-  <button onclick="document.getElementById('worshipPackMes').style.display = document.getElementById('worshipPackMes').style.display === 'none' ? 'block' : 'none'">🔽 Mostrar/ocultar</button>
-</div>
-<div id="worshipPackMes" class="pack-contenedor" style="display:none;margin-top:10px"></div>
-    <button onclick="mostrarWorshipPack('mes')">🎼 Worship Pack</button>
+    <div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+      <button onclick="mostrarWorshipPack('mes')">🎵 Worship Pack</button>
+      <button onclick="document.getElementById('worshipPackMes').style.display = document.getElementById('worshipPackMes').style.display === 'none' ? 'block' : 'none'">🔽 Mostrar/ocultar</button>
+    </div>
+    <div id="worshipPackMes" class="pack-contenedor" style="display:none;margin-top:10px"></div>
   </div>
-
-  <!-- Contenedor de Worship Pack -->
-  <div id="worshipPackContainer" style="margin-top:20px;"></div>
 
   <!-- Canciones -->
   <h2>🎵 Todas las canciones</h2>
@@ -91,7 +89,8 @@ footer{text-align:center;margin-top:24px;padding:16px}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, onSnapshot, setDoc, addDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-storage.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
@@ -101,39 +100,72 @@ const firebaseConfig = {
   messagingSenderId: "493050453266",
   appId: "1:493050453266:web:cf07ce9fbb471122f167cb"
 };
-
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const storage = getStorage(app);
 
 let cancionesCache = [];
 let modoEdicion = false;
+const PIN_ADMIN = "1234"; // tu PIN de administrador
 
+/* Utilidades UI */
 function toggleDark(){document.body.classList.toggle("dark");}
-
-function toggleEdicion(){
-  modoEdicion=!modoEdicion;
-  document.getElementById("editar-semana").style.display=modoEdicion?"block":"none";
-  document.getElementById("editar-mes").style.display=modoEdicion?"block":"none";
-  alert(modoEdicion ? "Modo edición activado" : "Modo edición desactivado");
+function promptPin(){
+  const pin = prompt("Ingresa el PIN de administrador:");
+  if(pin===PIN_ADMIN){modoEdicion=true; document.getElementById("editar-semana").style.display="block"; document.getElementById("editar-mes").style.display="block"; alert("Modo edición activado");} 
+  else alert("PIN incorrecto");
 }
 
+/* Normalizar títulos */
+function normalizar(texto){ return texto ? texto.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase().trim() : ""; }
+
+/* Secciones */
 async function guardarSeccion(tipo){
-  const titulo=document.getElementById(`titulo-${tipo}`).value.trim();
-  const canciones=document.getElementById(`canciones-${tipo}`).value.trim().split("\n").filter(Boolean);
-  await setDoc(doc(db,"secciones",tipo),{titulo,canciones});
+  const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
+  const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").filter(Boolean);
+  
+  // subir archivos si existen
+  let imagenes = [];
+  const inputImgs = document.getElementById(`imagenes-${tipo}`);
+  if(inputImgs && inputImgs.files.length>0){
+    for(const file of inputImgs.files){
+      const refImg = ref(storage, `imagenes/${tipo}/${file.name}`);
+      await uploadBytes(refImg, file);
+      const url = await getDownloadURL(refImg);
+      imagenes.push(url);
+    }
+  }
+  
+  let audioUrl = "";
+  const inputAudio = document.getElementById(`audio-${tipo}`);
+  if(inputAudio && inputAudio.files.length>0){
+    const file = inputAudio.files[0];
+    const refAudio = ref(storage, `audios/${tipo}/${file.name}`);
+    await uploadBytes(refAudio, file);
+    audioUrl = await getDownloadURL(refAudio);
+  }
+  
+  await setDoc(doc(db,"secciones",tipo), {titulo, canciones, imagenes, audio:audioUrl});
   cargarSeccion(tipo);
 }
 
+/* Cargar secciones */
 async function cargarSeccion(tipo){
-  const snap=await getDoc(doc(db,"secciones",tipo));
-  const cont=document.getElementById(`mostrar-${tipo}`);
-  if(!snap.exists()){cont.innerHTML="<p>No hay información guardada.</p>";return;}
-  const data=snap.data();
-  cont.innerHTML=`<h3>${data.titulo||""}</h3><ul>${(data.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>`;
+  const snap = await getDoc(doc(db,"secciones",tipo));
+  const cont = document.getElementById(`mostrar-${tipo}`);
+  if(!snap.exists()){ cont.innerHTML="<p>No hay información guardada.</p>"; return;}
+  const data = snap.data();
+  let html = `<h3>${data.titulo||""}</h3><ul>`;
+  (data.canciones||[]).forEach(c => html+=`<li>${c}</li>`);
+  html+="</ul>";
+  if(data.imagenes) data.imagenes.forEach(img => html+=`<img src="${img}" class="preview-img">`);
+  if(data.audio) html+=`<audio controls src="${data.audio}"></audio>`;
+  cont.innerHTML = html;
 }
 
+/* Canciones */
 function construirCard(c){
-  const div=document.createElement("div");
+  const div = document.createElement("div");
   div.className="card";
   div.innerHTML=`
     <h3>${c.titulo}</h3>
@@ -143,113 +175,68 @@ function construirCard(c){
   `;
   return div;
 }
-
 function cargarCanciones(){
-  const cont=document.getElementById("lista-canciones");
+  const cont = document.getElementById("lista-canciones");
   cont.innerHTML="";
-  cancionesCache.forEach(c=>cont.appendChild(construirCard(c)));
-  document.getElementById("contador-final").textContent=`Canciones totales 🎶: ${cancionesCache.length}`;
+  cancionesCache.forEach(c => cont.appendChild(construirCard(c)));
+  document.getElementById("contador-final").textContent = `Canciones totales 🎶: ${cancionesCache.length}`;
 }
 
+/* Worship Pack */
 async function mostrarWorshipPack(tipo){
-  const container=document.getElementById("worshipPackContainer");
-  container.innerHTML="";
-  const snap=await getDoc(doc(db,"secciones",tipo));
-  if(!snap.exists()){container.innerHTML="<p>No hay canciones en esta sección.</p>";return;}
-  const data=snap.data();
-  container.innerHTML=`<h2>🎼 Worship Pack - ${data.titulo||tipo.toUpperCase()}</h2>`;
-  const {canciones=[]}=data;
-  canciones.forEach(nombre=>{
-    const song=cancionesCache.find(c=>c.titulo.trim().toLowerCase()===nombre.trim().toLowerCase());
-    if(song) container.appendChild(construirCard(song));
-  });
+  const contId = tipo==='semana'?'worshipPackSemana':'worshipPackMes';
+  const cont = document.getElementById(contId);
+  if(!cont) return;
+  cont.innerHTML=""; cont.style.display='block';
+  
+  try{
+    const snap = await getDoc(doc(db,"secciones",tipo));
+    if(!snap.exists()){ cont.innerHTML="<p>No hay canciones guardadas en esta sección.</p>"; return;}
+    const data = snap.data();
+    const lista = Array.isArray(data.canciones)?data.canciones:[];
+    
+    const header = document.createElement('div');
+    header.style.display="flex"; header.style.justifyContent="space-between"; header.style.marginBottom="8px";
+    header.innerHTML=`<strong>${tipo==='semana'?'Worship Pack Semanal':'Worship Pack Mensual'} — ${data.titulo||tipo}</strong>
+      <button onclick="document.getElementById('${contId}').innerHTML='';document.getElementById('${contId}').style.display='none'">Cerrar</button>`;
+    cont.appendChild(header);
+    
+    for(const nombre of lista){
+      const encontrado = cancionesCache.find(c=>normalizar(c.titulo)===normalizar(nombre));
+      if(encontrado){
+        const card = construirCard(encontrado);
+        const badge = document.createElement('div');
+        badge.style.fontSize='0.85rem'; badge.style.marginBottom='6px';
+        badge.innerHTML=`<span style="background:var(--accent);color:#fff;padding:4px 8px;border-radius:6px;font-weight:700">Worship Pack</span>`;
+        card.insertBefore(badge,card.firstChild);
+        cont.appendChild(card);
+      } else {
+        const ph = document.createElement("div");
+        ph.className='card';
+        ph.innerHTML=`<h3>${nombre}</h3><p><em>Esta canción no existe en la colección "canciones". Añádela (modo edición) para que se muestre con acordes, imágenes y audio.</em></p>`;
+        cont.appendChild(ph);
+      }
+    }
+  } catch(err){ console.error(err); cont.innerHTML="<p>Error cargando worship pack (ver consola).</p>"; }
 }
 
+/* Inicializar */
 function inicializarCanciones(){
   onSnapshot(collection(db,"canciones"), snap=>{
-    cancionesCache=snap.docs.map(d=>({id:d.id,...d.data()}));
+    cancionesCache = snap.docs.map(d=>({id:d.id,...d.data()}));
     cargarCanciones();
   });
   cargarSeccion("semana");
   cargarSeccion("mes");
 }
 
+/* Bind global */
 window.toggleDark=toggleDark;
-window.toggleEdicion=toggleEdicion;
+window.promptPin=promptPin;
 window.guardarSeccion=guardarSeccion;
 window.mostrarWorshipPack=mostrarWorshipPack;
 
 inicializarCanciones();
-/* ===== WORSHIP PACK (inserta este bloque antes del `window.addEventListener('load'...)`) ===== */
-
-async function mostrarWorshipPack(tipo){
-  // tipo: 'semana' o 'mes'
-  const contId = tipo === 'semana' ? 'worshipPackSemana' : 'worshipPackMes';
-  const cont = document.getElementById(contId);
-  if(!cont) return console.warn("Contenedor worship pack no encontrado:", contId);
-  cont.innerHTML = ''; // limpiar
-  cont.style.display = 'block';
-
-  try {
-    // lee la sección correspondiente (usa la colección 'secciones' que ya guardas)
-    const snap = await getDoc(doc(db, "secciones", tipo));
-    if(!snap.exists()){
-      cont.innerHTML = `<p>No hay canciones guardadas en la sección "${tipo}".</p>`;
-      return;
-    }
-    const data = snap.data();
-    const lista = Array.isArray(data.canciones) ? data.canciones : [];
-    const titulo = data.titulo || (tipo === 'semana' ? 'Canciones para la semana' : 'Nuevas del mes');
-
-    // encabezado
-    const header = document.createElement('div');
-    header.style.display = "flex";
-    header.style.justifyContent = "space-between";
-    header.style.alignItems = "center";
-    header.style.marginBottom = "8px";
-    header.innerHTML = `<strong>${tipo==='semana' ? 'Worship Pack Semanal' : 'Worship Pack Mensual'} — ${titulo}</strong>
-                        <div style="display:flex;gap:8px">
-                          <button onclick="document.getElementById('${contId}').innerHTML='';document.getElementById('${contId}').style.display='none'">Cerrar</button>
-                        </div>`;
-    cont.appendChild(header);
-
-    if(lista.length === 0){
-      cont.appendChild(Object.assign(document.createElement('p'), { textContent: 'No hay canciones listadas en esta sección.' }));
-      return;
-    }
-
-    // por cada nombre en la lista, intentar encontrar el documento en cancionesCache por título normalizado
-    for(const nombre of lista){
-      const encontrado = cancionesCache.find(c => normalizar(c.titulo) === normalizar(nombre));
-      if(encontrado){
-        // reutilizamos tu construirCard para mantener el mismo look y funcionalidades
-        const card = construirCard(encontrado);
-        // opcional: marcar que proviene del pack (badge)
-        const badge = document.createElement('div');
-        badge.style.fontSize = '0.85rem';
-        badge.style.marginBottom = '6px';
-        badge.innerHTML = `<span style="background:var(--accent);color:#fff;padding:4px 8px;border-radius:6px;font-weight:700">Worship Pack</span>`;
-        card.insertBefore(badge, card.firstChild);
-        cont.appendChild(card);
-      } else {
-        // si no existe, mostramos un placeholder para que sepas qué añadir a la colección 'canciones'
-        const ph = document.createElement('div');
-        ph.className = 'card';
-        ph.innerHTML = `<h3>${nombre}</h3><p><em>Esta canción no existe en la colección "canciones". Añádela (modo edición) para que la tarjeta muestre acordes, imágenes y audio.</em></p>`;
-        cont.appendChild(ph);
-      }
-    }
-
-  } catch(err){
-    console.error("Error mostrarWorshipPack:", err);
-    cont.innerHTML = `<p>Error cargando worship pack (ver consola).</p>`;
-  }
-}
-
-/* bind para uso desde HTML (se asegura que está disponible globalmente) */
-window.mostrarWorshipPack = mostrarWorshipPack;
-
-/* ===== fin WORSHIP PACK ===== */
 </script>
 </body>
 </html>
