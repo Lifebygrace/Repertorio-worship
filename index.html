@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Repertorio Worship</title>
 <style>
-/* ======= TUS ESTILOS ORIGINALES ======= */
 :root{
   --primary:#002244;--accent:#ff8c42;--bg:#f0f4f8;--text:#002244;
   --section-bg:#fff8e1;--card-bg:#ffffff;--edit-bg:#FFEB3B;
@@ -28,8 +27,6 @@ footer{text-align:center;margin-top:24px;padding:16px}
 </style>
 </head>
 <body>
-<div class="edit-banner">✏️ Modo edición activo</div>
-
 <header>
   <div class="logo">
     <img src="logo.jpeg" alt="Logo" />
@@ -37,51 +34,52 @@ footer{text-align:center;margin-top:24px;padding:16px}
   </div>
   <div class="controls">
     <button onclick="toggleDark()">🌙 / ☀️</button>
-    <button onclick="activarEdicion()">✏️ Editar</button>
+    <button onclick="toggleEdicion()">✏️ Editar</button>
     <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
-    <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵 Mostrar lista</button>
   </div>
 </header>
 
 <main>
-  <!-- Sección semana -->
+  <!-- Sección Semana -->
   <div class="section">
     <h2>🎶 Canciones para la semana</h2>
-    <div id="contenedor-semana" style="display:none;">
-      <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
+    <div id="editar-semana" style="display:none;">
+      <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
       <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('semana')">Guardar sección</button>
+      <button onclick="guardarSeccion('semana')">Guardar</button>
     </div>
     <div id="mostrar-semana"></div>
-    <button onclick="mostrarWorshipPackSemana()">🎼 Worship Pack</button>
+    <button onclick="mostrarWorshipPack('semana')">🎼 Worship Pack</button>
   </div>
 
-  <!-- Sección mes -->
+  <!-- Sección Mes -->
   <div class="section">
     <h2>🆕 Canciones nuevas del mes</h2>
-    <div id="contenedor-mes" style="display:none;">
-      <input id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
+    <div id="editar-mes" style="display:none;">
+      <input id="titulo-mes" placeholder="Título (ej. Noviembre 2025)" />
       <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('mes')">Guardar sección</button>
+      <button onclick="guardarSeccion('mes')">Guardar</button>
     </div>
     <div id="mostrar-mes"></div>
-    <button onclick="mostrarWorshipPackMes()">🎼 Worship Pack</button>
+    <button onclick="mostrarWorshipPack('mes')">🎼 Worship Pack</button>
   </div>
 
+  <!-- Contenedor de Worship Pack -->
   <div id="worshipPackContainer" style="margin-top:20px;"></div>
 
+  <!-- Canciones -->
+  <h2>🎵 Todas las canciones</h2>
   <div id="lista-canciones"></div>
   <div id="contador-final" class="counter-badge">Canciones totales 🎶: 0</div>
 </main>
 
 <footer>
-  <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver al inicio</button>
+  <button onclick="window.scrollTo({top:0, behavior:'smooth'})">⬆️ Volver arriba</button>
 </footer>
 
 <script type="module">
-/* ========= Firebase + Funciones originales ========= */
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getFirestore, collection, doc, getDoc, onSnapshot, addDoc, updateDoc, deleteDoc, setDoc, getDocs } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
+import { getFirestore, collection, doc, getDoc, onSnapshot, setDoc } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDahT6IuQwSYdpAMcPpAERpqVuobmqmVSQ",
@@ -91,95 +89,85 @@ const firebaseConfig = {
   messagingSenderId: "493050453266",
   appId: "1:493050453266:web:cf07ce9fbb471122f167cb"
 };
+
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let cancionesCache = [];
 let modoEdicion = false;
 
-/* === Funciones base (reducidas para brevedad, pero 100 % funcionales) === */
-function normalizar(t){return (t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();}
 function toggleDark(){document.body.classList.toggle("dark");}
-function toggleCanciones(){document.getElementById("lista-canciones").style.display='block';}
-function activarEdicion(){modoEdicion=!modoEdicion;alert(modoEdicion?'Modo edición activado':'Modo edición desactivado');}
+
+function toggleEdicion(){
+  modoEdicion=!modoEdicion;
+  document.getElementById("editar-semana").style.display=modoEdicion?"block":"none";
+  document.getElementById("editar-mes").style.display=modoEdicion?"block":"none";
+  alert(modoEdicion ? "Modo edición activado" : "Modo edición desactivado");
+}
+
 async function guardarSeccion(tipo){
   const titulo=document.getElementById(`titulo-${tipo}`).value.trim();
   const canciones=document.getElementById(`canciones-${tipo}`).value.trim().split("\n").filter(Boolean);
   await setDoc(doc(db,"secciones",tipo),{titulo,canciones});
   cargarSeccion(tipo);
 }
+
 async function cargarSeccion(tipo){
   const snap=await getDoc(doc(db,"secciones",tipo));
   const cont=document.getElementById(`mostrar-${tipo}`);
-  if(snap.exists()){
-    const d=snap.data();
-    cont.innerHTML=`<h3>${d.titulo||""}</h3><ul>${(d.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>`;
-  }
+  if(!snap.exists()){cont.innerHTML="<p>No hay información guardada.</p>";return;}
+  const data=snap.data();
+  cont.innerHTML=`<h3>${data.titulo||""}</h3><ul>${(data.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>`;
 }
 
-/* === Render de canciones === */
 function construirCard(c){
   const div=document.createElement("div");
   div.className="card";
-  div.innerHTML=`<h2>${c.titulo}</h2><p>${c.acordes||''}</p>`;
+  div.innerHTML=`
+    <h3>${c.titulo}</h3>
+    ${c.imagenes?(c.imagenes.map(img=>`<img src="${img}" class="preview-img">`).join("")):""}
+    ${c.audio?`<audio controls src="${c.audio}"></audio>`:""}
+    ${c.notas?`<p><strong>Notas:</strong> ${c.notas}</p>`:""}
+  `;
   return div;
 }
+
 function cargarCanciones(){
   const cont=document.getElementById("lista-canciones");
   cont.innerHTML="";
   cancionesCache.forEach(c=>cont.appendChild(construirCard(c)));
+  document.getElementById("contador-final").textContent=`Canciones totales 🎶: ${cancionesCache.length}`;
 }
 
-/* === Worship Pack === */
-async function mostrarWorshipPackSemana(){
-  const cont=document.getElementById("worshipPackContainer");
-  cont.innerHTML="<h2>🎼 Worship Pack - Semana</h2>";
-  const snap=await getDoc(doc(db,"secciones","semana"));
-  if(!snap.exists()) return cont.innerHTML+="<p>No hay canciones guardadas.</p>";
-  const {canciones=[]}=snap.data();
-  canciones.forEach(t=>{
-    const song=cancionesCache.find(c=>c.titulo.trim().toLowerCase()===t.trim().toLowerCase());
-    if(song) cont.appendChild(construirCard(song));
+async function mostrarWorshipPack(tipo){
+  const container=document.getElementById("worshipPackContainer");
+  container.innerHTML="";
+  const snap=await getDoc(doc(db,"secciones",tipo));
+  if(!snap.exists()){container.innerHTML="<p>No hay canciones en esta sección.</p>";return;}
+  const data=snap.data();
+  container.innerHTML=`<h2>🎼 Worship Pack - ${data.titulo||tipo.toUpperCase()}</h2>`;
+  const {canciones=[]}=data;
+  canciones.forEach(nombre=>{
+    const song=cancionesCache.find(c=>c.titulo.trim().toLowerCase()===nombre.trim().toLowerCase());
+    if(song) container.appendChild(construirCard(song));
   });
 }
 
-async function mostrarWorshipPackMes(){
-  const cont=document.getElementById("worshipPackContainer");
-  cont.innerHTML="<h2>🎼 Worship Pack - Nuevas del Mes</h2>";
-  const snap=await getDoc(doc(db,"secciones","mes"));
-  if(!snap.exists()) return cont.innerHTML+="<p>No hay canciones nuevas.</p>";
-  const {canciones=[]}=snap.data();
-  canciones.forEach(t=>{
-    const song=cancionesCache.find(c=>c.titulo.trim().toLowerCase()===t.trim().toLowerCase());
-    if(song) cont.appendChild(construirCard(song));
-  });
-  const notas=document.createElement("textarea");
-  notas.placeholder="📝 Notas específicas para el grupo...";
-  notas.style.width="100%";
-  notas.style.height="100px";
-  notas.style.marginTop="12px";
-  cont.appendChild(notas);
-}
-
-/* === Inicialización === */
 function inicializarCanciones(){
   onSnapshot(collection(db,"canciones"), snap=>{
     cancionesCache=snap.docs.map(d=>({id:d.id,...d.data()}));
     cargarCanciones();
-    document.getElementById("contador-final").textContent=`Canciones totales 🎶: ${cancionesCache.length}`;
   });
+  cargarSeccion("semana");
+  cargarSeccion("mes");
 }
 
 window.toggleDark=toggleDark;
-window.toggleCanciones=toggleCanciones;
-window.activarEdicion=activarEdicion;
+window.toggleEdicion=toggleEdicion;
 window.guardarSeccion=guardarSeccion;
-window.mostrarWorshipPackSemana=mostrarWorshipPackSemana;
-window.mostrarWorshipPackMes=mostrarWorshipPackMes;
+window.mostrarWorshipPack=mostrarWorshipPack;
 
 inicializarCanciones();
-cargarSeccion("semana");
-cargarSeccion("mes");
 </script>
 </body>
 </html>
