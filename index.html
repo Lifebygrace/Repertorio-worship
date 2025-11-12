@@ -409,6 +409,7 @@ async function guardarSeccion(tipo){
   const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").map(s=>s.trim()).filter(Boolean);
   await setDoc(doc(db,"secciones",tipo), { titulo, canciones });
   alert("✅ Sección guardada");
+  await cargarSecciones(); // 🔁 Recargar datos para asegurar sincronía
   cargarSeccion(tipo);
 }
 
