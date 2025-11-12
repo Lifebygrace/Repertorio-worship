@@ -548,7 +548,9 @@ async function toggleWorshipPack() {
     const lista = Array.isArray(data.canciones) ? data.canciones.map(t => t.trim().toLowerCase()) : [];
 
     // filtrar cancionesCache por coincidencia de título
-    const cancionesSemana = cancionesCache.filter(c => lista.includes((c.titulo || "").trim().toLowerCase()));
+  const cancionesSemana = cancionesCache.filter(c => 
+  lista.some(nombre => normalizar(c.titulo) === normalizar(nombre))
+);
 
     if (cancionesSemana.length === 0) {
       contenedor.innerHTML = "<p>No se encontraron coincidencias con las canciones guardadas.</p>";
