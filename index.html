@@ -123,7 +123,15 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
 <button id="btnWorshipPack" onclick="toggleWorshipPack()" style="margin-top:8px;">🎁 Worship Pack</button>
 <div id="worshipPackContainer" style="display:none; margin-top:12px;"></div>
     </div>
-
+<div class="section">
+  <h2>🎁 Worship Pack</h2>
+  <div id="contenedor-worshippack" style="display:none;">
+    <input id="titulo-worshippack" placeholder="Título del Worship Pack (ej. Ensayo 15 Noviembre)" />
+    <textarea id="canciones-worshippack" placeholder="Canciones (una por línea)"></textarea>
+    <button onclick="guardarSeccion('worshippack')">Guardar Worship Pack</button>
+  </div>
+  <div id="mostrar-worshippack" style="margin-top:8px"></div>
+</div>
   <div class="section">
     <h2>🆕 Canciones nuevas del mes</h2>
     <div id="contenedor-mes" style="display:none;">
@@ -597,6 +605,25 @@ window.addEventListener('load', ()=>{
   inicializarCanciones();
   cargarSeccion("semana");
   cargarSeccion("mes");
+  // 🔹 Cargar Worship Pack
+try {
+  const snapWorship = await getDoc(doc(db, "secciones", "worshippack"));
+  if (snapWorship.exists()) {
+    const data = snapWorship.data();
+    document.getElementById("titulo-worshippack").value = data.titulo || "";
+    document.getElementById("canciones-worshippack").value = Array.isArray(data.canciones)
+      ? data.canciones.join("\n")
+      : (data.canciones || "");
+    document.getElementById("mostrar-worshippack").innerHTML = `
+      <h3>${data.titulo || "Worship Pack"}</h3>
+      <ul>${(Array.isArray(data.canciones) ? data.canciones : []).map(c => `<li>${c}</li>`).join("")}</ul>
+    `;
+  } else {
+    document.getElementById("mostrar-worshippack").innerHTML = "<p>No hay Worship Pack guardado.</p>";
+  }
+} catch (e) {
+  console.error("Error cargando Worship Pack:", e);
+}
 });
 </script>
 </body>
