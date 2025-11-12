@@ -49,6 +49,12 @@ footer{text-align:center;margin-top:24px;padding:16px}
       <button onclick="guardarSeccion('semana')">Guardar</button>
     </div>
     <div id="mostrar-semana"></div>
+    <!-- añade justo después de <div id="mostrar-semana" style="margin-top:8px"></div> -->
+<div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+  <button onclick="mostrarWorshipPack('semana')">🎵 Worship Pack</button>
+  <button onclick="document.getElementById('worshipPackSemana').style.display = document.getElementById('worshipPackSemana').style.display === 'none' ? 'block' : 'none'">🔽 Mostrar/ocultar</button>
+</div>
+<div id="worshipPackSemana" class="pack-contenedor" style="display:none;margin-top:10px"></div>
     <button onclick="mostrarWorshipPack('semana')">🎼 Worship Pack</button>
   </div>
 
@@ -61,6 +67,12 @@ footer{text-align:center;margin-top:24px;padding:16px}
       <button onclick="guardarSeccion('mes')">Guardar</button>
     </div>
     <div id="mostrar-mes"></div>
+    <!-- añade justo después de <div id="mostrar-mes" style="margin-top:8px"></div> -->
+<div style="margin-top:8px;display:flex;gap:8px;align-items:center">
+  <button onclick="mostrarWorshipPack('mes')">🎵 Worship Pack</button>
+  <button onclick="document.getElementById('worshipPackMes').style.display = document.getElementById('worshipPackMes').style.display === 'none' ? 'block' : 'none'">🔽 Mostrar/ocultar</button>
+</div>
+<div id="worshipPackMes" class="pack-contenedor" style="display:none;margin-top:10px"></div>
     <button onclick="mostrarWorshipPack('mes')">🎼 Worship Pack</button>
   </div>
 
@@ -168,6 +180,76 @@ window.guardarSeccion=guardarSeccion;
 window.mostrarWorshipPack=mostrarWorshipPack;
 
 inicializarCanciones();
+/* ===== WORSHIP PACK (inserta este bloque antes del `window.addEventListener('load'...)`) ===== */
+
+async function mostrarWorshipPack(tipo){
+  // tipo: 'semana' o 'mes'
+  const contId = tipo === 'semana' ? 'worshipPackSemana' : 'worshipPackMes';
+  const cont = document.getElementById(contId);
+  if(!cont) return console.warn("Contenedor worship pack no encontrado:", contId);
+  cont.innerHTML = ''; // limpiar
+  cont.style.display = 'block';
+
+  try {
+    // lee la sección correspondiente (usa la colección 'secciones' que ya guardas)
+    const snap = await getDoc(doc(db, "secciones", tipo));
+    if(!snap.exists()){
+      cont.innerHTML = `<p>No hay canciones guardadas en la sección "${tipo}".</p>`;
+      return;
+    }
+    const data = snap.data();
+    const lista = Array.isArray(data.canciones) ? data.canciones : [];
+    const titulo = data.titulo || (tipo === 'semana' ? 'Canciones para la semana' : 'Nuevas del mes');
+
+    // encabezado
+    const header = document.createElement('div');
+    header.style.display = "flex";
+    header.style.justifyContent = "space-between";
+    header.style.alignItems = "center";
+    header.style.marginBottom = "8px";
+    header.innerHTML = `<strong>${tipo==='semana' ? 'Worship Pack Semanal' : 'Worship Pack Mensual'} — ${titulo}</strong>
+                        <div style="display:flex;gap:8px">
+                          <button onclick="document.getElementById('${contId}').innerHTML='';document.getElementById('${contId}').style.display='none'">Cerrar</button>
+                        </div>`;
+    cont.appendChild(header);
+
+    if(lista.length === 0){
+      cont.appendChild(Object.assign(document.createElement('p'), { textContent: 'No hay canciones listadas en esta sección.' }));
+      return;
+    }
+
+    // por cada nombre en la lista, intentar encontrar el documento en cancionesCache por título normalizado
+    for(const nombre of lista){
+      const encontrado = cancionesCache.find(c => normalizar(c.titulo) === normalizar(nombre));
+      if(encontrado){
+        // reutilizamos tu construirCard para mantener el mismo look y funcionalidades
+        const card = construirCard(encontrado);
+        // opcional: marcar que proviene del pack (badge)
+        const badge = document.createElement('div');
+        badge.style.fontSize = '0.85rem';
+        badge.style.marginBottom = '6px';
+        badge.innerHTML = `<span style="background:var(--accent);color:#fff;padding:4px 8px;border-radius:6px;font-weight:700">Worship Pack</span>`;
+        card.insertBefore(badge, card.firstChild);
+        cont.appendChild(card);
+      } else {
+        // si no existe, mostramos un placeholder para que sepas qué añadir a la colección 'canciones'
+        const ph = document.createElement('div');
+        ph.className = 'card';
+        ph.innerHTML = `<h3>${nombre}</h3><p><em>Esta canción no existe en la colección "canciones". Añádela (modo edición) para que la tarjeta muestre acordes, imágenes y audio.</em></p>`;
+        cont.appendChild(ph);
+      }
+    }
+
+  } catch(err){
+    console.error("Error mostrarWorshipPack:", err);
+    cont.innerHTML = `<p>Error cargando worship pack (ver consola).</p>`;
+  }
+}
+
+/* bind para uso desde HTML (se asegura que está disponible globalmente) */
+window.mostrarWorshipPack = mostrarWorshipPack;
+
+/* ===== fin WORSHIP PACK ===== */
 </script>
 </body>
 </html>
