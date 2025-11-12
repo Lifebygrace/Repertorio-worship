@@ -111,34 +111,31 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
 <button id="clearSearch" class="clear-btn">✂️borrar❌</button>
   </div>
 
-  <div class="section">
-    <h2>🎶 Canciones para la semana</h2>
+<div class="section">
+  <h2>🎶 Canciones para la semana</h2>
+  <div id="mostrar-semana" style="margin-top:8px"></div>
   <button onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
   <div id="worshippack-semana" style="display:none; margin-top:8px;"></div>
-  ...
+
+  <div id="contenedor-semana" style="display:none; margin-top:10px;">
+    <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
+    <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
+    <button onclick="guardarSeccion('semana')">Guardar sección</button>
+  </div>
 </div>
 
-    <div id="contenedor-semana" style="display:none;">
-      <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
-      <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('semana')">Guardar sección</button>
-    </div>
-    <div id="mostrar-semana" style="margin-top:8px"></div>
-  </div>
-
-  <div class="section">
-    <h2>🆕 Canciones nuevas del mes</h2>
-      <button onclick="mostrarWorshipPack('mes')">🎁 Worship Pack</button>
+<div class="section">
+  <h2>🆕 Canciones nuevas del mes</h2>
+  <div id="mostrar-mes" style="margin-top:8px"></div>
+  <button onclick="mostrarWorshipPack('mes')">🎁 Worship Pack</button>
   <div id="worshippack-mes" style="display:none; margin-top:8px;"></div>
-  ...
-</div>
-    <div id="contenedor-mes" style="display:none;">
-      <input id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
-      <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
-      <button onclick="guardarSeccion('mes')">Guardar sección</button>
-    </div>
-    <div id="mostrar-mes" style="margin-top:8px"></div>
+
+  <div id="contenedor-mes" style="display:none; margin-top:10px;">
+    <input id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
+    <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
+    <button onclick="guardarSeccion('mes')">Guardar sección</button>
   </div>
+</div>
 
   <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
 
@@ -530,23 +527,26 @@ function setOrden(campo){
 
 /* BOOT */
 
-/* Mostrar Worship Pack (tarjetas de las canciones listadas en la sección) */
+/* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
 async function mostrarWorshipPack(tipo) {
   const cont = document.getElementById(`worshippack-${tipo}`);
-  if (!cont) return;
+  const boton = document.querySelector(`button[onclick="mostrarWorshipPack('${tipo}')"]`);
+  if (!cont || !boton) return;
 
-  // Si ya está visible, la ocultamos
+  // Si ya está visible, la ocultamos y restauramos el texto del botón
   if (cont.style.display === "block") {
     cont.style.display = "none";
     cont.innerHTML = "";
+    boton.textContent = "🎁 Worship Pack";
     return;
   }
 
-  // Obtener canciones de la sección guardada
+  // Mostrar el pack
   const snap = await getDoc(doc(db, "secciones", tipo));
   if (!snap.exists()) {
     cont.innerHTML = "<p>No hay canciones guardadas para esta sección.</p>";
     cont.style.display = "block";
+    boton.textContent = "🔽 Ocultar pack";
     return;
   }
 
@@ -554,7 +554,7 @@ async function mostrarWorshipPack(tipo) {
   const lista = (data.canciones || []).map(t => normalizar(t));
   cont.innerHTML = ""; // limpiar
 
-  // Mostrar tarjetas de las canciones cuyo título coincide
+  // Mostrar tarjetas de las canciones de la lista
   cancionesCache.forEach(c => {
     if (lista.includes(normalizar(c.titulo))) {
       cont.appendChild(construirCard(c));
@@ -566,7 +566,9 @@ async function mostrarWorshipPack(tipo) {
   }
 
   cont.style.display = "block";
+  boton.textContent = "🔽 Ocultar pack";
 }
+
 window.addEventListener('load', ()=>{
   const saved = localStorage.getItem("theme");
   if(saved === "dark") document.body.classList.add("dark");
