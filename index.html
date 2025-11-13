@@ -334,14 +334,21 @@ async function marcarTocada(id){
 }
 
 /* Render lista de canciones (aplica búsqueda) */
+
 function cargarCanciones(){
   const cont = document.getElementById("lista-canciones");
   cont.innerHTML = "";
-  const q = normalizar(document.getElementById("search").value || "");
+
+  // Limpia espacios antes y después de la búsqueda
+  const q = normalizar((document.getElementById("search").value || "").trim());
+
+  // Si no hay texto, no aplicar filtro (muestra todo solo si está habilitado)
   cancionesCache.forEach(c => {
-    if(normalizar(c.titulo).includes(q)) cont.appendChild(construirCard(c));
+    const tituloNormalizado = normalizar(c.titulo || "").trim();
+    if (tituloNormalizado.includes(q)) cont.appendChild(construirCard(c));
   });
-  cont.style.display = (cancionesVisible || q.length>0) ? "block" : "none";
+
+  cont.style.display = (cancionesVisible || q.length > 0) ? "block" : "none";
 }
 
 /* Agregar canción */
