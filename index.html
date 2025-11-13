@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/icons/apple-icon-180x180.png">
+<meta name="theme-color" content="#002244">
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Repertorio Worship</title>
@@ -165,6 +168,13 @@ ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
             <th class="th-sortable" onclick="setOrden('ultima')">Última fecha <span class="sort-ind" id="sortUltima"></span></th>
           </tr>
         </thead>
+        <script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/service-worker.js')
+    .then(() => console.log('✅ Service Worker registrado correctamente.'))
+    .catch(err => console.error('❌ Error al registrar el Service Worker:', err));
+}
+</script>
         <tbody></tbody>
       </table>
     </div>
