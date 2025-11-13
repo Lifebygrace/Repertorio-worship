@@ -1,96 +1,71 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<link rel="manifest" href="/manifest.json">
-<link rel="apple-touch-icon" href="/icons/apple-icon-180x180.png">
-<meta name="theme-color" content="#002244">
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Repertorio Worship</title>
-<style>
-:root{
-  --primary:#002244;--accent:#ff8c42;--bg:#f0f4f8;--text:#002244;
-  --section-bg:#fff8e1;--card-bg:#ffffff;--edit-bg:#FFEB3B;
-}
-body.dark{--bg:#121212;--text:#f0f4f8;--card-bg:#1e1e1e;--section-bg:#2a2a2a;--edit-bg:#f9a825}
-html,body{height:100%;margin:0;padding:0}
-body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);transition:background .25s,color .25s}
-header{background:var(--primary);color:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
-.logo{display:flex;align-items:center;gap:12px}
-.logo img{height:56px;border-radius:8px}
-.controls{display:flex;gap:8px;align-items:center}
-button{background:var(--accent);color:#fff;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700}
-button:hover{transform:scale(1.03)}
-main{max-width:900px;margin:18px auto;padding:12px}
-.card{background:var(--card-bg);padding:14px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.08);margin-bottom:16px}
-.section{background:var(--section-bg);padding:14px;border-radius:10px;margin-bottom:16px}
-input[type="text"],textarea,input[type="date"]{width:100%;padding:10px;margin-bottom:10px;border-radius:8px;border:1px solid #ccc;background:transparent;color:inherit}
-.search-container{position:relative;margin-bottom:16px}
-#search{padding:14px 44px 14px 14px;border-radius:10px;border:2px solid var(--accent);font-size:1.05rem}
-#clearSearch{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:var(--accent);font-size:1.2rem;display:none}
-.link-btn{display:inline-block;background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none}
-.edit-banner{position:sticky;top:0;background:var(--edit-bg);padding:8px;text-align:center;font-weight:bold;display:none;z-index:50}
-footer{text-align:center;margin-top:24px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px;flex-wrap:wrap}
-table{width:100%;border-collapse:collapse;margin-top:8px}
-th,td{border:1px solid #ccc;padding:6px;text-align:center}
-th{background:var(--accent);color:#fff;cursor:pointer}
-ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
-.fechas-box{min-width:180px}
-.small {font-size:0.8rem;padding:4px 6px;border-radius:6px;margin-left:2px}
-.meta-line{font-size:0.9rem;color:#555;display:flex;gap:10px;align-items:center;margin-top:6px}
-.meta-line .plays, .meta-line .last{display:inline-block}
-.tocada-btn{background:#0077cc;padding:6px 8px;border-radius:6px;color:#fff;border:0;cursor:pointer;font-weight:700}
-.tocada-btn:hover{opacity:0.95}
-.counter-badge{background:rgba(0,0,0,0.06);padding:6px 12px;border-radius:10px;font-weight:700}
-.preview-img {
-  max-width: 350px; /* antes era 120px */
-  border-radius: 8px;
-  margin: 8px 8px 0 0;
-  display: inline-block;
-  box-shadow: 0 0 6px rgba(0,0,0,0.15);
-}
-.th-sortable{position:relative}
-.th-sortable .sort-ind{font-size:0.9rem;opacity:0.9;margin-left:6px}
-.edit-input{width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;background:transparent;color:inherit;margin-bottom:8px}
-.clear-btn {
-  background-color: #e74c3c !important;
-  color: white !important;
-  border: none !important;
-  border-radius: 6px !important;
-  padding: 6px 12px !important;
-  cursor: pointer !important;
-  font-size: 14px !important;
-  font-weight: bold !important;
-  transition: background-color 0.2s ease, transform 0.1s ease !important;
-}
-.clear-btn:hover {
-  background-color: #c0392b; /* rojo más oscuro */
-  transform: scale(1.1);
-}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Repertorio Worship</title>
 
-.clear-btn:active {
-  transform: scale(0.95);
-}
-.delete-btn {
-  background-color: #e74c3c; /* rojo principal */
-  color: white;
-  border: none;
-  border-radius: 6px;
-  padding: 6px 12px;
-  cursor: pointer;
-  font-weight: bold;
-  transition: background-color 0.2s ease, transform 0.1s ease;
-}
+  <!-- 🎨 Colores del tema -->
+  <meta name="theme-color" content="#002244">
+  <meta name="background-color" content="#002244">
 
-.delete-btn:hover {
-  background-color: #c0392b; /* rojo más oscuro al pasar el mouse */
-  transform: scale(1.05);
-}
+  <!-- 📱 Configuración para iOS (icono pantalla de inicio) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Repertorio Worship">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/logo-180.png">
 
-.delete-btn:active {
-  transform: scale(0.95);
-}
-</style>
+  <!-- 📦 Manifest + favicons Android -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="/icons/logo-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="/icons/logo-512.png">
+
+  <style>
+  :root{
+    --primary:#002244;--accent:#ff8c42;--bg:#f0f4f8;--text:#002244;
+    --section-bg:#fff8e1;--card-bg:#ffffff;--edit-bg:#FFEB3B;
+  }
+  body.dark{--bg:#121212;--text:#f0f4f8;--card-bg:#1e1e1e;--section-bg:#2a2a2a;--edit-bg:#f9a825}
+  html,body{height:100%;margin:0;padding:0}
+  body{font-family:'Segoe UI',sans-serif;background:var(--bg);color:var(--text);transition:background .25s,color .25s}
+  header{background:var(--primary);color:#fff;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap}
+  .logo{display:flex;align-items:center;gap:12px}
+  .logo img{height:56px;border-radius:8px}
+  .controls{display:flex;gap:8px;align-items:center}
+  button{background:var(--accent);color:#fff;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700}
+  button:hover{transform:scale(1.03)}
+  main{max-width:900px;margin:18px auto;padding:12px}
+  .card{background:var(--card-bg);padding:14px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.08);margin-bottom:16px}
+  .section{background:var(--section-bg);padding:14px;border-radius:10px;margin-bottom:16px}
+  input[type="text"],textarea,input[type="date"]{width:100%;padding:10px;margin-bottom:10px;border-radius:8px;border:1px solid #ccc;background:transparent;color:inherit}
+  .search-container{position:relative;margin-bottom:16px}
+  #search{padding:14px 44px 14px 14px;border-radius:10px;border:2px solid var(--accent);font-size:1.05rem}
+  #clearSearch{position:absolute;right:12px;top:50%;transform:translateY(-50%);background:transparent;border:0;color:var(--accent);font-size:1.2rem;display:none}
+  .link-btn{display:inline-block;background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;text-decoration:none}
+  .edit-banner{position:sticky;top:0;background:var(--edit-bg);padding:8px;text-align:center;font-weight:bold;display:none;z-index:50}
+  footer{text-align:center;margin-top:24px;padding:16px;display:flex;flex-direction:column;align-items:center;gap:10px;flex-wrap:wrap}
+  table{width:100%;border-collapse:collapse;margin-top:8px}
+  th,td{border:1px solid #ccc;padding:6px;text-align:center}
+  th{background:var(--accent);color:#fff;cursor:pointer}
+  ul.fechas-lista{list-style:none;padding:0;margin:0;text-align:left}
+  .fechas-box{min-width:180px}
+  .small{font-size:0.8rem;padding:4px 6px;border-radius:6px;margin-left:2px}
+  .meta-line{font-size:0.9rem;color:#555;display:flex;gap:10px;align-items:center;margin-top:6px}
+  .meta-line .plays,.meta-line .last{display:inline-block}
+  .tocada-btn{background:#0077cc;padding:6px 8px;border-radius:6px;color:#fff;border:0;cursor:pointer;font-weight:700}
+  .tocada-btn:hover{opacity:0.95}
+  .counter-badge{background:rgba(0,0,0,0.06);padding:6px 12px;border-radius:10px;font-weight:700}
+  .preview-img{max-width:350px;border-radius:8px;margin:8px 8px 0 0;display:inline-block;box-shadow:0 0 6px rgba(0,0,0,0.15);}
+  .th-sortable{position:relative}
+  .th-sortable .sort-ind{font-size:0.9rem;opacity:0.9;margin-left:6px}
+  .edit-input{width:100%;padding:8px;border-radius:6px;border:1px solid #ccc;background:transparent;color:inherit;margin-bottom:8px}
+  .clear-btn{background-color:#e74c3c !important;color:white !important;border:none !important;border-radius:6px !important;padding:6px 12px !important;cursor:pointer !important;font-size:14px !important;font-weight:bold !important;transition:background-color 0.2s ease,transform 0.1s ease !important;}
+  .clear-btn:hover{background-color:#c0392b;transform:scale(1.1);}
+  .clear-btn:active{transform:scale(0.95);}
+  .delete-btn{background-color:#e74c3c;color:white;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:bold;transition:background-color 0.2s ease,transform 0.1s ease;}
+  .delete-btn:hover{background-color:#c0392b;transform:scale(1.05);}
+  .delete-btn:active{transform:scale(0.95);}
+  </style>
 </head>
 <body>
 <div class="edit-banner">✏️ Modo edición activo</div>
