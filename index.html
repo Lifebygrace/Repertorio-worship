@@ -61,19 +61,7 @@
   .delete-btn{background-color:#e74c3c;color:white;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:bold;transition:background-color 0.2s ease,transform 0.1s ease;}
   .delete-btn:hover{background-color:#c0392b;transform:scale(1.05);}
   .delete-btn:active{transform:scale(0.95);}
-.fila-botones {
-  display: flex;
-  justify-content: flex-end; /* Mueve los botones a la derecha */
-  gap: 10px; /* Separación entre botones */
-  margin-top: 8px;
-}
-
-.fila-botones button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-}
-</style>
+  </style>
 </head>
 <body>
 <div class="edit-banner">✏️ Modo edición activo</div>
@@ -101,10 +89,8 @@
   <h2>🎶 Canciones para la semana</h2>
   <div id="mostrar-semana" style="margin-top:8px"></div>
 
- <div class="fila-botones">
-  <button class="btn-notas" onclick="toggleNotas('semana')">🗒️ Ver notas</button>
-  <button class="btn-pack" onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
-</div>
+<button onclick="toggleNotas('semana')">🗒️ Ver notas</button>
+<button onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
 
   <div id="contenedor-semana" style="display:none; margin-top:10px;">
   <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
