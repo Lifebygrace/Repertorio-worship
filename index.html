@@ -429,7 +429,14 @@ function toggleNotas(tipo){
 async function guardarSeccion(tipo){
   const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
   const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").map(s=>s.trim()).filter(Boolean);
-  await setDoc(doc(db,"secciones",tipo), { titulo, canciones });
+  const notas = document.getElementById(`notas-edit-${tipo}`).value.trim();
+
+  await setDoc(doc(db, "secciones", tipo), { 
+    titulo, 
+    canciones, 
+    notas 
+  });
+
   alert("✅ Sección guardada");
   cargarSeccion(tipo);
 }
