@@ -80,25 +80,31 @@
 </header>
 
 <main>
-  <div class="search-container">
-    <input id="search" placeholder="🔍 Buscar canciones por título..." />
-<button id="clearSearch" class="clear-btn">✂️borrar❌</button>
-  </div>
-
 <div class="section">
   <h2>🎶 Canciones para la semana</h2>
+
+  <!-- Donde se ven las canciones guardadas -->
   <div id="mostrar-semana" style="margin-top:8px"></div>
 
+  <!-- Botón y contenedor de notas -->
   <button onclick="toggleNotas('semana')">🗒️ Ver notas</button>
+
+  <!-- Aquí se mostrarán las notas guardadas -->
   <div id="notas-semana" style="display:none; margin-top:8px;"></div>
 
+  <!-- Worship Pack -->
   <button onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
   <div id="worshippack-semana" style="display:none; margin-top:8px;"></div>
 
+  <!-- Contenido editable SOLO en modo edición -->
   <div id="contenedor-semana" style="display:none; margin-top:10px;">
     <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
+
     <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
+
+    <!-- CAMPO DE NOTAS (este es el que Firestore necesita) -->
     <textarea id="notas-edit-semana" placeholder="Notas de esta semana..."></textarea>
+
     <button onclick="guardarSeccion('semana')">Guardar sección</button>
   </div>
 </div>
@@ -423,17 +429,26 @@ async function cargarSeccion(tipo){
 
 async function guardarSeccion(tipo){
   const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
-  const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").map(s=>s.trim()).filter(Boolean);
+  const canciones = document.getElementById(`canciones-${tipo}`).value
+    .trim()
+    .split("\n")
+    .map(s=>s.trim())
+    .filter(Boolean);
   const notas = document.getElementById(`notas-edit-${tipo}`).value.trim();
 
-  await setDoc(doc(db,"secciones",tipo), { titulo, canciones, notas });
+  await setDoc(doc(db, "secciones", tipo), {
+    titulo,
+    canciones,
+    notas
+  });
+
   alert("✅ Sección guardada");
   cargarSeccion(tipo);
 }
 
 function toggleNotas(tipo){
   const box = document.getElementById(`notas-${tipo}`);
-  box.style.display = box.style.display === "block" ? "none" : "block";
+  box.style.display = box.style.display === "none" ? "block" : "none";
 }
   
 
