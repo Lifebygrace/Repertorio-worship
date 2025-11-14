@@ -89,11 +89,10 @@
   <h2>🎶 Canciones para la semana</h2>
   <div id="mostrar-semana" style="margin-top:8px"></div>
 
-  <button onclick="toggleNotas('semana')">🗒️ Ver notas</button>
-  <div id="notas-semana" style="display:none; margin-top:8px;"></div>
-
-  <button onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
-  <div id="worshippack-semana" style="display:none; margin-top:8px;"></div>
+ <div class="fila-botones">
+  <button class="btn-notas" onclick="toggleNotas('semana')">🗒️ Ver notas</button>
+  <button class="btn-pack" onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
+</div>
 
   <div id="contenedor-semana" style="display:none; margin-top:10px;">
   <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
