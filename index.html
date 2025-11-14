@@ -96,6 +96,7 @@
   <div id="worshippack-semana" style="display:none; margin-top:8px;"></div>
 
   <div id="contenedor-semana" style="display:none; margin-top:10px;">
+    <div id="notas-semana"></div>
     <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
     <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
     <textarea id="notas-edit-semana" placeholder="Notas de esta semana..."></textarea>
@@ -423,7 +424,8 @@ async function cargarSeccion(tipo){
 
 function toggleNotas(tipo){
   const box = document.getElementById(`notas-${tipo}`);
-  box.style.display = box.style.display === "block" ? "none" : "block";
+  if(!box) return;
+  box.style.display = box.style.display === "none" ? "block" : "none";
 }
 
 async function guardarSeccion(tipo){
