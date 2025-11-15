@@ -80,31 +80,20 @@
 </header>
 
 <main>
+  <div class="search-container">
+    <input id="search" placeholder="🔍 Buscar canciones por título..." />
+<button id="clearSearch" class="clear-btn">✂️borrar❌</button>
+  </div>
+
 <div class="section">
   <h2>🎶 Canciones para la semana</h2>
-
-  <!-- Donde se ven las canciones guardadas -->
   <div id="mostrar-semana" style="margin-top:8px"></div>
-
-  <!-- Botón y contenedor de notas -->
-  <button onclick="toggleNotas('semana')">🗒️ Ver notas</button>
-
-  <!-- Aquí se mostrarán las notas guardadas -->
-  <div id="notas-semana" style="display:none; margin-top:8px;"></div>
-
-  <!-- Worship Pack -->
   <button onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
   <div id="worshippack-semana" style="display:none; margin-top:8px;"></div>
 
-  <!-- Contenido editable SOLO en modo edición -->
   <div id="contenedor-semana" style="display:none; margin-top:10px;">
-    <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
-
+    <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13 de octubre)" />
     <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
-
-    <!-- CAMPO DE NOTAS (este es el que Firestore necesita) -->
-    <textarea id="notas-edit-semana" placeholder="Notas de esta semana..."></textarea>
-
     <button onclick="guardarSeccion('semana')">Guardar sección</button>
   </div>
 </div>
@@ -399,58 +388,20 @@ async function cargarSeccion(tipo){
   try{
     const snap = await getDoc(doc(db,"secciones",tipo));
     const cont = document.getElementById(`mostrar-${tipo}`);
-    const notasBox = document.getElementById(`notas-${tipo}`);
-    const notasEdit = document.getElementById(`notas-edit-${tipo}`);
-
     if(snap.exists()){
       const data = snap.data();
-      cont.innerHTML = `
-        <h3>${data.titulo || ""}</h3>
-        <ul>${(data.canciones || []).map(c=>`<li>${c}</li>`).join("")}</ul>
-      `;
-
-      notasBox.innerHTML = data.notas 
-        ? `<div class="card"><h3>📝 Notas</h3><p>${data.notas.replace(/\n/g,"<br>")}</p></div>`
-        : `<p>(No hay notas para esta sección)</p>`;
-
-      if(modoEdicion){
-        notasEdit.value = data.notas || "";
-      }
-
-    } else {
-      cont.innerHTML = "<p>Aún no hay información guardada.</p>";
-      notasBox.innerHTML = "<p>(No hay notas)</p>";
-      if(modoEdicion) notasEdit.value = "";
-    }
-
+      cont.innerHTML = `<h3>${data.titulo||""}</h3><ul>${(data.canciones||[]).map(c=>`<li>${c}</li>`).join("")}</ul>`;
+    } else cont.innerHTML = "<p>Aún no hay información guardada.</p>";
     document.getElementById(`contenedor-${tipo}`).style.display = modoEdicion ? "block" : "none";
-  } catch(e){ console.error(e); }
+  } catch(e){ console.error("Error cargarSeccion:", e); }
 }
-
 async function guardarSeccion(tipo){
   const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
-  const canciones = document.getElementById(`canciones-${tipo}`).value
-    .trim()
-    .split("\n")
-    .map(s=>s.trim())
-    .filter(Boolean);
-  const notas = document.getElementById(`notas-edit-${tipo}`).value.trim();
-
-  await setDoc(doc(db, "secciones", tipo), {
-    titulo,
-    canciones,
-    notas
-  });
-
+  const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").map(s=>s.trim()).filter(Boolean);
+  await setDoc(doc(db,"secciones",tipo), { titulo, canciones });
   alert("✅ Sección guardada");
   cargarSeccion(tipo);
 }
-
-function toggleNotas(tipo){
-  const box = document.getElementById(`notas-${tipo}`);
-  box.style.display = box.style.display === "none" ? "block" : "none";
-}
-  
 
 /* MODO EDICIÓN con PIN 2025 */
 function activarEdicion(){
@@ -631,7 +582,6 @@ window.addEventListener('load', ()=>{
   window.marcarTocada = marcarTocada;
   window.actualizarRegistroCard = actualizarRegistroCard;
   window.mostrarWorshipPack = mostrarWorshipPack;
-  window.toggleNotas = toggleNotas;
   inicializarCanciones();
   cargarSeccion("semana");
   cargarSeccion("mes");
