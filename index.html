@@ -61,6 +61,36 @@
   .delete-btn{background-color:#e74c3c;color:white;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:bold;transition:background-color 0.2s ease,transform 0.1s ease;}
   .delete-btn:hover{background-color:#c0392b;transform:scale(1.05);}
   .delete-btn:active{transform:scale(0.95);}
+  .notas-card {
+  background: #fff8e1; /* fondo cálido */
+  border-left: 5px solid var(--accent);
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin-top: 12px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  white-space: pre-wrap; /* respeta saltos de línea */
+  transition: background 0.25s, color 0.25s;
+}
+body.dark .notas-card {
+  background: #2a2a2a;
+  color: #f0f4f8;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+.notas-card h3 {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-size: 1.1rem;
+  color: var(--primary);
+}
+.notas-card ul {
+  padding-left: 20px;
+  margin: 0;
+}
+.notas-card li {
+  margin-bottom: 6px;
+}
   </style>
 </head>
 <body>
@@ -395,6 +425,23 @@ async function borrarCancion(id){
 }
 
 /* SECCIONES (semana / mes) */
+
+// Función para renderizar notas en lista con emojis
+function renderNotas(texto){
+  if(!texto) return "(No hay notas para esta sección)";
+
+  // Agregar emojis según palabras clave
+  texto = texto.replace(/importante/gi, "⚠️ importante")
+               .replace(/ensayar/gi, "🎵 ensayar")
+               .replace(/recordar/gi, "🔔 recordar")
+               .replace(/audio/gi, "🎧 audio");
+
+  // Separar en líneas y convertir en <ul>
+  const lineas = texto.split("\n").filter(l => l.trim());
+  return `<ul>${lineas.map(l => `<li>${l}</li>`).join("")}</ul>`;
+}
+
+// Función principal
 async function cargarSeccion(tipo){
   try{
     const snap = await getDoc(doc(db,"secciones",tipo));
@@ -409,22 +456,18 @@ async function cargarSeccion(tipo){
 
     if(snap.exists()){
       const data = snap.data();
+      // Sección principal con título y canciones
       cont.innerHTML = `
         <h3>${data.titulo || ""}</h3>
-        <ul>${(data.canciones || []).map(c=>`<li>${c}</li>`).join("")}</ul>
+        <ul>${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}</ul>
       `;
 
-      // Solo actualizar notasBox si existe
+      // Renderizar notas si existe el contenedor
       if(notasBox){
-        notasBox.innerHTML = data.notas 
-          ? `<div class="card"><h3>📝 Notas</h3><p>${data.notas.replace(/\n/g,"<br>")}</p></div>`
-          : `<p>(No hay notas para esta sección)</p>`;
-      } else {
-        // opcional: log para detectar qué falta
-        console.warn(`notasBox (id=notas-${tipo}) no encontrado en DOM`);
+        notasBox.innerHTML = `<div class="notas-card"><h3>📝 Notas</h3>${renderNotas(data.notas)}</div>`;
       }
 
-      // Solo actualizar textarea de edición si existe y estamos en modo edición
+      // Actualizar textarea de edición si estamos en modo edición
       if(modoEdicion && notasEdit){
         notasEdit.value = data.notas || "";
       }
@@ -443,6 +486,7 @@ async function cargarSeccion(tipo){
   }
 }
 
+// Toggle notas
 function toggleNotas(tipo){
   const box = document.getElementById(`notas-${tipo}`);
   if(!box) return;
