@@ -80,37 +80,38 @@
 </header>
 
 <main>
-  <div class="search-container">
-    <input id="search" placeholder="🔍 Buscar canciones por título..." />
-<button id="clearSearch" class="clear-btn">✂️borrar❌</button>
-  </div>
-
 <div class="section">
   <h2>🎶 Canciones para la semana</h2>
+
+  <!-- Donde se ven las canciones guardadas -->
   <div id="mostrar-semana" style="margin-top:8px"></div>
 
+  <!-- Botón y contenedor de notas -->
   <button onclick="toggleNotas('semana')">🗒️ Ver notas</button>
+
+  <!-- Aquí se mostrarán las notas guardadas -->
   <div id="notas-semana" style="display:none; margin-top:8px;"></div>
 
+  <!-- Worship Pack -->
   <button onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
   <div id="worshippack-semana" style="display:none; margin-top:8px;"></div>
 
+  <!-- Contenido editable SOLO en modo edición -->
   <div id="contenedor-semana" style="display:none; margin-top:10px;">
-  <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
-  <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
-  <textarea id="notas-edit-semana" placeholder="Notas de esta semana..."></textarea>
-  <button onclick="guardarSeccion('semana')">Guardar sección</button>
-</div>
+    <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
+
+    <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
+
+    <!-- CAMPO DE NOTAS (este es el que Firestore necesita) -->
+    <textarea id="notas-edit-semana" placeholder="Notas de esta semana..."></textarea>
+
+    <button onclick="guardarSeccion('semana')">Guardar sección</button>
+  </div>
 </div>
 
 <div class="section">
   <h2>🆕 Canciones nuevas del mes</h2>
   <div id="mostrar-mes" style="margin-top:8px"></div>
-
-<!-- AÑADE ESTE DIV para notas (si no existe) -->
-<button onclick="toggleNotas('mes')">🗒️ Ver notas</button>
-<div id="notas-mes" style="display:none; margin-top:8px;"></div>
-  
   <button onclick="mostrarWorshipPack('mes')">🎁 Worship Pack</button>
   <div id="worshippack-mes" style="display:none; margin-top:8px;"></div>
 
@@ -401,11 +402,6 @@ async function cargarSeccion(tipo){
     const notasBox = document.getElementById(`notas-${tipo}`);
     const notasEdit = document.getElementById(`notas-edit-${tipo}`);
 
-    if(!cont){
-      console.warn(`Contenedor mostrar-${tipo} no existe en DOM`);
-      return;
-    }
-
     if(snap.exists()){
       const data = snap.data();
       cont.innerHTML = `
@@ -413,55 +409,48 @@ async function cargarSeccion(tipo){
         <ul>${(data.canciones || []).map(c=>`<li>${c}</li>`).join("")}</ul>
       `;
 
-      // Solo actualizar notasBox si existe
-      if(notasBox){
-        notasBox.innerHTML = data.notas 
-          ? `<div class="card"><h3>📝 Notas</h3><p>${data.notas.replace(/\n/g,"<br>")}</p></div>`
-          : `<p>(No hay notas para esta sección)</p>`;
-      } else {
-        // opcional: log para detectar qué falta
-        console.warn(`notasBox (id=notas-${tipo}) no encontrado en DOM`);
-      }
+      notasBox.innerHTML = data.notas 
+        ? `<div class="card"><h3>📝 Notas</h3><p>${data.notas.replace(/\n/g,"<br>")}</p></div>`
+        : `<p>(No hay notas para esta sección)</p>`;
 
-      // Solo actualizar textarea de edición si existe y estamos en modo edición
-      if(modoEdicion && notasEdit){
+      if(modoEdicion){
         notasEdit.value = data.notas || "";
       }
 
     } else {
       cont.innerHTML = "<p>Aún no hay información guardada.</p>";
-      if(notasBox) notasBox.innerHTML = "<p>(No hay notas)</p>";
-      if(modoEdicion && notasEdit) notasEdit.value = "";
+      notasBox.innerHTML = "<p>(No hay notas)</p>";
+      if(modoEdicion) notasEdit.value = "";
     }
 
-    const contenedor = document.getElementById(`contenedor-${tipo}`);
-    if(contenedor) contenedor.style.display = modoEdicion ? "block" : "none";
-
-  } catch(e){
-    console.error("Error en cargarSeccion:", e);
-  }
-}
-
-function toggleNotas(tipo){
-  const box = document.getElementById(`notas-${tipo}`);
-  if(!box) return;
-  box.style.display = box.style.display === "none" ? "block" : "none";
+    document.getElementById(`contenedor-${tipo}`).style.display = modoEdicion ? "block" : "none";
+  } catch(e){ console.error(e); }
 }
 
 async function guardarSeccion(tipo){
   const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
-  const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").map(s=>s.trim()).filter(Boolean);
+  const canciones = document.getElementById(`canciones-${tipo}`).value
+    .trim()
+    .split("\n")
+    .map(s=>s.trim())
+    .filter(Boolean);
   const notas = document.getElementById(`notas-edit-${tipo}`).value.trim();
 
-  await setDoc(doc(db, "secciones", tipo), { 
-    titulo, 
-    canciones, 
-    notas 
+  await setDoc(doc(db, "secciones", tipo), {
+    titulo,
+    canciones,
+    notas
   });
 
   alert("✅ Sección guardada");
   cargarSeccion(tipo);
 }
+
+function toggleNotas(tipo){
+  const box = document.getElementById(`notas-${tipo}`);
+  box.style.display = box.style.display === "none" ? "block" : "none";
+}
+  
 
 /* MODO EDICIÓN con PIN 2025 */
 function activarEdicion(){
@@ -642,6 +631,7 @@ window.addEventListener('load', ()=>{
   window.marcarTocada = marcarTocada;
   window.actualizarRegistroCard = actualizarRegistroCard;
   window.mostrarWorshipPack = mostrarWorshipPack;
+  window.toggleNotas = toggleNotas;
   inicializarCanciones();
   cargarSeccion("semana");
   cargarSeccion("mes");
