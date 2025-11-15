@@ -440,14 +440,9 @@ async function cargarSeccion(tipo){
   }
 }
 
-function toggleNotas(tipo) {
+function toggleNotas(tipo){
   const box = document.getElementById(`notas-${tipo}`);
-  if (!box) {
-    console.warn(`No existe notas-${tipo}`);
-    return;
-  }
-
-  // Alternar el display de este contenedor
+  if(!box) return;
   box.style.display = box.style.display === "none" ? "block" : "none";
 }
 
