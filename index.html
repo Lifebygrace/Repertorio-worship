@@ -89,11 +89,8 @@
   <h2>🎶 Canciones para la semana</h2>
   <div id="mostrar-semana" style="margin-top:8px"></div>
 
-  <button onclick="toggleNotas('semana')">🗒️ Ver notas</button>
-  <div id="notas-semana" style="display:none; margin-top:8px;"></div>
-
-  <button onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
-  <div id="worshippack-semana" style="display:none; margin-top:8px;"></div>
+<button onclick="toggleNotas('semana')">🗒️ Ver notas</button>
+<button onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
 
   <div id="contenedor-semana" style="display:none; margin-top:10px;">
   <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
@@ -106,8 +103,14 @@
 <div class="section">
   <h2>🆕 Canciones nuevas del mes</h2>
   <div id="mostrar-mes" style="margin-top:8px"></div>
-  <button onclick="mostrarWorshipPack('mes')">🎁 Worship Pack</button>
-  <div id="worshippack-mes" style="display:none; margin-top:8px;"></div>
+
+<!-- AÑADE ESTE DIV para notas (si no existe) -->
+
+  <button onclick="toggleNotas('semana')">🗒️ Ver notas</button>
+  <div id="notas-semana" style="display:none; margin-top:8px;"></div>
+
+  <button onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
+  <div id="worshippack-semana" style="display:none; margin-top:8px;"></div>
 
   <div id="contenedor-mes" style="display:none; margin-top:10px;">
     <input id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
@@ -396,6 +399,11 @@ async function cargarSeccion(tipo){
     const notasBox = document.getElementById(`notas-${tipo}`);
     const notasEdit = document.getElementById(`notas-edit-${tipo}`);
 
+    if(!cont){
+      console.warn(`Contenedor mostrar-${tipo} no existe en DOM`);
+      return;
+    }
+
     if(snap.exists()){
       const data = snap.data();
       cont.innerHTML = `
@@ -403,27 +411,43 @@ async function cargarSeccion(tipo){
         <ul>${(data.canciones || []).map(c=>`<li>${c}</li>`).join("")}</ul>
       `;
 
-      notasBox.innerHTML = data.notas 
-        ? `<div class="card"><h3>📝 Notas</h3><p>${data.notas.replace(/\n/g,"<br>")}</p></div>`
-        : `<p>(No hay notas para esta sección)</p>`;
+      // Solo actualizar notasBox si existe
+      if(notasBox){
+        notasBox.innerHTML = data.notas 
+          ? `<div class="card"><h3>📝 Notas</h3><p>${data.notas.replace(/\n/g,"<br>")}</p></div>`
+          : `<p>(No hay notas para esta sección)</p>`;
+      } else {
+        // opcional: log para detectar qué falta
+        console.warn(`notasBox (id=notas-${tipo}) no encontrado en DOM`);
+      }
 
-      if(modoEdicion){
+      // Solo actualizar textarea de edición si existe y estamos en modo edición
+      if(modoEdicion && notasEdit){
         notasEdit.value = data.notas || "";
       }
 
     } else {
       cont.innerHTML = "<p>Aún no hay información guardada.</p>";
-      notasBox.innerHTML = "<p>(No hay notas)</p>";
-      if(modoEdicion) notasEdit.value = "";
+      if(notasBox) notasBox.innerHTML = "<p>(No hay notas)</p>";
+      if(modoEdicion && notasEdit) notasEdit.value = "";
     }
 
-    document.getElementById(`contenedor-${tipo}`).style.display = modoEdicion ? "block" : "none";
-  } catch(e){ console.error(e); }
+    const contenedor = document.getElementById(`contenedor-${tipo}`);
+    if(contenedor) contenedor.style.display = modoEdicion ? "block" : "none";
+
+  } catch(e){
+    console.error("Error en cargarSeccion:", e);
+  }
 }
 
-function toggleNotas(tipo){
+function toggleNotas(tipo) {
   const box = document.getElementById(`notas-${tipo}`);
-  if(!box) return;
+  if (!box) {
+    console.warn(`No existe notas-${tipo}`);
+    return;
+  }
+
+  // Alternar el display de este contenedor
   box.style.display = box.style.display === "none" ? "block" : "none";
 }
 
@@ -609,7 +633,7 @@ window.addEventListener('load', ()=>{
   window.agregarCancion = agregarCancion;
   window.guardarEdicion = guardarEdicion;
   window.toggleDark = toggleDark;
-  window. = toggleFormulario;
+  window.toggleFormulario = toggleFormulario;
   window.activarEdicion = activarEdicion;
   window.guardarSeccion = guardarSeccion;
   window.toggleCanciones = toggleCanciones;
@@ -621,10 +645,10 @@ window.addEventListener('load', ()=>{
   window.marcarTocada = marcarTocada;
   window.actualizarRegistroCard = actualizarRegistroCard;
   window.mostrarWorshipPack = mostrarWorshipPack;
+  window.toggleNotas = toggleNotas;
   inicializarCanciones();
   cargarSeccion("semana");
   cargarSeccion("mes");
-  window.toggleNotas = toggleNotas;
 });
 </script>
 </body>
