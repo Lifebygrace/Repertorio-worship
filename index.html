@@ -61,28 +61,24 @@
   .delete-btn{background-color:#e74c3c;color:white;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:bold;transition:background-color 0.2s ease,transform 0.1s ease;}
   .delete-btn:hover{background-color:#c0392b;transform:scale(1.05);}
   .delete-btn:active{transform:scale(0.95);}
-  .notas-card {
+ .notas-card {
   background: #fff8e1; /* fondo cálido */
   border-left: 5px solid var(--accent);
   border-radius: 10px;
   padding: 14px 18px;
-  margin-top: 12px;
+  margin-top: 12px; /* espacio sobre notas */
+  margin-bottom: 12px; /* espacio debajo de notas */
   box-shadow: 0 2px 6px rgba(0,0,0,0.08);
   font-size: 0.95rem;
   line-height: 1.5;
   white-space: pre-wrap; /* respeta saltos de línea */
   transition: background 0.25s, color 0.25s;
 }
-body.dark .notas-card {
-  background: #2a2a2a;
-  color: #f0f4f8;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
-}
 .notas-card h3 {
   margin-top: 0;
   margin-bottom: 8px;
   font-size: 1.1rem;
-  color: var(--primary);
+  color: var(--primary); /* modo claro */
 }
 .notas-card ul {
   padding-left: 20px;
@@ -91,6 +87,15 @@ body.dark .notas-card {
 .notas-card li {
   margin-bottom: 6px;
 }
+body.dark .notas-card {
+  background: #2a2a2a;
+  color: #f0f4f8;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+body.dark .notas-card h3 {
+  color: #ffca28; /* título visible en modo oscuro */
+}
+
   </style>
 </head>
 <body>
