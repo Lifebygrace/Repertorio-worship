@@ -666,43 +666,7 @@ async function mostrarWorshipPack(tipo) {
   cont.style.display = "block";
   boton.textContent = "🔽 Ocultar pack";
 }
-import { onSnapshot, doc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-/* 🔥 Actualización en tiempo real de las secciones */
-function suscribirSeccionTiempoReal(tipo){
-  const ref = doc(db, "secciones", tipo);
-
-  onSnapshot(ref, (snap) => {
-    if (!snap.exists()) {
-      // Si la sección aún no está creada
-      document.getElementById(`mostrar-${tipo}`).innerHTML = "";
-      document.getElementById(`notas-${tipo}`).innerHTML = "";
-      document.getElementById(`worshippack-${tipo}`).innerHTML = "";
-      return;
-    }
-
-    const data = snap.data();
-
-    // 📝 Mostrar título + canciones
-    const cont = document.getElementById(`mostrar-${tipo}`);
-    if (cont)
-      cont.innerHTML = `
-        <h3>${data.titulo || ""}</h3>
-        <ul>${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}</ul>
-      `;
-
-    // 🗒️ Mostrar notas en vivo
-    const notas = document.getElementById(`notas-${tipo}`);
-    if (notas)
-      notas.innerHTML = data.notas || "";
-
-    // 🎁 Si el Worship Pack está abierto, volver a generarlo
-    const pack = document.getElementById(`worshippack-${tipo}`);
-    if (pack && pack.style.display === "block") {
-      mostrarWorshipPack(tipo);
-    }
-  });
-}
 window.addEventListener('load', ()=>{
   const saved = localStorage.getItem("theme");
   if(saved === "dark") document.body.classList.add("dark");
@@ -730,8 +694,8 @@ window.addEventListener('load', ()=>{
   window.mostrarWorshipPack = mostrarWorshipPack;
   window.toggleNotas = toggleNotas;
   inicializarCanciones();
-  suscribirSeccionTiempoReal("semana");
-  suscribirSeccionTiempoReal("mes");
+  cargarSeccion("semana");
+  cargarSeccion("mes");
 });
 </script>
 </body>
