@@ -546,54 +546,81 @@ function toggleCanciones(){ cancionesVisible = !cancionesVisible; document.getEl
 function toggleRegistro(){ const el = document.getElementById("registro-canciones"); el.style.display = el.style.display === "block" ? "none" : "block"; if(el.style.display==="block") cargarRegistro(); }
 function toggleAnalisis(){
   async function cargarAnalisisMensual(){
-  const cont = document.getElementById("analisis-mensual");
-  cont.innerHTML = "<h2>📊 Canciones por mes</h2>";
+    const cont = document.getElementById("analisis-mensual");
+    cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
 
-  const snap = await getDocs(collection(db,"registro"));
-  const mapaMeses = {}; // { "2026-01": Set([...]) }
+    const snapRegistro = await getDocs(collection(db,"registro"));
+    const analisisSnap = await getDocs(collection(db,"analisis_mensual"));
 
-  snap.forEach(docu => {
-    const data = docu.data();
-    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
-    const cancion = cancionesCache.find(c => c.id === docu.id);
-    if(!cancion) return;
+    // Cache análisis guardados
+    const analisisGuardado = {};
+    analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
-    fechas.forEach(f => {
-      const mes = f.slice(0,7); // YYYY-MM
-      if(!mapaMeses[mes]) mapaMeses[mes] = new Set();
-      mapaMeses[mes].add(cancion.titulo);
+    const mapaMeses = {}; // { "YYYY-MM": [ {id,titulo,veces} ] }
+
+    snapRegistro.forEach(docu => {
+      const data = docu.data();
+      const fechas = data.fechas || [];
+      const cancion = cancionesCache.find(c => c.id === docu.id);
+      if(!cancion) return;
+
+      fechas.forEach(f => {
+        const mes = f.slice(0,7);
+        if(!mapaMeses[mes]) mapaMeses[mes] = {};
+        mapaMeses[mes][cancion.id] = (mapaMeses[mes][cancion.id] || 0) + 1;
+      });
     });
-  });
 
-  const mesesOrdenados = Object.keys(mapaMeses).sort().reverse();
+    const meses = Object.keys(mapaMeses).sort().reverse();
+    if(!meses.length){
+      cont.innerHTML += "<p>No hay datos aún.</p>";
+      return;
+    }
 
-  if(!mesesOrdenados.length){
-    cont.innerHTML += "<p>No hay datos suficientes.</p>";
-    return;
+    meses.forEach(mes => {
+      const fecha = new Date(mes+"-01");
+      const nombreMes = fecha.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+      const datosMes = analisisGuardado[mes] || { canciones:{}, notasGenerales:"" };
+
+      cont.innerHTML += `
+        <div class="card">
+          <h3>📅 ${nombreMes}</h3>
+
+          <table>
+            <tr>
+              <th>Canción</th>
+              <th>🎤 Cantante</th>
+              <th>🔢 Veces</th>
+              <th>🗒️ Notas</th>
+            </tr>
+            ${Object.entries(mapaMeses[mes]).map(([id,veces])=>{
+              const c = cancionesCache.find(x=>x.id===id);
+              const saved = datosMes.canciones?.[id] || {};
+              return `
+                <tr>
+                  <td>${c?.titulo || "—"}</td>
+                  <td><input data-mes="${mes}" data-id="${id}" class="cantante-input" value="${saved.cantante||""}"></td>
+                  <td><strong>${veces}</strong></td>
+                  <td><textarea data-mes="${mes}" data-id="${id}" class="nota-input">${saved.notas||""}</textarea></td>
+                </tr>
+              `;
+            }).join("")}
+          </table>
+
+          <h4>🧠 Observaciones generales</h4>
+          <textarea class="notas-generales" data-mes="${mes}">${datosMes.notasGenerales||""}</textarea>
+
+          <button onclick="guardarAnalisisMes('${mes}')">💾 Guardar análisis</button>
+        </div>
+      `;
+    });
   }
 
-  mesesOrdenados.forEach(mes => {
-    const fecha = new Date(mes + "-01");
-    const nombreMes = fecha.toLocaleDateString("es-ES", {
-      month: "long",
-      year: "numeric"
-    });
-
-    cont.innerHTML += `
-      <div class="card">
-        <h3>📅 ${nombreMes}</h3>
-        <ul>
-          ${[...mapaMeses[mes]].map(c => `<li>🎵 ${c}</li>`).join("")}
-        </ul>
-      </div>
-    `;
-  });
-}
   const cont = document.getElementById("analisis-mensual");
-  if(cont.style.display === "block"){
-    cont.style.display = "none";
+  if(cont.style.display==="block"){
+    cont.style.display="none";
   } else {
-    cont.style.display = "block";
+    cont.style.display="block";
     cargarAnalisisMensual();
   }
 }
@@ -677,7 +704,29 @@ function setOrden(campo){
   else { ordenActual.campo = campo; ordenActual.sentido = "desc"; }
   cargarRegistro();
 }
+async function guardarAnalisisMes(mes){
+  const canciones = {};
+  document.querySelectorAll(`.cantante-input[data-mes="${mes}"]`).forEach(i=>{
+    const id = i.dataset.id;
+    canciones[id] = canciones[id] || {};
+    canciones[id].cantante = i.value.trim();
+  });
 
+  document.querySelectorAll(`.nota-input[data-mes="${mes}"]`).forEach(i=>{
+    const id = i.dataset.id;
+    canciones[id] = canciones[id] || {};
+    canciones[id].notas = i.value.trim();
+  });
+
+  const notasGenerales = document.querySelector(`.notas-generales[data-mes="${mes}"]`).value.trim();
+
+  await setDoc(doc(db,"analisis_mensual",mes),{
+    canciones,
+    notasGenerales
+  });
+
+  alert("✅ Análisis mensual guardado");
+}
 /* BOOT */
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
@@ -744,6 +793,7 @@ window.addEventListener('load', ()=>{
   window.borrarFecha = borrarFecha;
   window.modificarFecha = modificarFecha;
   window.setOrden = setOrden;
+  window.guardarAnalisisMes = guardarAnalisisMes;
   window.marcarTocada = marcarTocada;
   window.actualizarRegistroCard = actualizarRegistroCard;
   window.mostrarWorshipPack = mostrarWorshipPack;
