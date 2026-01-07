@@ -586,26 +586,51 @@ function toggleAnalisis(){
         <div class="card">
           <h3>📅 ${nombreMes}</h3>
 
-          <table>
-            <tr>
-              <th>Canción</th>
-              <th>🎤 Cantante</th>
-              <th>🔢 Veces</th>
-              <th>🗒️ Notas</th>
-            </tr>
-            ${Object.entries(mapaMeses[mes]).map(([id,veces])=>{
-              const c = cancionesCache.find(x=>x.id===id);
-              const saved = datosMes.canciones?.[id] || {};
-              return `
-                <tr>
-                  <td>${c?.titulo || "—"}</td>
-                  <td><input data-mes="${mes}" data-id="${id}" class="cantante-input" value="${saved.cantante||""}"></td>
-                  <td><strong>${veces}</strong></td>
-                  <td><textarea data-mes="${mes}" data-id="${id}" class="nota-input">${saved.notas||""}</textarea></td>
-                </tr>
-              `;
-            }).join("")}
-          </table>
+cont.innerHTML += `
+  <div class="card">
+    <h3>📅 ${nombreMes}</h3>
+
+    ${Object.entries(mapaMeses[mes]).map(([id,veces])=>{
+      const c = cancionesCache.find(x=>x.id===id);
+      const saved = datosMes.canciones?.[id] || {};
+
+      return `
+        <div class="card" style="margin-top:12px;background:var(--section-bg)">
+          <h4>🎵 ${c?.titulo || "—"}</h4>
+
+          <label>🎤 Cantante</label>
+          <input 
+            class="cantante-input edit-input" 
+            data-mes="${mes}" 
+            data-id="${id}" 
+            placeholder="Nombre del cantante"
+            value="${saved.cantante || ""}"
+          >
+
+          <p><strong>🔢 Veces tocada:</strong> ${veces}</p>
+
+          <label>🗒️ Notas</label>
+          <textarea 
+            class="nota-input edit-input" 
+            data-mes="${mes}" 
+            placeholder="Observaciones de esta canción"
+          >${saved.notas || ""}</textarea>
+        </div>
+      `;
+    }).join("")}
+
+    <div class="notas-card">
+      <h3>🧠 Observaciones generales</h3>
+      <textarea 
+        class="notas-generales edit-input" 
+        data-mes="${mes}" 
+        placeholder="Evaluación general del grupo este mes"
+      >${datosMes.notasGenerales || ""}</textarea>
+    </div>
+
+    <button onclick="guardarAnalisisMes('${mes}')">💾 Guardar análisis</button>
+  </div>
+`;
 
           <h4>🧠 Observaciones generales</h4>
           <textarea class="notas-generales" data-mes="${mes}">${datosMes.notasGenerales||""}</textarea>
