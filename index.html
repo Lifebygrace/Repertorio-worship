@@ -175,6 +175,8 @@ body.dark .notas-card h3 {
 
   <div id="registro-canciones-container" style="margin-top:12px;">
     <button style="background:var(--accent);" onclick="toggleRegistro()">📊 Registro de canciones</button>
+    <button onclick="toggleAnalisis()">📊 Análisis mensual</button>
+    <div id="analisis-mensual" class="section" style="display:none;"></div>
     <div id="registro-canciones" class="section" style="display:none;">
       <h2>📋 Registro de canciones</h2>
       <table id="tabla-registro">
@@ -542,6 +544,59 @@ function toggleDark(){ document.body.classList.toggle("dark"); localStorage.setI
 function toggleFormulario(){ const f = document.getElementById("formulario"); f.style.display = f.style.display === "none" ? "block" : "none"; }
 function toggleCanciones(){ cancionesVisible = !cancionesVisible; document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar lista" : "🎵 Mostrar lista"; cargarCanciones(); }
 function toggleRegistro(){ const el = document.getElementById("registro-canciones"); el.style.display = el.style.display === "block" ? "none" : "block"; if(el.style.display==="block") cargarRegistro(); }
+function toggleAnalisis(){
+  async function cargarAnalisisMensual(){
+  const cont = document.getElementById("analisis-mensual");
+  cont.innerHTML = "<h2>📊 Canciones por mes</h2>";
+
+  const snap = await getDocs(collection(db,"registro"));
+  const mapaMeses = {}; // { "2026-01": Set([...]) }
+
+  snap.forEach(docu => {
+    const data = docu.data();
+    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+    const cancion = cancionesCache.find(c => c.id === docu.id);
+    if(!cancion) return;
+
+    fechas.forEach(f => {
+      const mes = f.slice(0,7); // YYYY-MM
+      if(!mapaMeses[mes]) mapaMeses[mes] = new Set();
+      mapaMeses[mes].add(cancion.titulo);
+    });
+  });
+
+  const mesesOrdenados = Object.keys(mapaMeses).sort().reverse();
+
+  if(!mesesOrdenados.length){
+    cont.innerHTML += "<p>No hay datos suficientes.</p>";
+    return;
+  }
+
+  mesesOrdenados.forEach(mes => {
+    const fecha = new Date(mes + "-01");
+    const nombreMes = fecha.toLocaleDateString("es-ES", {
+      month: "long",
+      year: "numeric"
+    });
+
+    cont.innerHTML += `
+      <div class="card">
+        <h3>📅 ${nombreMes}</h3>
+        <ul>
+          ${[...mapaMeses[mes]].map(c => `<li>🎵 ${c}</li>`).join("")}
+        </ul>
+      </div>
+    `;
+  });
+}
+  const cont = document.getElementById("analisis-mensual");
+  if(cont.style.display === "block"){
+    cont.style.display = "none";
+  } else {
+    cont.style.display = "block";
+    cargarAnalisisMensual();
+  }
+}
 
 /* Registro (cargar/ordenar/editar fechas) */
 async function cargarRegistro(){
@@ -696,6 +751,7 @@ window.addEventListener('load', ()=>{
   inicializarCanciones();
   cargarSeccion("semana");
   cargarSeccion("mes");
+  window.toggleAnalisis = toggleAnalisis;
 });
 </script>
 </body>
