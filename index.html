@@ -581,11 +581,6 @@ function toggleAnalisis(){
       const fecha = new Date(mes+"-01");
       const nombreMes = fecha.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
       const datosMes = analisisGuardado[mes] || { canciones:{}, notasGenerales:"" };
-
-      cont.innerHTML += `
-        <div class="card">
-          <h3>📅 ${nombreMes}</h3>
-
 cont.innerHTML += `
   <div class="card">
     <h3>📅 ${nombreMes}</h3>
@@ -631,15 +626,6 @@ cont.innerHTML += `
     <button onclick="guardarAnalisisMes('${mes}')">💾 Guardar análisis</button>
   </div>
 `;
-
-          <h4>🧠 Observaciones generales</h4>
-          <textarea class="notas-generales" data-mes="${mes}">${datosMes.notasGenerales||""}</textarea>
-
-          <button onclick="guardarAnalisisMes('${mes}')">💾 Guardar análisis</button>
-        </div>
-      `;
-    });
-  }
 
   const cont = document.getElementById("analisis-mensual");
   if(cont.style.display==="block"){
