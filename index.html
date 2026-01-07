@@ -545,6 +545,7 @@ function toggleFormulario(){ const f = document.getElementById("formulario"); f.
 function toggleCanciones(){ cancionesVisible = !cancionesVisible; document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar lista" : "🎵 Mostrar lista"; cargarCanciones(); }
 function toggleRegistro(){ const el = document.getElementById("registro-canciones"); el.style.display = el.style.display === "block" ? "none" : "block"; if(el.style.display==="block") cargarRegistro(); }
 function toggleAnalisis(){
+
   async function cargarAnalisisMensual(){
     const cont = document.getElementById("analisis-mensual");
     cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
@@ -552,11 +553,10 @@ function toggleAnalisis(){
     const snapRegistro = await getDocs(collection(db,"registro"));
     const analisisSnap = await getDocs(collection(db,"analisis_mensual"));
 
-    // Cache análisis guardados
     const analisisGuardado = {};
     analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
-    const mapaMeses = {}; // { "YYYY-MM": [ {id,titulo,veces} ] }
+    const mapaMeses = {};
 
     snapRegistro.forEach(docu => {
       const data = docu.data();
@@ -581,57 +581,57 @@ function toggleAnalisis(){
       const fecha = new Date(mes+"-01");
       const nombreMes = fecha.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
       const datosMes = analisisGuardado[mes] || { canciones:{}, notasGenerales:"" };
-cont.innerHTML += `
-  <div class="card">
-    <h3>📅 ${nombreMes}</h3>
 
-    ${Object.entries(mapaMeses[mes]).map(([id,veces])=>{
-      const c = cancionesCache.find(x=>x.id===id);
-      const saved = datosMes.canciones?.[id] || {};
+      cont.innerHTML += `
+        <div class="card">
+          <h3>📅 ${nombreMes}</h3>
 
-      return `
-        <div class="card" style="margin-top:12px;background:var(--section-bg)">
-          <h4>🎵 ${c?.titulo || "—"}</h4>
+          ${Object.entries(mapaMeses[mes]).map(([id,veces])=>{
+            const c = cancionesCache.find(x=>x.id===id);
+            const saved = datosMes.canciones?.[id] || {};
 
-          <label>🎤 Cantante</label>
-          <input 
-            class="cantante-input edit-input" 
-            data-mes="${mes}" 
-            data-id="${id}" 
-            placeholder="Nombre del cantante"
-            value="${saved.cantante || ""}"
-          >
+            return `
+              <div class="card" style="margin-top:12px;background:var(--section-bg)">
+                <h4>🎵 ${c?.titulo || "—"}</h4>
 
-          <p><strong>🔢 Veces tocada:</strong> ${veces}</p>
+                <label>🎤 Cantante</label>
+                <input 
+                  class="cantante-input edit-input" 
+                  data-mes="${mes}" 
+                  data-id="${id}" 
+                  value="${saved.cantante || ""}"
+                >
 
-          <label>🗒️ Notas</label>
-          <textarea 
-            class="nota-input edit-input" 
-            data-mes="${mes}" 
-            placeholder="Observaciones de esta canción"
-          >${saved.notas || ""}</textarea>
+                <p><strong>🔢 Veces tocada:</strong> ${veces}</p>
+
+                <label>🗒️ Notas</label>
+                <textarea 
+                  class="nota-input edit-input" 
+                  data-mes="${mes}"
+                >${saved.notas || ""}</textarea>
+              </div>
+            `;
+          }).join("")}
+
+          <div class="notas-card">
+            <h3>🧠 Observaciones generales</h3>
+            <textarea 
+              class="notas-generales edit-input" 
+              data-mes="${mes}"
+            >${datosMes.notasGenerales || ""}</textarea>
+          </div>
+
+          <button onclick="guardarAnalisisMes('${mes}')">💾 Guardar análisis</button>
         </div>
       `;
-    }).join("")}
-
-    <div class="notas-card">
-      <h3>🧠 Observaciones generales</h3>
-      <textarea 
-        class="notas-generales edit-input" 
-        data-mes="${mes}" 
-        placeholder="Evaluación general del grupo este mes"
-      >${datosMes.notasGenerales || ""}</textarea>
-    </div>
-
-    <button onclick="guardarAnalisisMes('${mes}')">💾 Guardar análisis</button>
-  </div>
-`;
+    });
+  }
 
   const cont = document.getElementById("analisis-mensual");
-  if(cont.style.display==="block"){
-    cont.style.display="none";
+  if(cont.style.display === "block"){
+    cont.style.display = "none";
   } else {
-    cont.style.display="block";
+    cont.style.display = "block";
     cargarAnalisisMensual();
   }
 }
