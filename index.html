@@ -586,13 +586,13 @@ async function cargarAnalisisMensual() {
     });
   });
 
-  const meses = Object.keys(mapaMeses).sort();
+  let meses = Object.keys(mapaMeses).sort().reverse(); // Mes más reciente primero
   if(!meses.length){
     cont.innerHTML += "<p>No hay datos aún.</p>";
     return;
   }
 
-  const ultimoMes = meses[meses.length-1];
+  const ultimoMes = meses[0];
 
   meses.forEach(mes => {
     const fecha = new Date(mes+"-01");
@@ -621,29 +621,31 @@ async function cargarAnalisisMensual() {
          </select></label>`
       : `<p>🎤 Cantante: ${datosMes.cantante || "-"}</p>`;
 
+    // Lista de canciones tocadas
     const listaHtml = `<ul>${listaCanciones.map(c=>`<li>${c.titulo}</li>`).join("")}</ul>`;
 
+    // Top 3 canciones con veces tocadas y emoji de valoración
     const resumenHtml = resumen.map(c=>{
       const val = datosMes.evaluaciones?.[c.id] || "";
-      const emoji = val === "Excelente" ? "🚀" : val === "Bien" ? "👍" : val === "A mejorar" ? "‼️" : "";
+      const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
       if(modoEdicion){
-        return `<li>${c.titulo} - 🔢 ${c.veces} veces - 
+        return `<li>${c.titulo} (${c.veces}) - 
           <select class="eval-select" data-id="${c.id}" data-mes="${mes}">
             <option value="" ${val===""?"selected":""}></option>
-            <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀</option>
-            <option value="Bien" ${val==="Bien"?"selected":""}>👍</option>
             <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️</option>
+            <option value="Bien" ${val==="Bien"?"selected":""}>👍</option>
+            <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀</option>
           </select>
         </li>`;
       } else {
-        return `<li>${c.titulo} - 🔢 ${c.veces} veces ${emoji}</li>`;
+        return `<li>${c.titulo} (${c.veces}) ${emoji}</li>`;
       }
     }).join("");
 
-    // Observaciones editable
+    // Observaciones con mismo estilo de top 3
     const obsHtml = modoEdicion 
-      ? `<textarea class="obs-textarea" data-mes="${mes}" placeholder="Escribe observaciones o consejos aquí..." style="width:100%;height:60px;margin-top:4px;">${datosMes.observaciones||""}</textarea>`
-      : `<p>${datosMes.observaciones||""}</p>`;
+      ? `<ul><li><textarea class="obs-textarea" data-mes="${mes}" placeholder="Escribe observaciones o consejos aquí..." style="width:100%;height:60px;margin-top:4px;">${datosMes.observaciones||""}</textarea></li></ul>`
+      : `<ul><li>${datosMes.observaciones||""}</li></ul>`;
 
     const abierto = mes === ultimoMes ? "open" : "";
 
