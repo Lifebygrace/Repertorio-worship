@@ -544,20 +544,39 @@ function toggleDark(){ document.body.classList.toggle("dark"); localStorage.setI
 function toggleFormulario(){ const f = document.getElementById("formulario"); f.style.display = f.style.display === "none" ? "block" : "none"; }
 function toggleCanciones(){ cancionesVisible = !cancionesVisible; document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar lista" : "🎵 Mostrar lista"; cargarCanciones(); }
 function toggleRegistro(){ const el = document.getElementById("registro-canciones"); el.style.display = el.style.display === "block" ? "none" : "block"; if(el.style.display==="block") cargarRegistro(); }
-function toggleAnalisis(){
+/* =========================
+   ANÁLISIS MENSUAL
+========================= */
 
+/* Mostrar / ocultar análisis mensual */
+function toggleAnalisis() {
+  const el = document.getElementById("analisis-mensual");
+  if(!el) return;
+
+  // Alterna visibilidad
+  el.style.display = el.style.display === "block" ? "none" : "block";
+
+  // Solo cargar datos si se muestra
+  if(el.style.display === "block") cargarAnalisisMensual();
+}
+
+/* Carga y renderiza el análisis mensual */
 async function cargarAnalisisMensual() {
   const cont = document.getElementById("analisis-mensual");
+  if(!cont) return;
   cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
 
-  const snapRegistro = await getDocs(collection(db,"registro"));
-  const analisisSnap = await getDocs(collection(db,"analisis_mensual"));
+  // Obtener datos del registro y análisis guardado
+  const [snapRegistro, analisisSnap] = await Promise.all([
+    getDocs(collection(db,"registro")),
+    getDocs(collection(db,"analisis_mensual"))
+  ]);
 
   const analisisGuardado = {};
   analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
-  const mapaMeses = {}; // { "YYYY-MM": { canciones: {id: veces}, observaciones: "", evaluaciones:{id:{evaluacion,cantante}} } }
-
+  // Mapear canciones por mes
+  const mapaMeses = {}; // { "YYYY-MM": { canciones: {id: veces}, observaciones:"", evaluaciones:{id:{evaluacion,cantante}} } }
   snapRegistro.forEach(docu => {
     const data = docu.data();
     const fechas = Array.isArray(data.fechas) ? data.fechas : [];
@@ -583,24 +602,26 @@ async function cargarAnalisisMensual() {
     const datosMes = analisisGuardado[mes] || { canciones:{}, observaciones:"" };
     const cancionesMes = mapaMeses[mes].canciones;
 
+    // Lista de canciones ordenadas por veces tocadas
     const cancionesLista = Object.entries(cancionesMes).map(([id, veces])=>{
       const c = cancionesCache.find(x=>x.id===id);
       return { id, titulo: c?.titulo || "—", veces };
     }).sort((a,b)=>b.veces - a.veces);
 
+    // Construir tarjeta mensual
     const card = document.createElement("div");
     card.className = "card";
     card.style.marginTop = "12px";
 
-    // Lista de canciones
+    // HTML canciones
     const listaCancionesHtml = `<ul>${cancionesLista.map(c=>`<li>${c.titulo} (${c.veces} veces)</li>`).join("")}</ul>`;
 
-    // Observaciones
+    // Observaciones (editable si modoEdicion)
     const observacionesHtml = modoEdicion 
       ? `<textarea class="edit-input observaciones-input" data-mes="${mes}" placeholder="Observaciones generales del mes...">${datosMes.observaciones || ""}</textarea>`
       : `<p>${datosMes.observaciones || "(No hay observaciones)"}</p>`;
 
-    // Resumen general
+    // Resumen general con evaluaciones y cantantes
     const resumenHtml = cancionesLista.map(c=>{
       const saved = datosMes.canciones?.[c.id] || {};
       if(modoEdicion){
@@ -631,30 +652,27 @@ async function cargarAnalisisMensual() {
 
     card.innerHTML = `
       <h2>📊 Análisis mensual: ${nombreMes}</h2>
-      
       <div>
         <h3>🎵 Canciones tocadas este mes</h3>
         ${listaCancionesHtml}
       </div>
-
       <details style="margin-top:10px;">
         <summary>📝 Observaciones</summary>
         <div class="notas-card" style="margin-top:8px;">${observacionesHtml}</div>
       </details>
-
       <details style="margin-top:10px;">
         <summary>📌 Resumen general</summary>
         <div class="notas-card" style="margin-top:8px;">
           <ul>${resumenHtml}</ul>
         </div>
       </details>
-
       ${modoEdicion ? `<button class="guardar-analisis-btn" data-mes="${mes}" style="margin-top:12px;">💾 Guardar análisis</button>` : ""}
     `;
 
     cont.appendChild(card);
   });
 
+  // Listeners para guardar análisis si estamos en modo edición
   if(modoEdicion){
     document.querySelectorAll(".guardar-analisis-btn").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
@@ -670,14 +688,8 @@ async function cargarAnalisisMensual() {
           canciones[id] = canciones[id] || {};
           canciones[id].evaluacion = inp.value.trim();
         });
-
         const observaciones = document.querySelector(`.observaciones-input[data-mes="${mes}"]`).value.trim();
-
-        await setDoc(doc(db,"analisis_mensual",mes),{
-          canciones,
-          observaciones
-        });
-
+        await setDoc(doc(db,"analisis_mensual",mes), { canciones, observaciones });
         alert("✅ Análisis mensual guardado");
       });
     });
