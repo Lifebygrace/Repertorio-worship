@@ -563,20 +563,16 @@ function toggleAnalisis() {
 /* Carga y renderiza el análisis mensual */
 async function cargarAnalisisMensual() {
   const cont = document.getElementById("analisis-mensual");
-  if(!cont) return;
   cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
 
-  // Obtener datos del registro y análisis guardado
-  const [snapRegistro, analisisSnap] = await Promise.all([
-    getDocs(collection(db,"registro")),
-    getDocs(collection(db,"analisis_mensual"))
-  ]);
+  const snapRegistro = await getDocs(collection(db,"registro"));
+  const analisisSnap = await getDocs(collection(db,"analisis_mensual"));
 
   const analisisGuardado = {};
   analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
-  // Mapear canciones por mes
-  const mapaMeses = {}; // { "YYYY-MM": { canciones: {id: veces}, observaciones:"", evaluaciones:{id:{evaluacion,cantante}} } }
+  const mapaMeses = {};
+
   snapRegistro.forEach(docu => {
     const data = docu.data();
     const fechas = Array.isArray(data.fechas) ? data.fechas : [];
@@ -585,8 +581,9 @@ async function cargarAnalisisMensual() {
 
     fechas.forEach(f => {
       const mes = f.slice(0,7);
-      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, observaciones:"", evaluaciones:{} };
+      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, observaciones:"", cantantes:{} };
       mapaMeses[mes].canciones[cancion.id] = (mapaMeses[mes].canciones[cancion.id] || 0) + 1;
+      if(data.cantante) mapaMeses[mes].cantantes[data.cantante] = true;
     });
   });
 
@@ -602,60 +599,36 @@ async function cargarAnalisisMensual() {
     const datosMes = analisisGuardado[mes] || { canciones:{}, observaciones:"" };
     const cancionesMes = mapaMeses[mes].canciones;
 
-    // Lista de canciones ordenadas por veces tocadas
-    const cancionesLista = Object.entries(cancionesMes).map(([id, veces])=>{
-      const c = cancionesCache.find(x=>x.id===id);
-      return { id, titulo: c?.titulo || "—", veces };
-    }).sort((a,b)=>b.veces - a.veces);
+    // Ordenamos canciones por veces tocadas y agarramos top 3
+    const topCanciones = Object.entries(cancionesMes)
+      .map(([id, veces])=>{
+        const c = cancionesCache.find(x=>x.id===id);
+        return { id, titulo: c?.titulo || "—", veces };
+      })
+      .sort((a,b)=>b.veces - a.veces)
+      .slice(0,3);
 
-    // Construir tarjeta mensual
     const card = document.createElement("div");
     card.className = "card";
     card.style.marginTop = "12px";
 
-    // HTML canciones
-    const listaCancionesHtml = `<ul>${cancionesLista.map(c=>`<li>${c.titulo} (${c.veces} veces)</li>`).join("")}</ul>`;
-
-    // Observaciones (editable si modoEdicion)
+    // Observaciones
     const observacionesHtml = modoEdicion 
       ? `<textarea class="edit-input observaciones-input" data-mes="${mes}" placeholder="Observaciones generales del mes...">${datosMes.observaciones || ""}</textarea>`
       : `<p>${datosMes.observaciones || "(No hay observaciones)"}</p>`;
 
-    // Resumen general con evaluaciones y cantantes
-    const resumenHtml = cancionesLista.map(c=>{
-      const saved = datosMes.canciones?.[c.id] || {};
-      if(modoEdicion){
-        return `
-          <li>
-            🎵 ${c.titulo}  
-            <br>🔢 Veces tocada: ${c.veces}  
-            <br>⭐ Evaluación: <input type="text" class="eval-input edit-input" data-id="${c.id}" value="${saved.evaluacion || ""}" placeholder="Evaluación">
-            <br>🎤 Cantante: 
-            <select class="cantante-select" data-id="${c.id}">
-              <option ${saved.cantante==="Jason"?"selected":""}>Jason</option>
-              <option ${saved.cantante==="Milly"?"selected":""}>Milly</option>
-              <option ${saved.cantante==="Carolina"?"selected":""}>Carolina</option>
-            </select>
-          </li>
-        `;
-      } else {
-        return `
-          <li>
-            🎵 ${c.titulo}  
-            <br>🔢 Veces tocada: ${c.veces}  
-            <br>⭐ Evaluación: ${saved.evaluacion || "-"}
-            <br>🎤 Cantante: ${saved.cantante || "-"}
-          </li>
-        `;
-      }
-    }).join("");
+    // Cantantes
+    const cantantesMes = Object.keys(mapaMeses[mes].cantantes).join(", ") || "-";
+
+    const resumenHtml = `
+      <ul>
+        <li>🎤 Cantantes este mes: ${cantantesMes}</li>
+        <li>🔥 Top 3 canciones: ${topCanciones.map(c=>c.titulo+" ("+c.veces+" veces)").join(", ")}</li>
+      </ul>
+    `;
 
     card.innerHTML = `
-      <h2>📊 Análisis mensual: ${nombreMes}</h2>
-      <div>
-        <h3>🎵 Canciones tocadas este mes</h3>
-        ${listaCancionesHtml}
-      </div>
+      <h2>📅 ${nombreMes}</h2>
       <details style="margin-top:10px;">
         <summary>📝 Observaciones</summary>
         <div class="notas-card" style="margin-top:8px;">${observacionesHtml}</div>
@@ -663,7 +636,7 @@ async function cargarAnalisisMensual() {
       <details style="margin-top:10px;">
         <summary>📌 Resumen general</summary>
         <div class="notas-card" style="margin-top:8px;">
-          <ul>${resumenHtml}</ul>
+          ${resumenHtml}
         </div>
       </details>
       ${modoEdicion ? `<button class="guardar-analisis-btn" data-mes="${mes}" style="margin-top:12px;">💾 Guardar análisis</button>` : ""}
@@ -672,24 +645,16 @@ async function cargarAnalisisMensual() {
     cont.appendChild(card);
   });
 
-  // Listeners para guardar análisis si estamos en modo edición
+  // Guardado de observaciones
   if(modoEdicion){
     document.querySelectorAll(".guardar-analisis-btn").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
         const mes = btn.dataset.mes;
-        const canciones = {};
-        document.querySelectorAll(`.cantante-select[data-id]`).forEach(sel=>{
-          const id = sel.dataset.id;
-          canciones[id] = canciones[id] || {};
-          canciones[id].cantante = sel.value;
-        });
-        document.querySelectorAll(`.eval-input[data-id]`).forEach(inp=>{
-          const id = inp.dataset.id;
-          canciones[id] = canciones[id] || {};
-          canciones[id].evaluacion = inp.value.trim();
-        });
         const observaciones = document.querySelector(`.observaciones-input[data-mes="${mes}"]`).value.trim();
-        await setDoc(doc(db,"analisis_mensual",mes), { canciones, observaciones });
+        await setDoc(doc(db,"analisis_mensual",mes),{
+          canciones: analisisGuardado[mes]?.canciones || {},
+          observaciones
+        });
         alert("✅ Análisis mensual guardado");
       });
     });
