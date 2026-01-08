@@ -571,7 +571,8 @@ async function cargarAnalisisMensual() {
   const analisisGuardado = {};
   analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
-  const mapaMeses = {};
+  // Agrupar por mes
+  const mapaMeses = {}; // { "YYYY-MM": { canciones:{id: veces}, cantante:"", evaluaciones:{id: valor} } }
 
   snapRegistro.forEach(docu => {
     const data = docu.data();
@@ -581,9 +582,8 @@ async function cargarAnalisisMensual() {
 
     fechas.forEach(f => {
       const mes = f.slice(0,7);
-      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, observaciones:"", cantantes:{} };
+      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, cantante: "", evaluaciones:{} };
       mapaMeses[mes].canciones[cancion.id] = (mapaMeses[mes].canciones[cancion.id] || 0) + 1;
-      if(data.cantante) mapaMeses[mes].cantantes[data.cantante] = true;
     });
   });
 
@@ -596,48 +596,62 @@ async function cargarAnalisisMensual() {
   meses.forEach(mes => {
     const fecha = new Date(mes+"-01");
     const nombreMes = fecha.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
-    const datosMes = analisisGuardado[mes] || { canciones:{}, observaciones:"" };
+    const datosMes = analisisGuardado[mes] || { canciones:{}, cantante:"", evaluaciones:{} };
     const cancionesMes = mapaMeses[mes].canciones;
 
-    // Ordenamos canciones por veces tocadas y agarramos top 3
-    const topCanciones = Object.entries(cancionesMes)
-      .map(([id, veces])=>{
-        const c = cancionesCache.find(x=>x.id===id);
-        return { id, titulo: c?.titulo || "—", veces };
-      })
-      .sort((a,b)=>b.veces - a.veces)
-      .slice(0,3);
+    // Lista total de canciones tocadas sin repetir
+    const listaCanciones = Object.keys(cancionesMes).map(id => {
+      const c = cancionesCache.find(x=>x.id===id);
+      return { id, titulo: c?.titulo || "—", veces: cancionesMes[id] };
+    });
+
+    // Ordenar para resumen general: más popular 🔥 primero
+    const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
 
     const card = document.createElement("div");
     card.className = "card";
     card.style.marginTop = "12px";
 
-    // Observaciones
-    const observacionesHtml = modoEdicion 
-      ? `<textarea class="edit-input observaciones-input" data-mes="${mes}" placeholder="Observaciones generales del mes...">${datosMes.observaciones || ""}</textarea>`
-      : `<p>${datosMes.observaciones || "(No hay observaciones)"}</p>`;
+    // Cantante del mes
+    const cantanteHtml = modoEdicion 
+      ? `<label>🎤 Cantante: <select class="cantante-select" data-mes="${mes}">
+           <option value="Carolina" ${datosMes.cantante==="Carolina"?"selected":""}>Carolina</option>
+           <option value="Jason" ${datosMes.cantante==="Jason"?"selected":""}>Jason</option>
+           <option value="Milly" ${datosMes.cantante==="Milly"?"selected":""}>Milly</option>
+         </select></label>`
+      : `<p>🎤 Cantante: ${datosMes.cantante || "-"}</p>`;
 
-    // Cantantes
-    const cantantesMes = Object.keys(mapaMeses[mes].cantantes).join(", ") || "-";
+    // Lista total de canciones tocadas
+    const listaHtml = `<ul>${listaCanciones.map(c=>`<li>${c.titulo}</li>`).join("")}</ul>`;
 
-    const resumenHtml = `
-      <ul>
-        <li>🎤 Cantantes este mes: ${cantantesMes}</li>
-        <li>🔥 Top 3 canciones: ${topCanciones.map(c=>c.titulo+" ("+c.veces+" veces)").join(", ")}</li>
-      </ul>
-    `;
+    // Resumen general: veces tocadas + valoración editable
+    const resumenHtml = resumen.map(c=>{
+      if(modoEdicion){
+        const val = datosMes.evaluaciones?.[c.id] || "";
+        return `<li>${c.titulo} - 🔢 ${c.veces} veces - Valoración: 
+          <select class="eval-select" data-id="${c.id}" data-mes="${mes}">
+            <option value="" ${val===""?"selected":""}></option>
+            <option value="Excelente" ${val==="Excelente"?"selected":""}>Excelente</option>
+            <option value="Bien" ${val==="Bien"?"selected":""}>Bien</option>
+            <option value="A mejorar" ${val==="A mejorar"?"selected":""}>A mejorar</option>
+          </select>
+        </li>`;
+      } else {
+        const val = datosMes.evaluaciones?.[c.id] || "-";
+        return `<li>${c.titulo} - 🔢 ${c.veces} veces - Valoración: ${val}</li>`;
+      }
+    }).join("");
 
     card.innerHTML = `
       <h2>📅 ${nombreMes}</h2>
+      <div style="margin-top:8px;">${cantanteHtml}</div>
       <details style="margin-top:10px;">
-        <summary>📝 Observaciones</summary>
-        <div class="notas-card" style="margin-top:8px;">${observacionesHtml}</div>
+        <summary>🎵 Canciones tocadas</summary>
+        <div style="margin-top:6px;">${listaHtml}</div>
       </details>
       <details style="margin-top:10px;">
         <summary>📌 Resumen general</summary>
-        <div class="notas-card" style="margin-top:8px;">
-          ${resumenHtml}
-        </div>
+        <div class="notas-card" style="margin-top:6px;"><ul>${resumenHtml}</ul></div>
       </details>
       ${modoEdicion ? `<button class="guardar-analisis-btn" data-mes="${mes}" style="margin-top:12px;">💾 Guardar análisis</button>` : ""}
     `;
@@ -645,15 +659,20 @@ async function cargarAnalisisMensual() {
     cont.appendChild(card);
   });
 
-  // Guardado de observaciones
   if(modoEdicion){
     document.querySelectorAll(".guardar-analisis-btn").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
         const mes = btn.dataset.mes;
-        const observaciones = document.querySelector(`.observaciones-input[data-mes="${mes}"]`).value.trim();
+        const evaluaciones = {};
+        document.querySelectorAll(`.eval-select[data-mes="${mes}"]`).forEach(sel=>{
+          const id = sel.dataset.id;
+          evaluaciones[id] = sel.value;
+        });
+        const cantante = document.querySelector(`.cantante-select[data-mes="${mes}"]`).value;
         await setDoc(doc(db,"analisis_mensual",mes),{
-          canciones: analisisGuardado[mes]?.canciones || {},
-          observaciones
+          canciones: mapaMeses[mes].canciones,
+          evaluaciones,
+          cantante
         });
         alert("✅ Análisis mensual guardado");
       });
