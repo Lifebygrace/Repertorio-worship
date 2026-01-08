@@ -605,8 +605,8 @@ async function cargarAnalisisMensual() {
       return { id, titulo: c?.titulo || "—", veces: cancionesMes[id] };
     });
 
-    // Ordenar para resumen general 🔥 y top 3
-    const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces).slice(0,3);
+// Ordenar TODAS las canciones por popularidad 🔥
+const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
 
     const card = document.createElement("div");
     card.className = "card";
@@ -621,9 +621,7 @@ async function cargarAnalisisMensual() {
          </select></label>`
       : `<p>🎤 Cantante: ${datosMes.cantante || "-"}</p>`;
 
-    // Lista de canciones tocadas
-    const listaHtml = `<ul>${listaCanciones.map(c=>`<li>${c.titulo}</li>`).join("")}</ul>`;
-
+  
     // Top 3 canciones con veces tocadas y emoji de valoración
     const resumenHtml = resumen.map(c=>{
       const val = datosMes.evaluaciones?.[c.id] || "";
@@ -654,11 +652,7 @@ async function cargarAnalisisMensual() {
         <summary>📅 ${nombreMes}</summary>
         <div style="margin-top:8px;">${cantanteHtml}</div>
         <details style="margin-top:6px;">
-          <summary>🎵 Canciones tocadas</summary>
-          <div style="margin-top:4px;">${listaHtml}</div>
-        </details>
-        <details style="margin-top:6px;">
-          <summary>📌 Top 3 canciones 🔥</summary>
+          <summary>📌 resumen musical 🔥</summary>
           <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
         </details>
         <details style="margin-top:6px;">
