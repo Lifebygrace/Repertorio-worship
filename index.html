@@ -581,9 +581,8 @@ async function cargarAnalisisMensual() {
     : "📂 Ocultar meses anteriores";
 });
 
-cont.appendChild(toggleBtn);
-cont.appendChild(mesesAnterioresCont);
-  
+
+
   const snapRegistro = await getDocs(collection(db,"registro"));
   const analisisSnap = await getDocs(collection(db,"analisis_mensual"));
 
@@ -683,9 +682,15 @@ const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
     `;
 
 if (index === 0) {
-  cont.appendChild(card); // mes más reciente
+  // 🟢 Mes más reciente
+  cont.appendChild(card);
+
+  // ⬇️ Botón JUSTO debajo del contenido del mes actual
+  cont.appendChild(toggleBtn);
+  cont.appendChild(mesesAnterioresCont);
 } else {
-  mesesAnterioresCont.appendChild(card); // meses antiguos
+  // 📂 Meses anteriores (orden correcto)
+  mesesAnterioresCont.appendChild(card);
 }
   });
 
