@@ -28,10 +28,60 @@
   .logo{display:flex;align-items:center;gap:12px}
   .logo img{height:56px;border-radius:8px}
   .controls{display:flex;gap:8px;align-items:center}
-  button{background:var(--accent);color:#fff;border:0;padding:6px 10px;border-radius:8px;cursor:pointer;font-weight:700}
+button{
+  background:var(--accent);
+  color:#fff;
+  border:0;
+  padding:6px 10px;
+  border-radius:10px;
+  cursor:pointer;
+  font-weight:700;
+
+  transition:
+    transform 0.15s ease-out,
+    box-shadow 0.15s ease-out;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:active{
+  transform: scale(0.94);
+}
   button:hover{transform:scale(1.03)}
   main{max-width:900px;margin:18px auto;padding:12px}
-  .card{background:var(--card-bg);padding:14px;border-radius:12px;box-shadow:0 2px 6px rgba(0,0,0,.08);margin-bottom:16px}
+.card{
+  background:var(--card-bg);
+  padding:14px;
+  border-radius:14px;
+  margin-bottom:16px;
+
+  box-shadow:
+    0 1px 2px rgba(0,0,0,.04),
+    0 4px 12px rgba(0,0,0,.06);
+
+  transition:
+    transform 0.25s cubic-bezier(.2,.8,.2,1),
+    box-shadow 0.25s cubic-bezier(.2,.8,.2,1);
+
+  will-change: transform, box-shadow;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Feedback táctil móvil */
+.card:active{
+  transform: scale(0.97);
+  box-shadow:
+    0 1px 1px rgba(0,0,0,.04),
+    0 2px 6px rgba(0,0,0,.08);
+}
+
+/* Hover solo escritorio */
+@media (hover: hover){
+  .card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,.10);
+  }
+}
   .section{background:var(--section-bg);padding:14px;border-radius:10px;margin-bottom:16px}
   input[type="text"],textarea,input[type="date"]{width:100%;padding:10px;margin-bottom:10px;border-radius:8px;border:1px solid #ccc;background:transparent;color:inherit}
   .search-container{position:relative;margin-bottom:16px}
@@ -95,19 +145,20 @@ body.dark .notas-card {
 body.dark .notas-card h3 {
   color: #ffca28; /* título visible en modo oscuro */
 }
-/* Apple-style fade */
-.fade-apple {
-  animation: fadeApple 0.32s cubic-bezier(.2,.8,.2,1) both;
+
+
+.fade-apple{
+  animation: fadeApple 0.28s cubic-bezier(.2,.8,.2,1) both;
 }
 
-@keyframes fadeApple {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
+@keyframes fadeApple{
+  from{
+    opacity:0;
+    transform:translateY(10px) scale(0.98);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  to{
+    opacity:1;
+    transform:translateY(0) scale(1);
   }
 }
 
@@ -121,21 +172,33 @@ details > summary::-webkit-details-marker {
   display: none;
 }
 
-details[open] > *:not(summary) {
-  animation: expandApple 0.28s ease-out;
+details[open] > *:not(summary){
+  animation: expandApple 0.26s cubic-bezier(.16,1,.3,1);
 }
 
-@keyframes expandApple {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
+@keyframes expandApple{
+  from{
+    opacity:0;
+    transform:translateY(-4px);
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+  to{
+    opacity:1;
+    transform:translateY(0);
   }
 }
 
+@media (prefers-reduced-motion: reduce){
+  *{
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.card,
+.fade-apple,
+details > *{
+  will-change: transform, opacity;
+}
   </style>
 </head>
 <body>
