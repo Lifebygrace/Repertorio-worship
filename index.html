@@ -282,18 +282,23 @@ details > *{
 
 <div class="section">
   <h2>🆕 Canciones nuevas del mes</h2>
+
+  <!-- Contenedor donde se mostrarán las canciones del mes -->
+  <div id="mostrar-mes" style="margin-top:8px"></div>
+
+  <!-- Botón para mostrar/ocultar notas -->
+  <button onclick="toggleNotas('mes')">🗒️ Ver notas</button>
   <div id="notas-mes" class="notas-toggle" style="display:none; margin-top:8px;"></div>
 
-<!-- AÑADE ESTE DIV para notas (si no existe) -->
-<button onclick="toggleNotas('mes')">🗒️ Ver notas</button>
-  
+  <!-- Botón para mostrar/ocultar Worship Pack -->
   <button onclick="mostrarWorshipPack('mes')">🎁 Worship Pack</button>
   <div id="worshippack-mes" style="display:none; margin-top:8px;"></div>
 
+  <!-- Contenedor de edición (solo visible en modo edición) -->
   <div id="contenedor-mes" style="display:none; margin-top:10px;">
     <input id="titulo-mes" placeholder="Título (ej. Octubre 2025)" />
     <textarea id="canciones-mes" placeholder="Canciones (una por línea)"></textarea>
-    <textarea id="notas-edit-mes" placeholder="Notas de esta semana..."></textarea>
+    <textarea id="notas-edit-mes" placeholder="Notas de este mes..."></textarea>
     <button onclick="guardarSeccion('mes')">Guardar sección</button>
   </div>
 </div>
