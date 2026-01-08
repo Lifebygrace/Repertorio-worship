@@ -186,6 +186,26 @@ details[open] > *:not(summary){
   }
 }
 
+/* =========================
+   Details Apple – animación más lenta
+   (Resumen mensual / Observaciones)
+========================= */
+
+.details-slow[open] > *:not(summary){
+  animation: expandAppleSlow 0.42s cubic-bezier(.2,.8,.2,1);
+}
+
+@keyframes expandAppleSlow{
+  from{
+    opacity:0;
+    transform:translateY(-6px);
+  }
+  to{
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
 @media (prefers-reduced-motion: reduce){
   *{
     animation: none !important;
@@ -771,12 +791,12 @@ const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
       <details ${abierto}>
         <summary>📅 ${nombreMes}</summary>
         <div style="margin-top:8px;">${cantanteHtml}</div>
-        <details style="margin-top:6px;">
-          <summary>📌 resumen musical 🔥</summary>
+        <details class="details-slow" style="margin-top:6px;">
+        <summary>📌 resumen musical 🔥</summary>
           <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
         </details>
-        <details style="margin-top:6px;">
-          <summary>📝 Observaciones / Consejos</summary>
+        <details class="details-slow" style="margin-top:6px;">
+        <summary>📝 Observaciones / Consejos</summary>
           <div class="notas-card" style="margin-top:4px;">${obsHtml}</div>
         </details>
         ${modoEdicion ? `<button class="guardar-analisis-btn" data-mes="${mes}" style="margin-top:8px;">💾 Guardar análisis</button>` : ""}
