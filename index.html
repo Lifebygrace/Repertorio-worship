@@ -564,7 +564,26 @@ function toggleAnalisis() {
 async function cargarAnalisisMensual() {
   const cont = document.getElementById("analisis-mensual");
   cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
+  
+  const toggleBtn = document.createElement("button");
+  toggleBtn.textContent = "📂 Ver meses anteriores";
+  toggleBtn.style.margin = "8px 0";
+  toggleBtn.style.display = "block";
+  
+  const mesesAnterioresCont = document.createElement("div");
+  mesesAnterioresCont.style.display = "none";
+  
+  toggleBtn.addEventListener("click", () => {
+  const visible = mesesAnterioresCont.style.display === "block";
+  mesesAnterioresCont.style.display = visible ? "none" : "block";
+  toggleBtn.textContent = visible
+    ? "📂 Ver meses anteriores"
+    : "📂 Ocultar meses anteriores";
+});
 
+cont.appendChild(toggleBtn);
+cont.appendChild(mesesAnterioresCont);
+  
   const snapRegistro = await getDocs(collection(db,"registro"));
   const analisisSnap = await getDocs(collection(db,"analisis_mensual"));
 
@@ -594,7 +613,7 @@ async function cargarAnalisisMensual() {
 
   const ultimoMes = meses[0];
 
-  meses.forEach(mes => {
+meses.forEach((mes, index) => {
     const fecha = new Date(mes+"-01");
     const nombreMes = fecha.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
     const datosMes = analisisGuardado[mes] || { canciones:{}, cantante:"", evaluaciones:{}, observaciones:"" };
@@ -663,7 +682,11 @@ const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
       </details>
     `;
 
-    cont.appendChild(card);
+if (index === 0) {
+  cont.appendChild(card); // mes más reciente
+} else {
+  mesesAnterioresCont.appendChild(card); // meses antiguos
+}
   });
 
   if(modoEdicion){
