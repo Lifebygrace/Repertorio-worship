@@ -593,25 +593,41 @@ function toggleAnalisis(){
             return `
               <div class="card" style="margin-top:12px;background:var(--section-bg)">
                 <h4>🎵 ${c?.titulo || "—"}</h4>
+${modoEdicion ? `
+  <label>⭐ Evaluación</label>
+  <select class="eval-input edit-input"
+    data-mes="${mes}" data-id="${id}">
+    <option value="">—</option>
+    <option value="excelente" ${saved.eval==="excelente"?"selected":""}>Excelente</option>
+    <option value="bien" ${saved.eval==="bien"?"selected":""}>Bien</option>
+    <option value="mejorar" ${saved.eval==="mejorar"?"selected":""}>A mejorar</option>
+  </select>
+` : `
+  <p><strong>⭐ Evaluación:</strong> ${saved.eval || "—"}</p>
+`}
 
-                <label>🎤 Cantante</label>
-                <input 
-                  class="cantante-input edit-input" 
-                  data-mes="${mes}" 
-                  data-id="${id}" 
-                  value="${saved.cantante || ""}"
-                >
+${modoEdicion ? `
+  <label>🎤 Cantante</label>
+  <input class="cantante-input edit-input"
+    data-mes="${mes}" data-id="${id}"
+    value="${saved.cantante || ""}">
+` : `
+  <p><strong>🎤 Cantante:</strong> ${saved.cantante || "—"}</p>
+`}
 
-                <p><strong>🔢 Veces tocada:</strong> ${veces}</p>
+<p><strong>🔢 Veces tocada:</strong> ${veces}</p>
 
-                <label>🗒️ Notas</label>
-                <textarea 
-                  class="nota-input edit-input" 
-                  data-mes="${mes}"
-                >${saved.notas || ""}</textarea>
+${modoEdicion ? `
+  <label>🗒️ Notas</label>
+  <textarea class="nota-input edit-input"
+    data-mes="${mes}">${saved.notas || ""}</textarea>
+` : `
+  <p><em>${saved.notas || "Sin notas"}</em></p>
+`}
               </div>
             `;
           }).join("")}
+          ${generarResumenMes(mes, mapaMeses, datosMes)}
 
           <div class="notas-card">
             <h3>🧠 Observaciones generales</h3>
@@ -621,7 +637,9 @@ function toggleAnalisis(){
             >${datosMes.notasGenerales || ""}</textarea>
           </div>
 
-          <button onclick="guardarAnalisisMes('${mes}')">💾 Guardar análisis</button>
+${modoEdicion ? `
+  <button onclick="guardarAnalisisMes('${mes}')">💾 Guardar análisis</button>
+` : ""}
         </div>
       `;
     });
@@ -715,6 +733,30 @@ function setOrden(campo){
   else { ordenActual.campo = campo; ordenActual.sentido = "desc"; }
   cargarRegistro();
 }
+function generarResumenMes(mes, mapaMeses, datosMes){
+  const canciones = Object.entries(mapaMeses[mes] || {});
+  if(!canciones.length) return "";
+
+  const total = canciones.length;
+  const top = canciones.sort((a,b)=>b[1]-a[1])[0];
+  const topSong = cancionesCache.find(c=>c.id===top[0])?.titulo || "—";
+
+  const evals = { excelente:0, bien:0, mejorar:0 };
+  Object.values(datosMes.canciones || {}).forEach(c=>{
+    if(c.eval) evals[c.eval]++;
+  });
+
+  return `
+    <div class="notas-card">
+      <h3>📈 Resumen del mes</h3>
+      <ul>
+        <li>🎵 Canciones distintas: <strong>${total}</strong></li>
+        <li>🔥 Más tocada: <strong>${topSong}</strong> (${top[1]} veces)</li>
+        <li>⭐ Excelente: ${evals.excelente} | 👍 Bien: ${evals.bien} | ⚠️ A mejorar: ${evals.mejorar}</li>
+      </ul>
+    </div>
+  `;
+}
 async function guardarAnalisisMes(mes){
   const canciones = {};
   document.querySelectorAll(`.cantante-input[data-mes="${mes}"]`).forEach(i=>{
@@ -730,7 +772,11 @@ async function guardarAnalisisMes(mes){
   });
 
   const notasGenerales = document.querySelector(`.notas-generales[data-mes="${mes}"]`).value.trim();
-
+document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
+  const id = i.dataset.id;
+  canciones[id] = canciones[id] || {};
+  canciones[id].eval = i.value;
+});
   await setDoc(doc(db,"analisis_mensual",mes),{
     canciones,
     notasGenerales
