@@ -95,6 +95,46 @@ body.dark .notas-card {
 body.dark .notas-card h3 {
   color: #ffca28; /* título visible en modo oscuro */
 }
+/* Apple-style fade */
+.fade-apple {
+  animation: fadeApple 0.32s cubic-bezier(.2,.8,.2,1) both;
+}
+
+@keyframes fadeApple {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+details > summary {
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+}
+
+details > summary::-webkit-details-marker {
+  display: none;
+}
+
+details[open] > *:not(summary) {
+  animation: expandApple 0.28s ease-out;
+}
+
+@keyframes expandApple {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
 
   </style>
 </head>
@@ -260,7 +300,7 @@ function actualizarContador(){
 /* Construcción de tarjeta — meta debajo del título + edición completa + preview imágenes en edición */
 function construirCard(d){
   const div = document.createElement("div");
-  div.className = "card";
+  div.className = "card fade-apple";
 
   // título (editable en modo edición)
   const q = document.getElementById("search").value || "";
