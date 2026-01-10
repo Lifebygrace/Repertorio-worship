@@ -323,6 +323,8 @@ details > *{
     <button style="background:var(--accent);" onclick="toggleRegistro()">📊 Registro de canciones</button>
     <button onclick="toggleAnalisis()">📊 Análisis mensual</button>
     <div id="analisis-mensual" class="section" style="display:none;"></div>
+    <button onclick="toggleCantantes()">🎤 Análisis por cantante</button>
+    <div id="analisis-cantantes" class="section" style="display:none;"></div>
     <div id="registro-canciones" class="section" style="display:none;">
       <h2>📋 Registro de canciones</h2>
       <table id="tabla-registro">
@@ -1004,6 +1006,108 @@ document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
 
   alert("✅ Análisis mensual guardado");
 }
+
+function toggleCantantes(){
+  const el = document.getElementById("analisis-cantantes");
+  if(!el) return;
+
+  el.style.display = el.style.display === "block" ? "none" : "block";
+  if(el.style.display === "block") cargarAnalisisCantantes();
+}
+
+async function cargarAnalisisCantantes(){
+  const cont = document.getElementById("analisis-cantantes");
+  cont.innerHTML = "<h2>🎤 Análisis por cantante</h2>";
+
+  const snap = await getDocs(collection(db,"analisis_mensual"));
+
+  const porCantante = {};
+
+  snap.forEach(docu=>{
+    const mes = docu.id; // ej: 2025-11
+    const data = docu.data();
+    const cantante = data.cantante || "Sin asignar";
+
+    if(!porCantante[cantante]) porCantante[cantante] = [];
+
+    porCantante[cantante].push({
+      mes,
+      canciones: data.canciones || {},
+      evaluaciones: data.evaluaciones || {},
+      observaciones: data.observaciones || ""
+    });
+  });
+
+  Object.keys(porCantante).forEach(nombre=>{
+    cont.appendChild(renderCantante(nombre, porCantante[nombre]));
+  });
+}
+
+function renderCantante(nombre, meses){
+  let excelente = 0;
+  let bien = 0;
+  let mal = 0;
+
+  meses.forEach(m=>{
+    Object.values(m.evaluaciones || {}).forEach(v=>{
+      if(v === "Excelente") excelente++;
+      else if(v === "Bien") bien++;
+      else if(v === "A mejorar") mal++;
+    });
+  });
+
+  const card = document.createElement("div");
+  card.className = "card";
+
+  card.innerHTML = `
+    <details>
+      <summary>
+        🎤 ${nombre} — 🚀 ${excelente} 👍 ${bien} ‼️ ${mal}
+      </summary>
+      ${meses
+        .sort((a,b)=>b.mes.localeCompare(a.mes))
+        .map(m=>renderMesCantante(m))
+        .join("")}
+    </details>
+  `;
+
+  return card;
+}
+
+function renderMesCantante(m){
+  const fecha = new Date(m.mes+"-01")
+    .toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+
+  let ex = 0, bien = 0, mal = 0;
+
+  const cancionesHtml = Object.keys(m.canciones).map(id=>{
+    const c = cancionesCache.find(x=>x.id===id);
+    const titulo = c?.titulo || "—";
+    const veces = m.canciones[id];
+    const ev = m.evaluaciones?.[id] || "";
+
+    if(ev === "Excelente") ex++;
+    else if(ev === "Bien") bien++;
+    else if(ev === "A mejorar") mal++;
+
+    const emoji =
+      ev === "Excelente" ? "🚀" :
+      ev === "Bien" ? "👍" :
+      ev === "A mejorar" ? "‼️" : "";
+
+    return `<li>${titulo} (${veces}) ${emoji}</li>`;
+  }).join("");
+
+  return `
+    <div class="notas-card" style="margin-top:10px;">
+      <h3>📅 ${fecha}</h3>
+      <p><strong>Resumen:</strong> 🚀 ${ex} 👍 ${bien} ‼️ ${mal}</p>
+      <ul>${cancionesHtml}</ul>
+      ${m.observaciones ? `<p><strong>📝 Observaciones:</strong><br>${m.observaciones}</p>` : ""}
+    </div>
+  `;
+}
+
 /* BOOT */
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
@@ -1079,6 +1183,7 @@ window.addEventListener('load', ()=>{
   cargarSeccion("semana");
   cargarSeccion("mes");
   window.toggleAnalisis = toggleAnalisis;
+  window.toggleCantantes = toggleCantantes;
 });
 </script>
 </body>
