@@ -276,6 +276,13 @@ details > *{
   <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
   <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
   <textarea id="notas-edit-semana" placeholder="Notas de esta semana..."></textarea>
+  <label style="font-weight:600">🎤 Cantante de la semana</label>
+<select id="cantante-semana" class="edit-input">
+  <option value="">— Seleccionar —</option>
+  <option value="Carolina">Carolina</option>
+  <option value="Jason">Jason</option>
+  <option value="Milly">Milly</option>
+</select>
   <button onclick="guardarSeccion('semana')">Guardar sección</button>
 </div>
 </div>
@@ -616,7 +623,10 @@ async function cargarSeccion(tipo){
         <h3>${data.titulo || ""}</h3>
         <ul>${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}</ul>
       `;
-
+      if(data.cantante){
+  cont.innerHTML += `<p>🎤 <strong>Cantante:</strong> ${data.cantante}</p>`;
+}
+      
       // Renderizar notas si existe el contenedor
       if(notasBox){
         notasBox.innerHTML = `<div class="notas-card"><h3>📝 Notas</h3>${renderNotas(data.notas)}</div>`;
@@ -661,15 +671,21 @@ function toggleNotas(tipo){
 
 async function guardarSeccion(tipo){
   const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
-  const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").map(s=>s.trim()).filter(Boolean);
+  const canciones = document.getElementById(`canciones-${tipo}`).value
+    .split("\n").map(s=>s.trim()).filter(Boolean);
   const notas = document.getElementById(`notas-edit-${tipo}`).value.trim();
 
-  await setDoc(doc(db, "secciones", tipo), { 
-    titulo, 
-    canciones, 
-    notas 
-  });
+  const data = { titulo, canciones, notas };
 
+  if(tipo === "semana"){
+    data.cantante = document.getElementById("cantante-semana").value;
+    data.fecha = isoToday();
+
+    // 🔒 Guardar histórico semanal
+    await addDoc(collection(db,"secciones_historico"), data);
+  }
+
+  await setDoc(doc(db,"secciones", tipo), data);
   alert("✅ Sección guardada");
   cargarSeccion(tipo);
 }
@@ -748,20 +764,29 @@ async function cargarAnalisisMensual() {
   const analisisGuardado = {};
   analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
-  // Agrupar por mes
-  const mapaMeses = {}; 
-  snapRegistro.forEach(docu => {
-    const data = docu.data();
-    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
-    const cancion = cancionesCache.find(c => c.id === docu.id);
-    if(!cancion) return;
+// Agrupar por mes y por cantante (desde semanas)
+const semanasSnap = await getDocs(collection(db,"secciones_historico"));
+const mapaMeses = {};
 
-    fechas.forEach(f => {
-      const mes = f.slice(0,7);
-      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, cantante: "", evaluaciones:{}, observaciones:"" };
-      mapaMeses[mes].canciones[cancion.id] = (mapaMeses[mes].canciones[cancion.id] || 0) + 1;
-    });
+semanasSnap.forEach(docu=>{
+  const s = docu.data();
+  if(!s.fecha || !s.cantante) return;
+
+  const mes = s.fecha.slice(0,7);
+
+  if(!mapaMeses[mes]) mapaMeses[mes] = {};
+  if(!mapaMeses[mes][s.cantante]) mapaMeses[mes][s.cantante] = {};
+
+  s.canciones.forEach(nombre=>{
+    const c = cancionesCache.find(x =>
+      normalizar(x.titulo) === normalizar(nombre)
+    );
+    if(!c) return;
+
+    mapaMeses[mes][s.cantante][c.id] =
+      (mapaMeses[mes][s.cantante][c.id] || 0) + 1;
   });
+});
 
   let meses = Object.keys(mapaMeses).sort().reverse(); // Mes más reciente primero
   if(!meses.length){
@@ -775,7 +800,12 @@ meses.forEach((mes, index) => {
     const fecha = new Date(mes+"-01");
     const nombreMes = fecha.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
     const datosMes = analisisGuardado[mes] || { canciones:{}, cantante:"", evaluaciones:{}, observaciones:"" };
-    const cancionesMes = mapaMeses[mes].canciones;
+    const cancionesMes = {};
+Object.values(mapaMeses[mes]).forEach(bloque=>{
+  Object.entries(bloque).forEach(([id, veces])=>{
+    cancionesMes[id] = (cancionesMes[id] || 0) + veces;
+  });
+});
 
     const listaCanciones = Object.keys(cancionesMes).map(id => {
       const c = cancionesCache.find(x=>x.id===id);
@@ -828,6 +858,13 @@ const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
       <details ${abierto}>
         <summary>📅 ${nombreMes}</summary>
         <div style="margin-top:8px;">${cantanteHtml}</div>
+        <label>Filtrar por cantante:</label>
+<select class="cantante-mes-select" data-mes="${mes}">
+  <option value="todos">Todos</option>
+  ${Object.keys(mapaMeses[mes]).map(c =>
+    `<option value="${c}">${c}</option>`
+  ).join("")}
+</select>
         <details class="details-slow" style="margin-top:6px;">
         <summary>📌 resumen musical 🔥</summary>
           <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
@@ -999,10 +1036,14 @@ document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
   canciones[id] = canciones[id] || {};
   canciones[id].eval = i.value;
 });
-  await setDoc(doc(db,"analisis_mensual",mes),{
-    canciones,
-    notasGenerales
-  });
+await setDoc(
+  doc(db,"analisis_mensual", mes),
+  {
+    evaluaciones,
+    observaciones
+  },
+  { merge: true }
+);
 
   alert("✅ Análisis mensual guardado");
 }
@@ -1015,26 +1056,39 @@ function toggleCantantes(){
   if(el.style.display === "block") cargarAnalisisCantantes();
 }
 
+
 async function cargarAnalisisCantantes(){
   const cont = document.getElementById("analisis-cantantes");
   cont.innerHTML = "<h2>🎤 Análisis por cantante</h2>";
 
-  const snap = await getDocs(collection(db,"analisis_mensual"));
+  const snap = await getDocs(collection(db,"secciones_historico"));
 
   const porCantante = {};
 
   snap.forEach(docu=>{
-    const mes = docu.id; // ej: 2025-11
-    const data = docu.data();
-    const cantante = data.cantante || "Sin asignar";
+    const s = docu.data();
+    if(!s.cantante || !s.fecha) return;
 
-    if(!porCantante[cantante]) porCantante[cantante] = [];
+    const mes = s.fecha.slice(0,7);
+    const cantante = s.cantante;
 
-    porCantante[cantante].push({
-      mes,
-      canciones: data.canciones || {},
-      evaluaciones: data.evaluaciones || {},
-      observaciones: data.observaciones || ""
+    if(!porCantante[cantante]) porCantante[cantante] = {};
+
+    if(!porCantante[cantante][mes]){
+      porCantante[cantante][mes] = {
+        canciones:{},
+        observaciones:""
+      };
+    }
+
+    s.canciones.forEach(nombre=>{
+      const c = cancionesCache.find(x =>
+        normalizar(x.titulo) === normalizar(nombre)
+      );
+      if(!c) return;
+
+      porCantante[cantante][mes].canciones[c.id] =
+        (porCantante[cantante][mes].canciones[c.id] || 0) + 1;
     });
   });
 
@@ -1043,36 +1097,40 @@ async function cargarAnalisisCantantes(){
   });
 }
 
+
+
 function renderCantante(nombre, meses){
-  let excelente = 0;
-  let bien = 0;
-  let mal = 0;
-
-  meses.forEach(m=>{
-    Object.values(m.evaluaciones || {}).forEach(v=>{
-      if(v === "Excelente") excelente++;
-      else if(v === "Bien") bien++;
-      else if(v === "A mejorar") mal++;
-    });
-  });
-
   const card = document.createElement("div");
   card.className = "card";
 
+  const mesesOrdenados = Object.keys(meses).sort().reverse();
+
   card.innerHTML = `
     <details>
-      <summary>
-        🎤 ${nombre} — 🚀 ${excelente} 👍 ${bien} ‼️ ${mal}
-      </summary>
-      ${meses
-        .sort((a,b)=>b.mes.localeCompare(a.mes))
-        .map(m=>renderMesCantante(m))
-        .join("")}
+      <summary>🎤 ${nombre}</summary>
+      ${mesesOrdenados.map(mes=>{
+        const fecha = new Date(mes+"-01")
+          .toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+
+        const canciones = meses[mes].canciones;
+        const lista = Object.keys(canciones).map(id=>{
+          const c = cancionesCache.find(x=>x.id===id);
+          return `<li>${c?.titulo || "—"} (${canciones[id]})</li>`;
+        }).join("");
+
+        return `
+          <div class="notas-card" style="margin-top:10px;">
+            <h3>📅 ${fecha}</h3>
+            <ul>${lista}</ul>
+          </div>
+        `;
+      }).join("")}
     </details>
   `;
 
   return card;
 }
+
 
 function renderMesCantante(m){
   const fecha = new Date(m.mes+"-01")
