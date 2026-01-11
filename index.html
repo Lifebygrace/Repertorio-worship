@@ -1108,6 +1108,99 @@ function renderMesCantante(m){
   `;
 }
 
+function cargarAnalisisMensual() {
+  const contenedor = document.getElementById("analisisMensual");
+  contenedor.innerHTML = ""; // limpiar
+
+  const meses = Object.keys(analisisGuardado).sort((a,b) => parseInt(a)-parseInt(b));
+
+  meses.forEach(mes => {
+    const datosMes = analisisGuardado[mes];
+    const nombreMes = nombreMeses[mes] || mes;
+    
+    // Generar resumen de canciones
+    let resumenHtml = "";
+    if(datosMes.canciones){
+      Object.keys(datosMes.canciones).forEach(cId => {
+        const cancion = datosMes.canciones[cId];
+        resumenHtml += `<li data-id="${cId}">${cancion.titulo || cId} 🎵</li>`;
+      });
+    }
+
+    // Observaciones
+    let obsHtml = datosMes.observaciones || "-";
+
+    // Crear lista de cantantes únicos de este mes
+    const cantantesMes = new Set();
+    Object.values(datosMes.canciones || {}).forEach(cancion => {
+      if(cancion.cantante){
+        cancion.cantante.split(",").forEach(c => cantantesMes.add(c.trim()));
+      }
+    });
+
+    // HTML del filtro de cantantes
+    let filtroHtml = `<label>Filtrar por cantante: 
+      <select class="filtro-cantante-mes" data-mes="${mes}" onchange="filtrarCantanteMes(this)">
+        <option value="">Todos</option>
+        ${[...cantantesMes].map(c => `<option value="${c}">${c}</option>`).join("")}
+      </select>
+    </label>`;
+
+    // Abrir el mes si es el actual
+    const abierto = mes === mesActual ? "open" : "";
+
+    // Card del mes
+    const card = document.createElement("div");
+    card.classList.add("card-mes");
+    card.innerHTML = `
+      <details ${abierto}>
+        <summary>📅 ${nombreMes}</summary>
+        <div style="margin-top:8px;">${filtroHtml}</div> <!-- filtro dentro del mes -->
+        <div>🎤 Cantante principal: ${datosMes.cantante || "-"}</div>
+        
+        <details class="details-slow" style="margin-top:6px;">
+          <summary>📌 resumen musical 🔥</summary>
+          <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
+        </details>
+        
+        <details class="details-slow" style="margin-top:6px;">
+          <summary>📝 Observaciones / Consejos</summary>
+          <div class="notas-card" style="margin-top:4px;">${obsHtml}</div>
+        </details>
+        
+        ${modoEdicion ? `<button class="guardar-analisis-btn" data-mes="${mes}" style="margin-top:8px;">💾 Guardar análisis</button>` : ""}
+      </details>
+    `;
+    contenedor.appendChild(card);
+  });
+}
+
+// Función de filtrado por cantante dentro del mes
+function filtrarCantanteMes(select){
+  const mes = select.dataset.mes;
+  const valor = select.value.trim();
+  const card = select.closest("div.card-mes");
+  if(!card) return;
+
+  const resumenDiv = card.querySelector("details:nth-of-type(1) .notas-card ul");
+  if(!resumenDiv) return;
+
+  Array.from(resumenDiv.children).forEach(li => {
+    const cId = li.dataset.id;
+    if(!cId) return;
+
+    const datosMes = analisisGuardado[mes];
+    const cancion = datosMes.canciones[cId];
+    const cantantes = cancion.cantante ? cancion.cantante.split(",").map(c => c.trim()) : [];
+
+    if(valor === "" || cantantes.includes(valor)){
+      li.style.display = "list-item";
+    } else {
+      li.style.display = "none";
+    }
+  });
+}
+
 /* BOOT */
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
