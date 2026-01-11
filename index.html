@@ -796,8 +796,6 @@ const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
            <option value="Jason" ${datosMes.cantante==="Jason"?"selected":""}>Jason</option>
            <option value="Milly" ${datosMes.cantante==="Milly"?"selected":""}>Milly</option>
          </select></label>`
-        <label>📅 Domingo del servicio</label>
-<input type="date" id="fecha-servicio">
       : `<p>🎤 Cantante: ${datosMes.cantante || "-"}</p>`;
 
   
@@ -980,115 +978,78 @@ function generarResumenMes(mes, mapaMeses, datosMes){
       </ul>
     </div>
   `;
-
+}
 async function guardarAnalisisMes(mes){
-
   const canciones = {};
-
-  // 🎵 Cantante por canción
   document.querySelectorAll(`.cantante-input[data-mes="${mes}"]`).forEach(i=>{
     const id = i.dataset.id;
     canciones[id] = canciones[id] || {};
     canciones[id].cantante = i.value.trim();
   });
 
-  // 📝 Notas por canción
   document.querySelectorAll(`.nota-input[data-mes="${mes}"]`).forEach(i=>{
     const id = i.dataset.id;
     canciones[id] = canciones[id] || {};
     canciones[id].notas = i.value.trim();
   });
 
-  // ⭐ Evaluaciones por canción
-  const evaluaciones = {};
-  document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
-    const id = i.dataset.id;
-    evaluaciones[id] = i.value;
+  const notasGenerales = document.querySelector(`.notas-generales[data-mes="${mes}"]`).value.trim();
+document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
+  const id = i.dataset.id;
+  canciones[id] = canciones[id] || {};
+  canciones[id].eval = i.value;
+});
+  await setDoc(doc(db,"analisis_mensual",mes),{
+    canciones,
+    notasGenerales
   });
 
-  // 🎤 Cantante del servicio (DOMINGO)
-  const cantante = document.querySelector(
-    `.cantante-select[data-mes="${mes}"]`
-  )?.value || "";
+  alert("✅ Análisis mensual guardado");
+}
 
-  // 📅 Domingo del servicio
-  const fechaServicio = document.querySelector(
-    `.fecha-servicio[data-mes="${mes}"]`
-  )?.value;
+function toggleCantantes(){
+  const el = document.getElementById("analisis-cantantes");
+  if(!el) return;
 
-  if(!fechaServicio){
-    alert("Selecciona el domingo del servicio");
-    return;
-  }
-
-  const mesReal = fechaServicio.slice(0,7); // ej: 2025-11
-
-  // 📝 Observaciones generales del servicio
-  const observaciones = document.querySelector(
-    `.notas-generales[data-mes="${mes}"]`
-  )?.value.trim() || "";
-
-  // 💾 GUARDAR POR DOMINGO
-  await setDoc(
-    doc(db,"analisis_mensual", mesReal, "servicios", fechaServicio),
-    {
-      cantante,
-      canciones,
-      evaluaciones,
-      observaciones,
-      timestamp: serverTimestamp()
-    }
-  );
-
-  alert("✅ Análisis del servicio guardado");
+  el.style.display = el.style.display === "block" ? "none" : "block";
+  if(el.style.display === "block") cargarAnalisisCantantes();
 }
 
 async function cargarAnalisisCantantes(){
-
   const cont = document.getElementById("analisis-cantantes");
   cont.innerHTML = "<h2>🎤 Análisis por cantante</h2>";
 
-  const mesesSnap = await getDocs(collection(db,"analisis_mensual"));
+  const snap = await getDocs(collection(db,"analisis_mensual"));
+
   const porCantante = {};
 
-  // 🔁 recorrer meses
-  for(const mesDoc of mesesSnap.docs){
+  snap.forEach(docu=>{
+    const mes = docu.id; // ej: 2025-11
+    const data = docu.data();
+    const cantante = data.cantante || "Sin asignar";
 
-    const serviciosSnap = await getDocs(
-      collection(db,"analisis_mensual", mesDoc.id, "servicios")
-    );
+    if(!porCantante[cantante]) porCantante[cantante] = [];
 
-    // 🔁 recorrer domingos
-    serviciosSnap.forEach(serv=>{
-      const d = serv.data();
-      const cantante = d.cantante || "Sin asignar";
-
-      if(!porCantante[cantante]) porCantante[cantante] = [];
-
-      porCantante[cantante].push({
-        fecha: serv.id,               // YYYY-MM-DD
-        canciones: d.canciones || {},
-        evaluaciones: d.evaluaciones || {},
-        observaciones: d.observaciones || ""
-      });
+    porCantante[cantante].push({
+      mes,
+      canciones: data.canciones || {},
+      evaluaciones: data.evaluaciones || {},
+      observaciones: data.observaciones || ""
     });
-  }
+  });
 
-  // render final
   Object.keys(porCantante).forEach(nombre=>{
     cont.appendChild(renderCantante(nombre, porCantante[nombre]));
   });
 }
 
-
-function renderCantante(nombre, servicios){
-
+function renderCantante(nombre, meses){
   let excelente = 0;
   let bien = 0;
   let mal = 0;
 
-  servicios.forEach(s=>{
-    Object.values(s.evaluaciones || {}).forEach(v=>{
+  meses.forEach(m=>{
+    Object.values(m.evaluaciones || {}).forEach(v=>{
       if(v === "Excelente") excelente++;
       else if(v === "Bien") bien++;
       else if(v === "A mejorar") mal++;
@@ -1103,10 +1064,9 @@ function renderCantante(nombre, servicios){
       <summary>
         🎤 ${nombre} — 🚀 ${excelente} 👍 ${bien} ‼️ ${mal}
       </summary>
-
-      ${servicios
-        .sort((a,b)=>b.fecha.localeCompare(a.fecha))
-        .map(s=>renderServicioCantante(s))
+      ${meses
+        .sort((a,b)=>b.mes.localeCompare(a.mes))
+        .map(m=>renderMesCantante(m))
         .join("")}
     </details>
   `;
@@ -1114,23 +1074,17 @@ function renderCantante(nombre, servicios){
   return card;
 }
 
-function renderServicioCantante(s){
-
-  const fecha = new Date(s.fecha)
-    .toLocaleDateString("es-ES",{
-      weekday:"long",
-      day:"numeric",
-      month:"long",
-      year:"numeric"
-    });
+function renderMesCantante(m){
+  const fecha = new Date(m.mes+"-01")
+    .toLocaleDateString("es-ES",{month:"long",year:"numeric"});
 
   let ex = 0, bien = 0, mal = 0;
 
-  const cancionesHtml = Object.keys(s.canciones).map(id=>{
+  const cancionesHtml = Object.keys(m.canciones).map(id=>{
     const c = cancionesCache.find(x=>x.id===id);
     const titulo = c?.titulo || "—";
-    const veces = s.canciones[id]?.veces || 1;
-    const ev = s.evaluaciones?.[id] || "";
+    const veces = m.canciones[id];
+    const ev = m.evaluaciones?.[id] || "";
 
     if(ev === "Excelente") ex++;
     else if(ev === "Bien") bien++;
@@ -1149,9 +1103,7 @@ function renderServicioCantante(s){
       <h3>📅 ${fecha}</h3>
       <p><strong>Resumen:</strong> 🚀 ${ex} 👍 ${bien} ‼️ ${mal}</p>
       <ul>${cancionesHtml}</ul>
-      ${s.observaciones
-        ? `<p><strong>📝 Observaciones:</strong><br>${s.observaciones}</p>`
-        : ""}
+      ${m.observaciones ? `<p><strong>📝 Observaciones:</strong><br>${m.observaciones}</p>` : ""}
     </div>
   `;
 }
