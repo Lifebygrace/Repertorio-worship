@@ -1108,96 +1108,187 @@ function renderMesCantante(m){
   `;
 }
 
-function cargarAnalisisMensual() {
-  const contenedor = document.getElementById("analisisMensual");
-  contenedor.innerHTML = ""; // limpiar
+async function cargarAnalisisMensual() {
+  const cont = document.getElementById("analisis-mensual");
+  cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
 
-  const meses = Object.keys(analisisGuardado).sort((a,b) => parseInt(a)-parseInt(b));
+  const toggleBtn = document.createElement("button");
+  toggleBtn.textContent = "📂 Ver meses anteriores";
+  toggleBtn.style.margin = "8px 0";
+  toggleBtn.style.display = "block";
 
-  meses.forEach(mes => {
-    const datosMes = analisisGuardado[mes];
-    const nombreMes = nombreMeses[mes] || mes;
-    
-    // Generar resumen de canciones
-    let resumenHtml = "";
-    if(datosMes.canciones){
-      Object.keys(datosMes.canciones).forEach(cId => {
-        const cancion = datosMes.canciones[cId];
-        resumenHtml += `<li data-id="${cId}">${cancion.titulo || cId} 🎵</li>`;
-      });
-    }
+  const mesesAnterioresCont = document.createElement("div");
+  mesesAnterioresCont.style.display = "none";
 
-    // Observaciones
-    let obsHtml = datosMes.observaciones || "-";
+  toggleBtn.addEventListener("click", () => {
+    const visible = mesesAnterioresCont.style.display === "block";
+    mesesAnterioresCont.style.display = visible ? "none" : "block";
+    toggleBtn.textContent = visible
+      ? "📂 Ver meses anteriores"
+      : "📂 Ocultar meses anteriores";
+  });
 
-    // Crear lista de cantantes únicos de este mes
-    const cantantesMes = new Set();
-    Object.values(datosMes.canciones || {}).forEach(cancion => {
-      if(cancion.cantante){
-        cancion.cantante.split(",").forEach(c => cantantesMes.add(c.trim()));
-      }
+  const snapRegistro = await getDocs(collection(db,"registro"));
+  const analisisSnap = await getDocs(collection(db,"analisis_mensual"));
+
+  const analisisGuardado = {};
+  analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
+
+  // Agrupar por mes
+  const mapaMeses = {}; 
+  snapRegistro.forEach(docu => {
+    const data = docu.data();
+    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+    const cancion = cancionesCache.find(c => c.id === docu.id);
+    if(!cancion) return;
+
+    fechas.forEach(f => {
+      const mes = f.slice(0,7);
+      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, cantante: "", evaluaciones:{}, observaciones:"" };
+      mapaMeses[mes].canciones[cancion.id] = (mapaMeses[mes].canciones[cancion.id] || 0) + 1;
+    });
+  });
+
+  let meses = Object.keys(mapaMeses).sort().reverse(); // Mes más reciente primero
+  if(!meses.length){
+    cont.innerHTML += "<p>No hay datos aún.</p>";
+    return;
+  }
+
+  const ultimoMes = meses[0];
+
+  meses.forEach((mes, index) => {
+    const fecha = new Date(mes+"-01");
+    const nombreMes = fecha.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+    const datosMes = analisisGuardado[mes] || { canciones:{}, cantante:"", evaluaciones:{}, observaciones:"" };
+    const cancionesMes = mapaMeses[mes].canciones;
+
+    const listaCanciones = Object.keys(cancionesMes).map(id => {
+      const c = cancionesCache.find(x=>x.id===id);
+      return { id, titulo: c?.titulo || "—", veces: cancionesMes[id], cantante: c?.cantante || "" };
     });
 
-    // HTML del filtro de cantantes
-    let filtroHtml = `<label>Filtrar por cantante: 
-      <select class="filtro-cantante-mes" data-mes="${mes}" onchange="filtrarCantanteMes(this)">
-        <option value="">Todos</option>
-        ${[...cantantesMes].map(c => `<option value="${c}">${c}</option>`).join("")}
-      </select>
-    </label>`;
+    const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
 
-    // Abrir el mes si es el actual
-    const abierto = mes === mesActual ? "open" : "";
+    // HTML para cantante
+    const cantanteHtml = modoEdicion 
+      ? `<label>🎤 Cantante: <select class="cantante-select" data-mes="${mes}">
+           <option value="Carolina" ${datosMes.cantante==="Carolina"?"selected":""}>Carolina</option>
+           <option value="Jason" ${datosMes.cantante==="Jason"?"selected":""}>Jason</option>
+           <option value="Milly" ${datosMes.cantante==="Milly"?"selected":""}>Milly</option>
+         </select></label>`
+      : `<p>🎤 Cantante: ${datosMes.cantante || "-"}</p>`;
 
-    // Card del mes
+    // =============================
+    // 🔹 FILTRO POR CANTANTE
+    // =============================
+    const cantantesMes = Array.from(new Set(resumen.flatMap(c => c.cantante.split(",").map(x=>x.trim()).filter(Boolean))));
+    const filtroHtml = cantantesMes.length ? `
+      <label>Filtrar por cantante: 
+        <select onchange="filtrarCantanteMes(this)" data-mes="${mes}">
+          <option value="">Todos</option>
+          ${cantantesMes.map(c => `<option value="${c}">${c}</option>`).join('')}
+        </select>
+      </label>
+    ` : '';
+
+    // HTML para resumen musical
+    const resumenHtml = resumen.map(c=>{
+      const val = datosMes.evaluaciones?.[c.id] || "";
+      const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
+      if(modoEdicion){
+        return `<li data-id="${c.id}">${c.titulo} (${c.veces}) - 
+          <select class="eval-select" data-id="${c.id}" data-mes="${mes}">
+            <option value="" ${val===""?"selected":""}></option>
+            <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️</option>
+            <option value="Bien" ${val==="Bien"?"selected":""}>👍</option>
+            <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀</option>
+          </select>
+        </li>`;
+      } else {
+        return `<li data-id="${c.id}">${c.titulo} (${c.veces}) ${emoji}</li>`;
+      }
+    }).join("");
+
+    // Observaciones
+    const obsHtml = modoEdicion 
+      ? `<ul><li><textarea class="obs-textarea" data-mes="${mes}" placeholder="Escribe observaciones o consejos aquí..." style="width:100%;height:60px;margin-top:4px;">${datosMes.observaciones||""}</textarea></li></ul>`
+      : `<ul><li>${datosMes.observaciones||""}</li></ul>`;
+
+    const abierto = mes === ultimoMes ? "open" : "";
+
     const card = document.createElement("div");
-    card.classList.add("card-mes");
+    card.className = "card";
+    card.style.marginTop = "12px";
+
     card.innerHTML = `
       <details ${abierto}>
         <summary>📅 ${nombreMes}</summary>
-        <div style="margin-top:8px;">${filtroHtml}</div> <!-- filtro dentro del mes -->
-        <div>🎤 Cantante principal: ${datosMes.cantante || "-"}</div>
-        
+        <div style="margin-top:8px;">${cantanteHtml}</div>
+        <div style="margin-top:6px;">${filtroHtml}</div> <!-- filtro agregado -->
         <details class="details-slow" style="margin-top:6px;">
           <summary>📌 resumen musical 🔥</summary>
           <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
         </details>
-        
         <details class="details-slow" style="margin-top:6px;">
           <summary>📝 Observaciones / Consejos</summary>
           <div class="notas-card" style="margin-top:4px;">${obsHtml}</div>
         </details>
-        
         ${modoEdicion ? `<button class="guardar-analisis-btn" data-mes="${mes}" style="margin-top:8px;">💾 Guardar análisis</button>` : ""}
       </details>
     `;
-    contenedor.appendChild(card);
+
+    if (index === 0) {
+      cont.appendChild(card);
+      cont.appendChild(toggleBtn);
+      cont.appendChild(mesesAnterioresCont);
+    } else {
+      mesesAnterioresCont.appendChild(card);
+    }
   });
+
+  // guardar edición del análisis mensual
+  if(modoEdicion){
+    document.querySelectorAll(".guardar-analisis-btn").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const mes = btn.dataset.mes;
+        const evaluaciones = {};
+        document.querySelectorAll(`.eval-select[data-mes="${mes}"]`).forEach(sel=>{
+          const id = sel.dataset.id;
+          evaluaciones[id] = sel.value;
+        });
+        const cantante = document.querySelector(`.cantante-select[data-mes="${mes}"]`).value;
+        const observaciones = document.querySelector(`.obs-textarea[data-mes="${mes}"]`).value;
+        await setDoc(doc(db,"analisis_mensual",mes),{
+          canciones: mapaMeses[mes].canciones,
+          evaluaciones,
+          cantante,
+          observaciones
+        });
+        alert("✅ Análisis mensual guardado");
+      });
+    });
+  }
 }
 
-// Función de filtrado por cantante dentro del mes
+// =============================
+// 🔹 FUNCION FILTRAR CANTANTE
+// =============================
 function filtrarCantanteMes(select){
   const mes = select.dataset.mes;
-  const valor = select.value.trim();
-  const card = select.closest("div.card-mes");
-  if(!card) return;
+  const cantante = select.value.trim();
+  const detalles = Array.from(document.querySelectorAll("#analisis-mensual details summary"))
+    .find(s => s.textContent.includes(mes));
+  if(!detalles) return;
+  const resumen = detalles.parentElement.querySelector("ul");
+  if(!resumen) return;
 
-  const resumenDiv = card.querySelector("details:nth-of-type(1) .notas-card ul");
-  if(!resumenDiv) return;
-
-  Array.from(resumenDiv.children).forEach(li => {
-    const cId = li.dataset.id;
-    if(!cId) return;
-
-    const datosMes = analisisGuardado[mes];
-    const cancion = datosMes.canciones[cId];
-    const cantantes = cancion.cantante ? cancion.cantante.split(",").map(c => c.trim()) : [];
-
-    if(valor === "" || cantantes.includes(valor)){
-      li.style.display = "list-item";
-    } else {
-      li.style.display = "none";
-    }
+  resumen.querySelectorAll("li").forEach(li => {
+    const id = li.dataset.id;
+    const c = cancionesCache.find(c=>c.id===id);
+    if(!c) return;
+    const cantantes = (c.cantante || "").split(",").map(x=>x.trim());
+    li.style.display = !cantante || cantantes.includes(cantante) ? "list-item" : "none";
   });
 }
 
