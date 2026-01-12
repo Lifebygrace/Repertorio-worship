@@ -381,6 +381,7 @@ const db = getFirestore(app);
 
 /* Estado */
 let modoEdicion = false;
+const CANTANTES = ["Carolina", "Jason", "Milly"];
 let cancionesCache = [];
 let registroCache = {};
 let debounceTimer;
@@ -513,7 +514,9 @@ async function actualizarRegistroCard(id){
 /* Marcar tocada +1 */
 
 async function marcarTocada(id){
-  const cantante = prompt("¿Quién cantó esta canción?");
+  const cantante = prompt(
+  "¿Quién cantó esta canción?\n" + CANTANTES.join(", ")
+);
   if(!cantante) return;
 
   const ref = doc(db,"registro",id);
@@ -1019,10 +1022,14 @@ if(modoEdicion){
             value="${e.fecha}"
             onchange="editarEvento('${r.id}',${idx},'fecha',this.value)">
 
-          <input type="text"
-            value="${e.cantante}"
-            placeholder="Cantante"
-            onchange="editarEvento('${r.id}',${idx},'cantante',this.value)">
+     <select onchange="editarEvento('${r.id}',${idx},'cantante',this.value)">
+  ${CANTANTES.map(cantante => `
+    <option value="${cantante}"
+      ${e.cantante === cantante ? "selected" : ""}>
+      ${cantante}
+    </option>
+  `).join("")}
+  </select>
 
           <button class="small"
             onclick="borrarEvento('${r.id}',${idx})">❌</button>
