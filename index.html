@@ -482,39 +482,66 @@ const editButtons = modoEdicion
 }
 
 /* Actualiza la línea de registro dentro de la tarjeta */
+
 async function actualizarRegistroCard(id){
-  try{
-    const ref = doc(db,"registro",id);
-    const snap = await getDoc(ref);
-    const playsEl = document.getElementById(`plays-${id}`);
-    const lastEl = document.getElementById(`last-${id}`);
-    if(!playsEl || !lastEl) return;
-    if(!snap.exists()){
-      playsEl.innerHTML = `🎵 <strong>Veces tocada:</strong> 0`;
-      lastEl.innerHTML = `| <strong>Última vez:</strong> —`;
-      return;
-    }
-    const data = snap.data();
-    const veces = Number(data.veces||0);
-    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
-    const ultima = fechas.length ? fechas[fechas.length-1] : null;
-    playsEl.innerHTML = `🎵 <strong>Veces tocada:</strong> ${veces}`;
-    lastEl.innerHTML = `| <strong>Última vez:</strong> ${ultima ? isoToDisplay(ultima) : '—'}`;
-  } catch(e){ console.error("Error actualizarRegistroCard:", e); }
+  const ref = doc(db,"registro",id);
+  const snap = await getDoc(ref);
+
+  const playsEl = document.getElementById(`plays-${id}`);
+  const lastEl = document.getElementById(`last-${id}`);
+  if(!playsEl || !lastEl) return;
+
+  if(!snap.exists()){
+    playsEl.innerHTML = `🎵 <strong>Veces tocada:</strong> 0`;
+    lastEl.innerHTML = `| <strong>Última vez:</strong> —`;
+    return;
+  }
+
+  const data = snap.data();
+  const eventos = data.eventos
+    || (data.fechas || []).map(f => ({ fecha: f, cantante: "—" }));
+
+  const veces = eventos.length;
+  const ultima = eventos.at(-1);
+
+  playsEl.innerHTML = `🎵 <strong>Veces tocada:</strong> ${veces}`;
+  lastEl.innerHTML = `| <strong>Última vez:</strong> ${
+    ultima ? `${isoToDisplay(ultima.fecha)} (${ultima.cantante})` : "—"
+  }`;
 }
 
 /* Marcar tocada +1 */
+
 async function marcarTocada(id){
-  try{
-    const ref = doc(db,"registro",id);
-    const snap = await getDoc(ref);
-    const data = snap.exists()?snap.data():{veces:0,fechas:[]};
-    const nuevas = Array.isArray(data.fechas)?[...data.fechas]:[];
-    nuevas.push(isoToday());
-    await setDoc(ref, {veces: nuevas.length, fechas: nuevas});
-    actualizarRegistroCard(id);
-    if(document.getElementById("registro-canciones").style.display==="block") cargarRegistro();
-  } catch(e){ console.error("Error marcarTocada:", e); alert("Error marcando tocada (mira consola)."); }
+  const cantante = prompt("¿Quién cantó esta canción?");
+  if(!cantante) return;
+
+  const ref = doc(db,"registro",id);
+  const snap = await getDoc(ref);
+
+  let eventos = [];
+
+  if(snap.exists()){
+    const data = snap.data();
+    if(Array.isArray(data.eventos)){
+      eventos = data.eventos;
+    } else if(Array.isArray(data.fechas)){
+      // compatibilidad con datos antiguos
+      eventos = data.fechas.map(f => ({
+        fecha: f,
+        cantante: "—"
+      }));
+    }
+  }
+
+  eventos.push({
+    fecha: isoToday(),
+    cantante
+  });
+
+  await setDoc(ref, { eventos });
+  actualizarRegistroCard(id);
+  cargarRegistro();
 }
 
 /* Render lista de canciones (aplica búsqueda) */
@@ -919,10 +946,19 @@ async function cargarRegistro(){
   const snap = await getDocs(collection(db,"registro"));
   snap.forEach(d=> registroCache[d.id] = d.data());
   const combinado = cancionesCache.map(c => {
-    const r = registroCache[c.id] || { veces:0, fechas:[] };
-    const fechas = Array.isArray(r.fechas) ? r.fechas : [];
-    return { id: c.id, titulo: c.titulo || "Sin título", veces: Number(r.veces||0), fechas };
-  });
+  const r = registroCache[c.id] || { eventos: [] };
+
+  const eventos = r.eventos
+    || (r.fechas || []).map(f => ({ fecha: f, cantante: "—" }));
+
+  return {
+    id: c.id,
+    titulo: c.titulo || "Sin título",
+    eventos,
+    veces: eventos.length,
+    fechas: eventos.map(e => e.fecha)
+  };
+});
 
   combinado.sort((a,b) => {
     const campo = ordenActual.campo; const sentido = ordenActual.sentido === "asc" ? 1 : -1;
@@ -938,13 +974,50 @@ async function cargarRegistro(){
   const tbody = document.querySelector("#tabla-registro tbody");
   tbody.innerHTML = "";
   combinado.forEach(r => {
-    let fechasHtml = "";
-    if(modoEdicion){
-      fechasHtml = `<div class="fechas-box">${r.fechas.map((f,idx)=>`<div><input type="date" value="${f}" onchange="modificarFecha('${r.id}',${idx},this.value)"> <button class="small" onclick="borrarFecha('${r.id}',${idx})">❌</button></div>`).join("")}<div style="margin-top:4px"><button class="small" onclick="agregarFechaManual('${r.id}')">➕ Añadir fecha</button></div></div>`;
-    } else {
-      const ultima = r.fechas.length ? r.fechas[r.fechas.length-1] : "";
-      fechasHtml = `<div class="fechas-box">${ultima ? isoToDisplay(ultima) : ''} ${r.fechas.length>1 ? `<button class="small" onclick="alert('Historial de fechas:\\n${r.fechas.join("\\n")}')">Ver más</button>` : ""}</div>`;
-    }
+let fechasHtml = "";
+
+let fechasHtml = "";
+
+if(modoEdicion){
+  fechasHtml = `
+    <div class="fechas-box">
+      ${r.eventos.map((e, idx)=>`
+        <div class="registro-evento">
+          <input type="date"
+            value="${e.fecha}"
+            onchange="editarEvento('${r.id}',${idx},'fecha',this.value)">
+
+          <input type="text"
+            value="${e.cantante}"
+            placeholder="Cantante"
+            onchange="editarEvento('${r.id}',${idx},'cantante',this.value)">
+
+          <button class="small"
+            onclick="borrarEvento('${r.id}',${idx})">❌</button>
+        </div>
+      `).join("")}
+
+      <div style="margin-top:4px">
+        <button class="small"
+          onclick="marcarTocada('${r.id}')">➕ Añadir</button>
+      </div>
+    </div>
+  `;
+} else {
+  const ultimo = r.eventos.at(-1);
+
+  fechasHtml = `
+    <div class="fechas-box">
+      ${ultimo ? `${isoToDisplay(ultimo.fecha)} (${ultimo.cantante})` : ""}
+      ${r.eventos.length > 1
+        ? `<button class="small"
+            onclick="alert('Historial:\\n${r.eventos
+              .map(e => isoToDisplay(e.fecha) + ' (' + e.cantante + ')')
+              .join("\\n")}')">Ver más</button>`
+        : ""}
+    </div>
+  `;
+}
     const tr = document.createElement("tr");
     tr.innerHTML = `<td style="text-align:left">${r.titulo}</td><td>${r.veces}</td><td>${fechasHtml}</td>`;
     tbody.appendChild(tr);
@@ -1219,6 +1292,34 @@ window.addEventListener('load', ()=>{
   searchInput.addEventListener("input", ()=>{ debounceBuscar(); clearBtn.style.display = searchInput.value ? "block" : "none"; });
   clearBtn.addEventListener("click", ()=>{ searchInput.value = ""; clearBtn.style.display = "none"; cargarCanciones(); });
 
+async function editarEvento(id, idx, campo, valor){
+  const ref = doc(db,"registro",id);
+  const snap = await getDoc(ref);
+  if(!snap.exists()) return;
+
+  const data = snap.data();
+  const eventos = data.eventos || [];
+
+  eventos[idx][campo] = valor;
+  await setDoc(ref, { eventos });
+  cargarRegistro();
+}
+
+async function borrarEvento(id, idx){
+  if(!confirm("¿Borrar este registro?")) return;
+
+  const ref = doc(db,"registro",id);
+  const snap = await getDoc(ref);
+  if(!snap.exists()) return;
+
+  const eventos = snap.data().eventos || [];
+  eventos.splice(idx, 1);
+
+  await setDoc(ref, { eventos });
+  cargarRegistro();
+}
+
+
   // bind global functions used from html
   window.agregarCancion = agregarCancion;
   window.guardarEdicion = guardarEdicion;
@@ -1242,6 +1343,8 @@ window.addEventListener('load', ()=>{
   cargarSeccion("mes");
   window.toggleAnalisis = toggleAnalisis;
   window.toggleCantantes = toggleCantantes;
+  window.editarEvento = editarEvento;
+  window.borrarEvento = borrarEvento;
 });
 </script>
 </body>
