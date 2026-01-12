@@ -544,6 +544,34 @@ async function marcarTocada(id){
   cargarRegistro();
 }
 
+
+async function editarEvento(id, idx, campo, valor){
+  const ref = doc(db,"registro",id);
+  const snap = await getDoc(ref);
+  if(!snap.exists()) return;
+
+  const data = snap.data();
+  const eventos = data.eventos || [];
+
+  eventos[idx][campo] = valor;
+  await setDoc(ref, { eventos });
+  cargarRegistro();
+}
+
+async function borrarEvento(id, idx){
+  if(!confirm("¿Borrar este registro?")) return;
+
+  const ref = doc(db,"registro",id);
+  const snap = await getDoc(ref);
+  if(!snap.exists()) return;
+
+  const eventos = snap.data().eventos || [];
+  eventos.splice(idx, 1);
+
+  await setDoc(ref, { eventos });
+  cargarRegistro();
+}
+
 /* Render lista de canciones (aplica búsqueda) */
 
 function cargarCanciones(){
@@ -964,18 +992,22 @@ async function cargarRegistro(){
     const campo = ordenActual.campo; const sentido = ordenActual.sentido === "asc" ? 1 : -1;
     if(campo === "veces") return (a.veces - b.veces) * sentido;
     if(campo === "ultima"){
-      const da = a.fechas.length ? a.fechas[a.fechas.length-1] : "";
-      const db = b.fechas.length ? b.fechas[b.fechas.length-1] : "";
-      return ((da||'') < (db||'') ? -1 : ((da||'') > (db||'') ? 1 : 0)) * sentido;
-    }
+  // Tomamos la última fecha de cada canción y la convertimos a objeto Date
+  const da = a.fechas.length ? new Date(a.fechas[a.fechas.length-1]) : null;
+  const db = b.fechas.length ? new Date(b.fechas[b.fechas.length-1]) : null;
+
+  if(!da && !db) return 0;         // Ninguna tiene fecha
+  if(!da) return 1 * sentido;      // a sin fecha → va después
+  if(!db) return -1 * sentido;     // b sin fecha → va después
+
+  return (da - db) * sentido;      // resta numérica, fechas ordenadas correctamente
+}
     return a.titulo.localeCompare(b.titulo) * sentido;
   });
 
   const tbody = document.querySelector("#tabla-registro tbody");
   tbody.innerHTML = "";
   combinado.forEach(r => {
-let fechasHtml = "";
-
 let fechasHtml = "";
 
 if(modoEdicion){
@@ -1292,32 +1324,7 @@ window.addEventListener('load', ()=>{
   searchInput.addEventListener("input", ()=>{ debounceBuscar(); clearBtn.style.display = searchInput.value ? "block" : "none"; });
   clearBtn.addEventListener("click", ()=>{ searchInput.value = ""; clearBtn.style.display = "none"; cargarCanciones(); });
 
-async function editarEvento(id, idx, campo, valor){
-  const ref = doc(db,"registro",id);
-  const snap = await getDoc(ref);
-  if(!snap.exists()) return;
 
-  const data = snap.data();
-  const eventos = data.eventos || [];
-
-  eventos[idx][campo] = valor;
-  await setDoc(ref, { eventos });
-  cargarRegistro();
-}
-
-async function borrarEvento(id, idx){
-  if(!confirm("¿Borrar este registro?")) return;
-
-  const ref = doc(db,"registro",id);
-  const snap = await getDoc(ref);
-  if(!snap.exists()) return;
-
-  const eventos = snap.data().eventos || [];
-  eventos.splice(idx, 1);
-
-  await setDoc(ref, { eventos });
-  cargarRegistro();
-}
 
 
   // bind global functions used from html
