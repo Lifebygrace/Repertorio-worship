@@ -865,6 +865,10 @@ cont.appendChild(acordeon);
     cont.innerHTML += "<p>No hay datos aún.</p>";
     return;
   }
+  
+  const acordeon = document.getElementById("acordeon-meses");
+if (!acordeon) return;
+acordeon.innerHTML = "";
 
 meses.forEach(mes => {
   const fecha = new Date(mes + "-01");
