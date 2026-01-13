@@ -823,26 +823,24 @@ async function cargarAnalisisMensual() {
   analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
 // Agrupar por mes y por cantante (desde semanas)
-const semanasSnap = await getDocs(collection(db,"secciones_historico"));
+const registroSnap = await getDocs(collection(db,"registro"));
 const mapaMeses = {};
 
-semanasSnap.forEach(docu=>{
-  const s = docu.data();
-  if(!s.fecha || !s.cantante) return;
 
-  const mes = s.fecha.slice(0,7);
+registroSnap.forEach(docu => {
+  const eventos = docu.data().eventos || [];
 
-  if(!mapaMeses[mes]) mapaMeses[mes] = {};
-  if(!mapaMeses[mes][s.cantante]) mapaMeses[mes][s.cantante] = {};
+  eventos.forEach(ev => {
+    if (!ev.fecha || !ev.cantante) return;
 
-  s.canciones.forEach(nombre=>{
-    const c = cancionesCache.find(x =>
-      normalizar(x.titulo) === normalizar(nombre)
-    );
-    if(!c) return;
+    const mes = ev.fecha.slice(0,7);
+    const cantante = ev.cantante;
 
-    mapaMeses[mes][s.cantante][c.id] =
-      (mapaMeses[mes][s.cantante][c.id] || 0) + 1;
+    if (!mapaMeses[mes]) mapaMeses[mes] = {};
+    if (!mapaMeses[mes][cantante]) mapaMeses[mes][cantante] = {};
+
+    mapaMeses[mes][cantante][docu.id] =
+      (mapaMeses[mes][cantante][docu.id] || 0) + 1;
   });
 });
 
@@ -1173,7 +1171,7 @@ async function cargarAnalisisCantantes(){
   const cont = document.getElementById("analisis-cantantes");
   cont.innerHTML = "<h2>🎤 Análisis por cantante</h2>";
 
-  const snap = await getDocs(collection(db,"secciones_historico"));
+const snap = await getDocs(collection(db,"registro"));
 
   const porCantante = {};
 
