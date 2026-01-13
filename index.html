@@ -809,31 +809,31 @@ async function cargarAnalisisMensual() {
   const cont = document.getElementById("analisis-mensual");
   cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
 
-  // 🔥 Tomamos todos los registros
+  // Traer TODOS los registros desde Firestore
   const snapRegistro = await getDocs(collection(db, "registro"));
 
-  // 🔹 Agrupamos por mes y por cantante
-  const mapaMeses = {};
- snapRegistro.forEach(docu => {
-  // Compatibilidad con registros antiguos
-  let eventos = docu.data().eventos;
-  if (!Array.isArray(eventos) || eventos.length === 0) {
-    eventos = (docu.data().fechas || []).map(f => ({ fecha: f, cantante: "—" }));
-  }
+  const mapaMeses = {}; // { "YYYY-MM": { idCancion: veces } }
+  const mapaCantantesMes = {}; // { "YYYY-MM": { cantante: { idCancion: veces } } }
 
-  eventos.forEach(ev => {
-    if (!ev.fecha || !ev.cantante) return;
+  snapRegistro.forEach(docu => {
+    const eventos = docu.data().eventos || [];
+    eventos.forEach(ev => {
+      if (!ev.fecha || !ev.cantante) return;
 
-    const mes = ev.fecha.slice(0, 7);
-    const cantante = ev.cantante;
+      const mes = ev.fecha.slice(0, 7); // YYYY-MM
+      const cantante = ev.cantante;
 
-    if (!mapaMeses[mes]) mapaMeses[mes] = {};
-    if (!mapaMeses[mes][cantante]) mapaMeses[mes][cantante] = {};
-    if (!mapaMeses[mes][cantante][docu.id]) mapaMeses[mes][cantante][docu.id] = 0;
+      // Conteo global por mes
+      if (!mapaMeses[mes]) mapaMeses[mes] = {};
+      mapaMeses[mes][docu.id] = (mapaMeses[mes][docu.id] || 0) + 1;
 
-    mapaMeses[mes][cantante][docu.id]++;
+      // Conteo por cantante
+      if (!mapaCantantesMes[mes]) mapaCantantesMes[mes] = {};
+      if (!mapaCantantesMes[mes][cantante]) mapaCantantesMes[mes][cantante] = {};
+      mapaCantantesMes[mes][cantante][docu.id] =
+        (mapaCantantesMes[mes][cantante][docu.id] || 0) + 1;
+    });
   });
-});
 
   const meses = Object.keys(mapaMeses).sort().reverse();
   if (!meses.length) {
@@ -841,54 +841,44 @@ async function cargarAnalisisMensual() {
     return;
   }
 
-  const ultimoMes = meses[0];
-
-  meses.forEach(mes => {
+  meses.forEach((mes, idx) => {
     const fecha = new Date(mes + "-01");
     const nombreMes = fecha.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
 
-    // ✅ Crear un mapa total de canciones para el mes (sumando todos los cantantes)
-    const cancionesMes = {};
-    Object.values(mapaMeses[mes]).forEach(cantanteBloque => {
-      Object.entries(cantanteBloque).forEach(([id, veces]) => {
-        cancionesMes[id] = (cancionesMes[id] || 0) + veces;
-      });
-    });
+    const cancionesMes = Object.entries(mapaMeses[mes] || {})
+      .map(([id, veces]) => {
+        const c = cancionesCache.find(x => x.id === id);
+        return { titulo: c?.titulo || "—", veces };
+      })
+      .sort((a, b) => b.veces - a.veces);
 
-    // Lista de canciones con títulos y veces
-    const listaCanciones = Object.keys(cancionesMes).map(id => {
-      const c = cancionesCache.find(x => x.id === id);
-      return { id, titulo: c?.titulo || "—", veces: cancionesMes[id] };
-    }).sort((a, b) => b.veces - a.veces);
-
-    const resumenHtml = listaCanciones.map(c => `<li>${c.titulo} (${c.veces})</li>`).join("");
-
-    // Cantante predominante del mes
-    let cantantePredominante = "-";
+    // Cantante predominante
+    let cantantePred = "-";
+    const cantMes = mapaCantantesMes[mes] || {};
     let maxCanciones = 0;
-    Object.keys(mapaMeses[mes]).forEach(c => {
-      const total = Object.values(mapaMeses[mes][c]).reduce((a, b) => a + b, 0);
+    Object.entries(cantMes).forEach(([cant, lista]) => {
+      const total = Object.values(lista).reduce((a, b) => a + b, 0);
       if (total > maxCanciones) {
         maxCanciones = total;
-        cantantePredominante = c;
+        cantantePred = cant;
       }
     });
+
+    const resumenHtml = cancionesMes.map(c => `<li>${c.titulo} (${c.veces})</li>`).join("");
 
     const card = document.createElement("div");
     card.className = "card";
     card.style.marginTop = "12px";
 
-    const abierto = mes === ultimoMes ? "open" : "";
+    const abierto = idx === 0 ? "open" : "";
 
     card.innerHTML = `
       <details ${abierto}>
         <summary>📅 ${nombreMes}</summary>
-        <p>🎤 Cantante predominante: ${cantantePredominante}</p>
+        <p>🎤 Cantante predominante: ${cantantePred}</p>
         <details class="details-slow" style="margin-top:6px;">
           <summary>📌 Resumen musical 🔥</summary>
-          <div class="notas-card" style="margin-top:4px;">
-            <ul>${resumenHtml}</ul>
-          </div>
+          <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
         </details>
       </details>
     `;
@@ -1090,36 +1080,54 @@ function toggleCantantes(){
 }
 
 
-async function cargarAnalisisCantantes(){
+async function cargarAnalisisCantantes() {
   const cont = document.getElementById("analisis-cantantes");
   cont.innerHTML = "<h2>🎤 Análisis por cantante</h2>";
 
-  const snap = await getDocs(collection(db,"registro"));
-  const porCantante = {};
-  
+  const snap = await getDocs(collection(db, "registro"));
+
+  const porCantante = {}; // { cantante: { "YYYY-MM": { idCancion: veces } } }
+
   snap.forEach(docu => {
-  // Compatibilidad con registros antiguos
-  let eventos = docu.data().eventos;
-  if (!Array.isArray(eventos) || eventos.length === 0) {
-    eventos = (docu.data().fechas || []).map(f => ({ fecha: f, cantante: "—" }));
-  }
+    const eventos = docu.data().eventos || [];
+    eventos.forEach(ev => {
+      if (!ev.fecha || !ev.cantante) return;
 
-  eventos.forEach(ev => {
-    if (!ev.fecha || !ev.cantante) return;
+      const mes = ev.fecha.slice(0, 7);
+      const cantante = ev.cantante;
 
-    const mes = ev.fecha.slice(0, 7);
-    const cantante = ev.cantante;
-
-    if (!porCantante[cantante]) porCantante[cantante] = {};
-    if (!porCantante[cantante][mes]) porCantante[cantante][mes] = {};
-    if (!porCantante[cantante][mes][docu.id]) porCantante[cantante][mes][docu.id] = 0;
-
-    porCantante[cantante][mes][docu.id]++;
+      if (!porCantante[cantante]) porCantante[cantante] = {};
+      if (!porCantante[cantante][mes]) porCantante[cantante][mes] = {};
+      porCantante[cantante][mes][docu.id] =
+        (porCantante[cantante][mes][docu.id] || 0) + 1;
+    });
   });
-});
 
-  Object.keys(porCantante).forEach(nombre=>{
-    cont.appendChild(renderCantante(nombre, porCantante[nombre]));
+  Object.entries(porCantante).forEach(([nombre, meses]) => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const mesesOrdenados = Object.keys(meses).sort().reverse();
+
+    card.innerHTML = `
+      <details>
+        <summary>🎤 ${nombre}</summary>
+        ${mesesOrdenados.map(mes => {
+          const fecha = new Date(mes + "-01").toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+          const lista = Object.entries(meses[mes] || {})
+            .map(([id, veces]) => {
+              const c = cancionesCache.find(x => x.id === id);
+              return `<li>${c?.titulo || "—"} (${veces})</li>`;
+            }).join("");
+          return `<div class="notas-card" style="margin-top:10px;">
+                    <h3>📅 ${fecha}</h3>
+                    <ul>${lista}</ul>
+                  </div>`;
+        }).join("")}
+      </details>
+    `;
+
+    cont.appendChild(card);
   });
 }
 
