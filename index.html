@@ -276,13 +276,6 @@ details > *{
   <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
   <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
   <textarea id="notas-edit-semana" placeholder="Notas de esta semana..."></textarea>
-  <label style="font-weight:600">🎤 Cantante de la semana</label>
-<select id="cantante-semana" class="edit-input">
-  <option value="">— Seleccionar —</option>
-  <option value="Carolina">Carolina</option>
-  <option value="Jason">Jason</option>
-  <option value="Milly">Milly</option>
-</select>
   <button onclick="guardarSeccion('semana')">Guardar sección</button>
 </div>
 </div>
@@ -330,8 +323,6 @@ details > *{
     <button style="background:var(--accent);" onclick="toggleRegistro()">📊 Registro de canciones</button>
     <button onclick="toggleAnalisis()">📊 Análisis mensual</button>
     <div id="analisis-mensual" class="section" style="display:none;"></div>
-    <button onclick="toggleCantantes()">📊 por cantante</button>
-    <div id="analisis-cantantes" class="section" style="display:none;"></div>
     <div id="registro-canciones" class="section" style="display:none;">
       <h2>📋 Registro de canciones</h2>
       <table id="tabla-registro">
@@ -482,121 +473,39 @@ const editButtons = modoEdicion
 }
 
 /* Actualiza la línea de registro dentro de la tarjeta */
-
 async function actualizarRegistroCard(id){
-  const ref = doc(db,"registro",id);
-  const snap = await getDoc(ref);
-
-  const playsEl = document.getElementById(`plays-${id}`);
-  const lastEl = document.getElementById(`last-${id}`);
-  if(!playsEl || !lastEl) return;
-
-  if(!snap.exists()){
-    playsEl.innerHTML = `🎵 <strong>Veces tocada:</strong> 0`;
-    lastEl.innerHTML = `| <strong>Última vez:</strong> —`;
-    return;
-  }
-
-  const data = snap.data();
-  const eventos = data.eventos
-    || (data.fechas || []).map(f => ({ fecha: f, cantante: "—" }));
-
-  const veces = eventos.length;
-  const ultima = eventos.at(-1);
-
-  playsEl.innerHTML = `🎵 <strong>Veces tocada:</strong> ${veces}`;
-  lastEl.innerHTML = `| <strong>Última vez:</strong> ${
-    ultima ? `${isoToDisplay(ultima.fecha)} (${ultima.cantante})` : "—"
-  }`;
+  try{
+    const ref = doc(db,"registro",id);
+    const snap = await getDoc(ref);
+    const playsEl = document.getElementById(`plays-${id}`);
+    const lastEl = document.getElementById(`last-${id}`);
+    if(!playsEl || !lastEl) return;
+    if(!snap.exists()){
+      playsEl.innerHTML = `🎵 <strong>Veces tocada:</strong> 0`;
+      lastEl.innerHTML = `| <strong>Última vez:</strong> —`;
+      return;
+    }
+    const data = snap.data();
+    const veces = Number(data.veces||0);
+    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+    const ultima = fechas.length ? fechas[fechas.length-1] : null;
+    playsEl.innerHTML = `🎵 <strong>Veces tocada:</strong> ${veces}`;
+    lastEl.innerHTML = `| <strong>Última vez:</strong> ${ultima ? isoToDisplay(ultima) : '—'}`;
+  } catch(e){ console.error("Error actualizarRegistroCard:", e); }
 }
 
 /* Marcar tocada +1 */
-
 async function marcarTocada(id){
-  const cantante = prompt("¿Quién cantó esta canción?");
-  if(!cantante) return;
-
-  const ref = doc(db,"registro",id);
-  const snap = await getDoc(ref);
-
-  let eventos = [];
-
-  if(snap.exists()){
-    const data = snap.data();
-    if(Array.isArray(data.eventos)){
-      eventos = data.eventos;
-    } else if(Array.isArray(data.fechas)){
-      // compatibilidad con datos antiguos
-      eventos = data.fechas.map(f => ({
-        fecha: f,
-        cantante: "—"
-      }));
-    }
-  }
-
-  eventos.push({
-    fecha: isoToday(),
-    cantante
-  });
-
-  await setDoc(ref, { eventos });
-  actualizarRegistroCard(id);
-  cargarRegistro();
-}
-
-
-// 🔁 Sincroniza cantante en secciones_historico según fecha
-async function sincronizarCantanteHistorico(fecha, nuevoCantante) {
-  const snap = await getDocs(collection(db, "secciones_historico"));
-
-  snap.forEach(async docu => {
-    const data = docu.data();
-    if (data.fecha === fecha) {
-      await updateDoc(doc(db, "secciones_historico", docu.id), {
-        cantante: nuevoCantante
-      });
-    }
-  });
-}
-
-
-async function editarEvento(id, idx, campo, valor){
-  const ref = doc(db,"registro",id);
-  const snap = await getDoc(ref);
-  if(!snap.exists()) return;
-
-  const data = snap.data();
-  const eventos = data.eventos || [];
-
-  // Guardamos la fecha original ANTES del cambio
-  const fechaOriginal = eventos[idx].fecha;
-
-  // Aplicamos el cambio
-  eventos[idx][campo] = valor;
-  await setDoc(ref, { eventos });
-
-  // 🔁 SI CAMBIA EL CANTANTE → sincronizar análisis mensual
-  if (campo === "cantante") {
-    await sincronizarCantanteHistorico(fechaOriginal, valor);
-  }
-
-  cargarRegistro();
-}
-
-
-
-async function borrarEvento(id, idx){
-  if(!confirm("¿Borrar este registro?")) return;
-
-  const ref = doc(db,"registro",id);
-  const snap = await getDoc(ref);
-  if(!snap.exists()) return;
-
-  const eventos = snap.data().eventos || [];
-  eventos.splice(idx, 1);
-
-  await setDoc(ref, { eventos });
-  cargarRegistro();
+  try{
+    const ref = doc(db,"registro",id);
+    const snap = await getDoc(ref);
+    const data = snap.exists()?snap.data():{veces:0,fechas:[]};
+    const nuevas = Array.isArray(data.fechas)?[...data.fechas]:[];
+    nuevas.push(isoToday());
+    await setDoc(ref, {veces: nuevas.length, fechas: nuevas});
+    actualizarRegistroCard(id);
+    if(document.getElementById("registro-canciones").style.display==="block") cargarRegistro();
+  } catch(e){ console.error("Error marcarTocada:", e); alert("Error marcando tocada (mira consola)."); }
 }
 
 /* Render lista de canciones (aplica búsqueda) */
@@ -705,10 +614,7 @@ async function cargarSeccion(tipo){
         <h3>${data.titulo || ""}</h3>
         <ul>${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}</ul>
       `;
-      if(data.cantante){
-  cont.innerHTML += `<p>🎤 <strong>Cantante:</strong> ${data.cantante}</p>`;
-}
-      
+
       // Renderizar notas si existe el contenedor
       if(notasBox){
         notasBox.innerHTML = `<div class="notas-card"><h3>📝 Notas</h3>${renderNotas(data.notas)}</div>`;
@@ -753,21 +659,15 @@ function toggleNotas(tipo){
 
 async function guardarSeccion(tipo){
   const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
-  const canciones = document.getElementById(`canciones-${tipo}`).value
-    .split("\n").map(s=>s.trim()).filter(Boolean);
+  const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").map(s=>s.trim()).filter(Boolean);
   const notas = document.getElementById(`notas-edit-${tipo}`).value.trim();
 
-  const data = { titulo, canciones, notas };
+  await setDoc(doc(db, "secciones", tipo), { 
+    titulo, 
+    canciones, 
+    notas 
+  });
 
-  if(tipo === "semana"){
-    data.cantante = document.getElementById("cantante-semana").value;
-    data.fecha = isoToday();
-
-    // 🔒 Guardar histórico semanal
-    await addDoc(collection(db,"secciones_historico"), data);
-  }
-
-  await setDoc(doc(db,"secciones", tipo), data);
   alert("✅ Sección guardada");
   cargarSeccion(tipo);
 }
@@ -846,29 +746,20 @@ async function cargarAnalisisMensual() {
   const analisisGuardado = {};
   analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
-// Agrupar por mes y por cantante (desde semanas)
-const semanasSnap = await getDocs(collection(db,"secciones_historico"));
-const mapaMeses = {};
+  // Agrupar por mes
+  const mapaMeses = {}; 
+  snapRegistro.forEach(docu => {
+    const data = docu.data();
+    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+    const cancion = cancionesCache.find(c => c.id === docu.id);
+    if(!cancion) return;
 
-semanasSnap.forEach(docu=>{
-  const s = docu.data();
-  if(!s.fecha || !s.cantante) return;
-
-  const mes = s.fecha.slice(0,7);
-
-  if(!mapaMeses[mes]) mapaMeses[mes] = {};
-  if(!mapaMeses[mes][s.cantante]) mapaMeses[mes][s.cantante] = {};
-
-  s.canciones.forEach(nombre=>{
-    const c = cancionesCache.find(x =>
-      normalizar(x.titulo) === normalizar(nombre)
-    );
-    if(!c) return;
-
-    mapaMeses[mes][s.cantante][c.id] =
-      (mapaMeses[mes][s.cantante][c.id] || 0) + 1;
+    fechas.forEach(f => {
+      const mes = f.slice(0,7);
+      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, cantante: "", evaluaciones:{}, observaciones:"" };
+      mapaMeses[mes].canciones[cancion.id] = (mapaMeses[mes].canciones[cancion.id] || 0) + 1;
+    });
   });
-});
 
   let meses = Object.keys(mapaMeses).sort().reverse(); // Mes más reciente primero
   if(!meses.length){
@@ -882,12 +773,7 @@ meses.forEach((mes, index) => {
     const fecha = new Date(mes+"-01");
     const nombreMes = fecha.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
     const datosMes = analisisGuardado[mes] || { canciones:{}, cantante:"", evaluaciones:{}, observaciones:"" };
-    const cancionesMes = {};
-Object.values(mapaMeses[mes]).forEach(bloque=>{
-  Object.entries(bloque).forEach(([id, veces])=>{
-    cancionesMes[id] = (cancionesMes[id] || 0) + veces;
-  });
-});
+    const cancionesMes = mapaMeses[mes].canciones;
 
     const listaCanciones = Object.keys(cancionesMes).map(id => {
       const c = cancionesCache.find(x=>x.id===id);
@@ -940,13 +826,6 @@ const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
       <details ${abierto}>
         <summary>📅 ${nombreMes}</summary>
         <div style="margin-top:8px;">${cantanteHtml}</div>
-        <label>Filtrar por cantante:</label>
-<select class="cantante-mes-select" data-mes="${mes}">
-  <option value="todos">Todos</option>
-  ${Object.keys(mapaMeses[mes]).map(c =>
-    `<option value="${c}">${c}</option>`
-  ).join("")}
-</select>
         <details class="details-slow" style="margin-top:6px;">
         <summary>📌 resumen musical 🔥</summary>
           <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
@@ -1001,82 +880,32 @@ async function cargarRegistro(){
   const snap = await getDocs(collection(db,"registro"));
   snap.forEach(d=> registroCache[d.id] = d.data());
   const combinado = cancionesCache.map(c => {
-  const r = registroCache[c.id] || { eventos: [] };
-
-  const eventos = r.eventos
-    || (r.fechas || []).map(f => ({ fecha: f, cantante: "—" }));
-
-  return {
-    id: c.id,
-    titulo: c.titulo || "Sin título",
-    eventos,
-    veces: eventos.length,
-    fechas: eventos.map(e => e.fecha)
-  };
-});
+    const r = registroCache[c.id] || { veces:0, fechas:[] };
+    const fechas = Array.isArray(r.fechas) ? r.fechas : [];
+    return { id: c.id, titulo: c.titulo || "Sin título", veces: Number(r.veces||0), fechas };
+  });
 
   combinado.sort((a,b) => {
     const campo = ordenActual.campo; const sentido = ordenActual.sentido === "asc" ? 1 : -1;
     if(campo === "veces") return (a.veces - b.veces) * sentido;
     if(campo === "ultima"){
-  // Tomamos la última fecha de cada canción y la convertimos a objeto Date
-  const da = a.fechas.length ? new Date(a.fechas[a.fechas.length-1]) : null;
-  const db = b.fechas.length ? new Date(b.fechas[b.fechas.length-1]) : null;
-
-  if(!da && !db) return 0;         // Ninguna tiene fecha
-  if(!da) return 1 * sentido;      // a sin fecha → va después
-  if(!db) return -1 * sentido;     // b sin fecha → va después
-
-  return (da - db) * sentido;      // resta numérica, fechas ordenadas correctamente
-}
+      const da = a.fechas.length ? a.fechas[a.fechas.length-1] : "";
+      const db = b.fechas.length ? b.fechas[b.fechas.length-1] : "";
+      return ((da||'') < (db||'') ? -1 : ((da||'') > (db||'') ? 1 : 0)) * sentido;
+    }
     return a.titulo.localeCompare(b.titulo) * sentido;
   });
 
   const tbody = document.querySelector("#tabla-registro tbody");
   tbody.innerHTML = "";
   combinado.forEach(r => {
-let fechasHtml = "";
-
-if(modoEdicion){
-  fechasHtml = `
-    <div class="fechas-box">
-      ${r.eventos.map((e, idx)=>`
-        <div class="registro-evento">
-          <input type="date"
-            value="${e.fecha}"
-            onchange="editarEvento('${r.id}',${idx},'fecha',this.value)">
-
-          <input type="text"
-            value="${e.cantante}"
-            placeholder="Cantante"
-            onchange="editarEvento('${r.id}',${idx},'cantante',this.value)">
-
-          <button class="small"
-            onclick="borrarEvento('${r.id}',${idx})">❌</button>
-        </div>
-      `).join("")}
-
-      <div style="margin-top:4px">
-        <button class="small"
-          onclick="marcarTocada('${r.id}')">➕ Añadir</button>
-      </div>
-    </div>
-  `;
-} else {
-  const ultimo = r.eventos.at(-1);
-
-  fechasHtml = `
-    <div class="fechas-box">
-      ${ultimo ? `${isoToDisplay(ultimo.fecha)} (${ultimo.cantante})` : ""}
-      ${r.eventos.length > 1
-        ? `<button class="small"
-            onclick="alert('Historial:\\n${r.eventos
-              .map(e => isoToDisplay(e.fecha) + ' (' + e.cantante + ')')
-              .join("\\n")}')">Ver más</button>`
-        : ""}
-    </div>
-  `;
-}
+    let fechasHtml = "";
+    if(modoEdicion){
+      fechasHtml = `<div class="fechas-box">${r.fechas.map((f,idx)=>`<div><input type="date" value="${f}" onchange="modificarFecha('${r.id}',${idx},this.value)"> <button class="small" onclick="borrarFecha('${r.id}',${idx})">❌</button></div>`).join("")}<div style="margin-top:4px"><button class="small" onclick="agregarFechaManual('${r.id}')">➕ Añadir fecha</button></div></div>`;
+    } else {
+      const ultima = r.fechas.length ? r.fechas[r.fechas.length-1] : "";
+      fechasHtml = `<div class="fechas-box">${ultima ? isoToDisplay(ultima) : ''} ${r.fechas.length>1 ? `<button class="small" onclick="alert('Historial de fechas:\\n${r.fechas.join("\\n")}')">Ver más</button>` : ""}</div>`;
+    }
     const tr = document.createElement("tr");
     tr.innerHTML = `<td style="text-align:left">${r.titulo}</td><td>${r.veces}</td><td>${fechasHtml}</td>`;
     tbody.appendChild(tr);
@@ -1168,136 +997,13 @@ document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
   canciones[id] = canciones[id] || {};
   canciones[id].eval = i.value;
 });
-await setDoc(
-  doc(db,"analisis_mensual", mes),
-  {
-    evaluaciones,
-    observaciones
-  },
-  { merge: true }
-);
+  await setDoc(doc(db,"analisis_mensual",mes),{
+    canciones,
+    notasGenerales
+  });
 
   alert("✅ Análisis mensual guardado");
 }
-
-function toggleCantantes(){
-  const el = document.getElementById("analisis-cantantes");
-  if(!el) return;
-
-  el.style.display = el.style.display === "block" ? "none" : "block";
-  if(el.style.display === "block") cargarAnalisisCantantes();
-}
-
-
-async function cargarAnalisisCantantes(){
-  const cont = document.getElementById("analisis-cantantes");
-  cont.innerHTML = "<h2>🎤 Análisis por cantante</h2>";
-
-  const snap = await getDocs(collection(db,"secciones_historico"));
-
-  const porCantante = {};
-
-  snap.forEach(docu=>{
-    const s = docu.data();
-    if(!s.cantante || !s.fecha) return;
-
-    const mes = s.fecha.slice(0,7);
-    const cantante = s.cantante;
-
-    if(!porCantante[cantante]) porCantante[cantante] = {};
-
-    if(!porCantante[cantante][mes]){
-      porCantante[cantante][mes] = {
-        canciones:{},
-        observaciones:""
-      };
-    }
-
-    s.canciones.forEach(nombre=>{
-      const c = cancionesCache.find(x =>
-        normalizar(x.titulo) === normalizar(nombre)
-      );
-      if(!c) return;
-
-      porCantante[cantante][mes].canciones[c.id] =
-        (porCantante[cantante][mes].canciones[c.id] || 0) + 1;
-    });
-  });
-
-  Object.keys(porCantante).forEach(nombre=>{
-    cont.appendChild(renderCantante(nombre, porCantante[nombre]));
-  });
-}
-
-
-
-function renderCantante(nombre, meses){
-  const card = document.createElement("div");
-  card.className = "card";
-
-  const mesesOrdenados = Object.keys(meses).sort().reverse();
-
-  card.innerHTML = `
-    <details>
-      <summary>🎤 ${nombre}</summary>
-      ${mesesOrdenados.map(mes=>{
-        const fecha = new Date(mes+"-01")
-          .toLocaleDateString("es-ES",{month:"long",year:"numeric"});
-
-        const canciones = meses[mes].canciones;
-        const lista = Object.keys(canciones).map(id=>{
-          const c = cancionesCache.find(x=>x.id===id);
-          return `<li>${c?.titulo || "—"} (${canciones[id]})</li>`;
-        }).join("");
-
-        return `
-          <div class="notas-card" style="margin-top:10px;">
-            <h3>📅 ${fecha}</h3>
-            <ul>${lista}</ul>
-          </div>
-        `;
-      }).join("")}
-    </details>
-  `;
-
-  return card;
-}
-
-
-function renderMesCantante(m){
-  const fecha = new Date(m.mes+"-01")
-    .toLocaleDateString("es-ES",{month:"long",year:"numeric"});
-
-  let ex = 0, bien = 0, mal = 0;
-
-  const cancionesHtml = Object.keys(m.canciones).map(id=>{
-    const c = cancionesCache.find(x=>x.id===id);
-    const titulo = c?.titulo || "—";
-    const veces = m.canciones[id];
-    const ev = m.evaluaciones?.[id] || "";
-
-    if(ev === "Excelente") ex++;
-    else if(ev === "Bien") bien++;
-    else if(ev === "A mejorar") mal++;
-
-    const emoji =
-      ev === "Excelente" ? "🚀" :
-      ev === "Bien" ? "👍" :
-      ev === "A mejorar" ? "‼️" : "";
-
-    return `<li>${titulo} (${veces}) ${emoji}</li>`;
-  }).join("");
-
-  return `
-    <div class="notas-card" style="margin-top:10px;">
-      <h3>📅 ${fecha}</h3>
-      <p><strong>Resumen:</strong> 🚀 ${ex} 👍 ${bien} ‼️ ${mal}</p>
-      <ul>${cancionesHtml}</ul>
-      ${m.observaciones ? `<p><strong>📝 Observaciones:</strong><br>${m.observaciones}</p>` : ""}
-    </div>
-  `;
-}
-
 /* BOOT */
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
@@ -1351,9 +1057,6 @@ window.addEventListener('load', ()=>{
   searchInput.addEventListener("input", ()=>{ debounceBuscar(); clearBtn.style.display = searchInput.value ? "block" : "none"; });
   clearBtn.addEventListener("click", ()=>{ searchInput.value = ""; clearBtn.style.display = "none"; cargarCanciones(); });
 
-
-
-
   // bind global functions used from html
   window.agregarCancion = agregarCancion;
   window.guardarEdicion = guardarEdicion;
@@ -1376,9 +1079,6 @@ window.addEventListener('load', ()=>{
   cargarSeccion("semana");
   cargarSeccion("mes");
   window.toggleAnalisis = toggleAnalisis;
-  window.toggleCantantes = toggleCantantes;
-  window.editarEvento = editarEvento;
-  window.borrarEvento = borrarEvento;
 });
 </script>
 </body>
