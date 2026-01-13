@@ -237,6 +237,10 @@ details[open] > *:not(summary){
 .fade-apple,
 details > *{
   will-change: transform, opacity;
+  
+  /* Análisis mensual – ocultar/mostrar meses */
+.oculto {
+  display: none;
 }
   </style>
 </head>
@@ -816,7 +820,20 @@ async function cargarAnalisisMensual() {
   
   const cont = document.getElementById("analisis-mensual");
   cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
+  
+  const btn = document.createElement("button");
+btn.textContent = "📅 Mostrar meses anteriores";
+btn.onclick = () => {
+  document.getElementById("acordeon-meses").classList.toggle("oculto");
+};
+cont.appendChild(btn);
 
+const acordeon = document.createElement("div");
+acordeon.id = "acordeon-meses";
+acordeon.className = "oculto";
+acordeon.style.marginTop = "12px";
+cont.appendChild(acordeon);
+  
   // Traer TODOS los registros desde Firestore
   const snapRegistro = await getDocs(collection(db, "registro"));
 
@@ -849,50 +866,51 @@ async function cargarAnalisisMensual() {
     return;
   }
 
-  meses.forEach((mes, idx) => {
-    const fecha = new Date(mes + "-01");
-    const nombreMes = fecha.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
+meses.forEach(mes => {
+  const fecha = new Date(mes + "-01");
+  const nombreMes = fecha.toLocaleDateString("es-ES", {
+    month: "long",
+    year: "numeric"
+  });
 
-    const cancionesMes = Object.entries(mapaMeses[mes] || {})
+  const details = document.createElement("details");
+  details.style.marginTop = "10px";
+
+  const summary = document.createElement("summary");
+  summary.textContent = "📅 " + nombreMes;
+  details.appendChild(summary);
+
+  // Contenido del mes
+  const contenido = document.createElement("div");
+  contenido.style.marginTop = "6px";
+
+  const cantMes = mapaCantantesMes[mes] || {};
+
+  Object.entries(cantMes).forEach(([cantante, canciones]) => {
+    const h = document.createElement("p");
+    h.innerHTML = `<strong>🎤 ${cantante}</strong>`;
+    contenido.appendChild(h);
+
+    const ul = document.createElement("ul");
+
+    Object.entries(canciones)
       .map(([id, veces]) => {
         const c = cancionesCache.find(x => x.id === id);
         return { titulo: c?.titulo || "—", veces };
       })
-      .sort((a, b) => b.veces - a.veces);
+      .sort((a, b) => b.veces - a.veces)
+      .forEach(c => {
+        const li = document.createElement("li");
+        li.textContent = `${c.titulo} (${c.veces})`;
+        ul.appendChild(li);
+      });
 
-    // Cantante predominante
-    let cantantePred = "-";
-    const cantMes = mapaCantantesMes[mes] || {};
-    let maxCanciones = 0;
-    Object.entries(cantMes).forEach(([cant, lista]) => {
-      const total = Object.values(lista).reduce((a, b) => a + b, 0);
-      if (total > maxCanciones) {
-        maxCanciones = total;
-        cantantePred = cant;
-      }
-    });
-
-    const resumenHtml = cancionesMes.map(c => `<li>${c.titulo} (${c.veces})</li>`).join("");
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.marginTop = "12px";
-
-    const abierto = idx === 0 ? "open" : "";
-
-    card.innerHTML = `
-      <details ${abierto}>
-        <summary>📅 ${nombreMes}</summary>
-        <p>🎤 Cantante predominante: ${cantantePred}</p>
-        <details class="details-slow" style="margin-top:6px;">
-          <summary>📌 Resumen musical 🔥</summary>
-          <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
-        </details>
-      </details>
-    `;
-
-    cont.appendChild(card);
+    contenido.appendChild(ul);
   });
+
+  details.appendChild(contenido);
+  acordeon.appendChild(details);
+});
 }
 
 /* Registro (cargar/ordenar/editar fechas) */
