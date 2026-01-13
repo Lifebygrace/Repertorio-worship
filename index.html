@@ -814,21 +814,26 @@ async function cargarAnalisisMensual() {
 
   // 🔹 Agrupamos por mes y por cantante
   const mapaMeses = {};
-  snapRegistro.forEach(docu => {
-    const eventos = docu.data().eventos || [];
-    eventos.forEach(ev => {
-      if (!ev.fecha || !ev.cantante) return;
+ snapRegistro.forEach(docu => {
+  // Compatibilidad con registros antiguos
+  let eventos = docu.data().eventos;
+  if (!Array.isArray(eventos) || eventos.length === 0) {
+    eventos = (docu.data().fechas || []).map(f => ({ fecha: f, cantante: "—" }));
+  }
 
-      const mes = ev.fecha.slice(0, 7); // "YYYY-MM"
-      const cantante = ev.cantante;
+  eventos.forEach(ev => {
+    if (!ev.fecha || !ev.cantante) return;
 
-      if (!mapaMeses[mes]) mapaMeses[mes] = {};
-      if (!mapaMeses[mes][cantante]) mapaMeses[mes][cantante] = {};
-      if (!mapaMeses[mes][cantante][docu.id]) mapaMeses[mes][cantante][docu.id] = 0;
+    const mes = ev.fecha.slice(0, 7);
+    const cantante = ev.cantante;
 
-      mapaMeses[mes][cantante][docu.id]++;
-    });
+    if (!mapaMeses[mes]) mapaMeses[mes] = {};
+    if (!mapaMeses[mes][cantante]) mapaMeses[mes][cantante] = {};
+    if (!mapaMeses[mes][cantante][docu.id]) mapaMeses[mes][cantante][docu.id] = 0;
+
+    mapaMeses[mes][cantante][docu.id]++;
   });
+});
 
   const meses = Object.keys(mapaMeses).sort().reverse();
   if (!meses.length) {
@@ -1091,23 +1096,27 @@ async function cargarAnalisisCantantes(){
 
   const snap = await getDocs(collection(db,"registro"));
   const porCantante = {};
+  
+  snap.forEach(docu => {
+  // Compatibilidad con registros antiguos
+  let eventos = docu.data().eventos;
+  if (!Array.isArray(eventos) || eventos.length === 0) {
+    eventos = (docu.data().fechas || []).map(f => ({ fecha: f, cantante: "—" }));
+  }
 
-  snap.forEach(docu=>{
-    const eventos = docu.data().eventos || [];
+  eventos.forEach(ev => {
+    if (!ev.fecha || !ev.cantante) return;
 
-    eventos.forEach(ev=>{
-      if(!ev.fecha || !ev.cantante) return;
+    const mes = ev.fecha.slice(0, 7);
+    const cantante = ev.cantante;
 
-      const mes = ev.fecha.slice(0,7);
-      const cantante = ev.cantante;
+    if (!porCantante[cantante]) porCantante[cantante] = {};
+    if (!porCantante[cantante][mes]) porCantante[cantante][mes] = {};
+    if (!porCantante[cantante][mes][docu.id]) porCantante[cantante][mes][docu.id] = 0;
 
-      if(!porCantante[cantante]) porCantante[cantante] = {};
-      if(!porCantante[cantante][mes]) porCantante[cantante][mes] = {};
-
-      porCantante[cantante][mes][docu.id] =
-        (porCantante[cantante][mes][docu.id] || 0) + 1;
-    });
+    porCantante[cantante][mes][docu.id]++;
   });
+});
 
   Object.keys(porCantante).forEach(nombre=>{
     cont.appendChild(renderCantante(nombre, porCantante[nombre]));
