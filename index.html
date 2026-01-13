@@ -415,6 +415,9 @@ function inicializarRegistroRealtime(){
   onSnapshot(collection(db,"registro"), snap => {
     registroCache = {};
     snap.forEach(d => registroCache[d.id] = d.data());
+    
+     cargarAnalisisMensual();      // ✅ fuerza recalculo
+     cargarAnalisisCantantes();   // ✅ también por cantante
 
     const registroVisible =
       document.getElementById("registro-canciones")?.style.display === "block";
