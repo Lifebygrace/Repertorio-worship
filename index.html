@@ -828,12 +828,6 @@ btn.onclick = () => {
 };
 cont.appendChild(btn);
 
-const acordeon = document.createElement("div");
-acordeon.id = "acordeon-meses";
-acordeon.className = "oculto";
-acordeon.style.marginTop = "12px";
-cont.appendChild(acordeon);
-  
   // Traer TODOS los registros desde Firestore
   const snapRegistro = await getDocs(collection(db, "registro"));
 
