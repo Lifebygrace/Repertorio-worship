@@ -237,7 +237,7 @@ details[open] > *:not(summary){
 .fade-apple,
 details > *{
   will-change: transform, opacity;
-  
+}
   /* Análisis mensual – ocultar/mostrar meses */
 .oculto {
   display: none;
@@ -864,17 +864,14 @@ function toggleAnalisis() {
 /* Carga y renderiza el análisis mensual */
 
 async function cargarAnalisisMensual() {
-  if (!cancionesCache.length) {
-  await inicializarCanciones();
-}
-  
   const cont = document.getElementById("analisis-mensual");
   cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
   
 const btn = document.createElement("button");
 btn.textContent = "📅 Mostrar meses anteriores";
 btn.onclick = () => {
-  document.getElementById("acordeon-meses").classList.toggle("oculto");
+  const acc = document.getElementById("acordeon-meses");
+  if (acc) acc.classList.toggle("oculto");
 };
 cont.appendChild(btn);
 
