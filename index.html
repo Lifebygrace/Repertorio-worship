@@ -406,6 +406,21 @@ async function inicializarCanciones(){
   });
 }
 
+/* Inicialización: escucha realtime del registro */
+function inicializarRegistroRealtime(){
+  onSnapshot(collection(db,"registro"), snap => {
+    registroCache = {};
+    snap.forEach(d => registroCache[d.id] = d.data());
+
+    const registroVisible =
+      document.getElementById("registro-canciones")?.style.display === "block";
+
+    if(registroVisible){
+      cargarRegistro();
+    }
+  });
+}
+
 /* Contador en tiempo real (texto exacto pedido) */
 function actualizarContador(){
   const el = document.getElementById("contador-final");
@@ -543,15 +558,10 @@ async function marcarTocada(id){
     cantante
   });
 
-  // ✅ UNA sola escritura
-  await setDoc(ref, { eventos });
-
-  // ✅ refrescar vistas
-  actualizarRegistroCard(id);
-  cargarRegistro();
-  cargarAnalisisMensual();
-  cargarAnalisisCantantes();
-}
+ await setDoc(ref, { eventos });
+actualizarRegistroCard(id);
+cargarAnalisisMensual();
+cargarAnalisisCantantes();
 
 
 async function editarEvento(id, idx, campo, valor){
@@ -564,10 +574,8 @@ async function editarEvento(id, idx, campo, valor){
 
   eventos[idx][campo] = valor;
   await setDoc(ref, { eventos });
-cargarRegistro();
 cargarAnalisisMensual();
 cargarAnalisisCantantes();
-}
 
 async function borrarEvento(id, idx){
   if(!confirm("¿Borrar este registro?")) return;
@@ -580,10 +588,9 @@ async function borrarEvento(id, idx){
   eventos.splice(idx, 1);
 
 await setDoc(ref, { eventos });
-cargarRegistro();
 cargarAnalisisMensual();
 cargarAnalisisCantantes();
-}
+
 
 /* Render lista de canciones (aplica búsqueda) */
 
@@ -1276,6 +1283,7 @@ window.addEventListener('load', ()=>{
   window.toggleNotas = toggleNotas;
   inicializarCanciones();
   cargarSeccion("semana");
+  inicializarRegistroRealtime();
   cargarSeccion("mes");
   window.toggleAnalisis = toggleAnalisis;
   window.toggleCantantes = toggleCantantes;
