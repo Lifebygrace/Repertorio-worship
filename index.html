@@ -596,6 +596,34 @@ cargarAnalisisMensual();
 cargarAnalisisCantantes();
 }
 
+
+async function migrarRegistrosAntiguos() {
+  const snap = await getDocs(collection(db, "registro"));
+
+  for (const docu of snap.docs) {
+    const data = docu.data();
+
+    // Solo migrar si NO tiene eventos pero SÍ fechas
+    if (!Array.isArray(data.eventos) && Array.isArray(data.fechas)) {
+      const eventos = data.fechas.map(f => ({
+        fecha: f,
+        cantante: "—"
+      }));
+
+      await setDoc(
+        doc(db, "registro", docu.id),
+        { eventos },
+        { merge: true }
+      );
+
+      console.log(`✅ Migrado: ${docu.id}`);
+    }
+  }
+
+  alert("🎉 Migración completada");
+}
+
+
 /* Render lista de canciones (aplica búsqueda) */
 
 function cargarCanciones(){
@@ -1311,6 +1339,7 @@ window.addEventListener('load', ()=>{
   window.toggleCantantes = toggleCantantes;
   window.editarEvento = editarEvento;
   window.borrarEvento = borrarEvento;
+  window.migrarRegistrosAntiguos = migrarRegistrosAntiguos;
   cargarAnalisisMensual();
 });
 </script>
