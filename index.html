@@ -383,6 +383,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+
+function normalizarEventos(data){
+  if (Array.isArray(data.eventos)) return data.eventos;
+
+  if (Array.isArray(data.fechas)) {
+    return data.fechas.map(f => ({
+      fecha: f,
+      cantante: "—"
+    }));
+  }
+
+  return [];
+}
+
+
 /* Estado */
 let modoEdicion = false;
 const CANTANTES = ["Carolina", "Jason", "Milly"];
@@ -560,7 +575,7 @@ async function marcarTocada(id){
     cantante
   });
 
-  await setDoc(ref, { eventos });
+await setDoc(ref, { eventos }, { merge: true });
   actualizarRegistroCard(id);
   cargarAnalisisMensual();
   cargarAnalisisCantantes();
@@ -576,7 +591,7 @@ async function editarEvento(id, idx, campo, valor){
   const eventos = data.eventos || [];
 
   eventos[idx][campo] = valor;
-  await setDoc(ref, { eventos });
+  await setDoc(ref, { eventos }, { merge: true });
 cargarAnalisisMensual();
 cargarAnalisisCantantes();
 }
@@ -591,7 +606,7 @@ async function borrarEvento(id, idx){
   const eventos = snap.data().eventos || [];
   eventos.splice(idx, 1);
 
-await setDoc(ref, { eventos });
+await setDoc(ref, { eventos }, { merge: true });
 cargarAnalisisMensual();
 cargarAnalisisCantantes();
 }
@@ -872,9 +887,9 @@ cont.appendChild(acordeon);
   const mapaCantantesMes = {}; // { "YYYY-MM": { cantante: { idCancion: veces } } }
 
   snapRegistro.forEach(docu => {
-    const eventos = docu.data().eventos || [];
+    const eventos = normalizarEventos(docu.data());
     eventos.forEach(ev => {
-      if (!ev.fecha || !ev.cantante) return;
+      if (!ev.fecha || !ev.cantante || ev.cantante === "—") return;
 
       const mes = ev.fecha.slice(0, 7); // YYYY-MM
       const cantante = ev.cantante;
@@ -1146,9 +1161,9 @@ async function cargarAnalisisCantantes() {
   const porCantante = {}; // { cantante: { "YYYY-MM": { idCancion: veces } } }
 
   snap.forEach(docu => {
-    const eventos = docu.data().eventos || [];
+    const eventos = normalizarEventos(docu.data());
     eventos.forEach(ev => {
-      if (!ev.fecha || !ev.cantante) return;
+      if (!ev.fecha || !ev.cantante || ev.cantante === "—") return;
 
       const mes = ev.fecha.slice(0, 7);
       const cantante = ev.cantante;
