@@ -810,6 +810,10 @@ function toggleAnalisis() {
 /* Carga y renderiza el análisis mensual */
 
 async function cargarAnalisisMensual() {
+  if (!cancionesCache.length) {
+  await inicializarCanciones();
+}
+  
   const cont = document.getElementById("analisis-mensual");
   cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
 
