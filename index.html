@@ -541,15 +541,10 @@ async function marcarTocada(id){
 
   if(snap.exists()){
     const data = snap.data();
-
     if(Array.isArray(data.eventos)){
       eventos = data.eventos;
     } else if(Array.isArray(data.fechas)){
-      // compatibilidad con datos antiguos
-      eventos = data.fechas.map(f => ({
-        fecha: f,
-        cantante: "—"
-      }));
+      eventos = data.fechas.map(f => ({ fecha: f, cantante: "—" }));
     }
   }
 
@@ -558,10 +553,11 @@ async function marcarTocada(id){
     cantante
   });
 
- await setDoc(ref, { eventos });
-actualizarRegistroCard(id);
-cargarAnalisisMensual();
-cargarAnalisisCantantes();
+  await setDoc(ref, { eventos });
+  actualizarRegistroCard(id);
+  cargarAnalisisMensual();
+  cargarAnalisisCantantes();
+}
 
 
 async function editarEvento(id, idx, campo, valor){
@@ -576,6 +572,7 @@ async function editarEvento(id, idx, campo, valor){
   await setDoc(ref, { eventos });
 cargarAnalisisMensual();
 cargarAnalisisCantantes();
+}
 
 async function borrarEvento(id, idx){
   if(!confirm("¿Borrar este registro?")) return;
@@ -590,7 +587,7 @@ async function borrarEvento(id, idx){
 await setDoc(ref, { eventos });
 cargarAnalisisMensual();
 cargarAnalisisCantantes();
-
+}
 
 /* Render lista de canciones (aplica búsqueda) */
 
