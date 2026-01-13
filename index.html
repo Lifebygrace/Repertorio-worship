@@ -804,14 +804,15 @@ function toggleAnalisis() {
 }
 
 /* Carga y renderiza el análisis mensual */
+
 async function cargarAnalisisMensual() {
   const cont = document.getElementById("analisis-mensual");
   cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
 
-  // 📥 Tomamos todos los registros
+  // 🔥 Tomamos todos los registros
   const snapRegistro = await getDocs(collection(db, "registro"));
-  
-  // 🔹 Agrupamos por mes y cantante
+
+  // 🔹 Agrupamos por mes y por cantante
   const mapaMeses = {};
   snapRegistro.forEach(docu => {
     const eventos = docu.data().eventos || [];
@@ -823,9 +824,9 @@ async function cargarAnalisisMensual() {
 
       if (!mapaMeses[mes]) mapaMeses[mes] = {};
       if (!mapaMeses[mes][cantante]) mapaMeses[mes][cantante] = {};
+      if (!mapaMeses[mes][cantante][docu.id]) mapaMeses[mes][cantante][docu.id] = 0;
 
-      mapaMeses[mes][cantante][docu.id] =
-        (mapaMeses[mes][cantante][docu.id] || 0) + 1;
+      mapaMeses[mes][cantante][docu.id]++;
     });
   });
 
@@ -837,11 +838,11 @@ async function cargarAnalisisMensual() {
 
   const ultimoMes = meses[0];
 
-  meses.forEach((mes, index) => {
+  meses.forEach(mes => {
     const fecha = new Date(mes + "-01");
     const nombreMes = fecha.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
 
-    // Calculamos canciones totales por mes (suma de cantantes)
+    // ✅ Crear un mapa total de canciones para el mes (sumando todos los cantantes)
     const cancionesMes = {};
     Object.values(mapaMeses[mes]).forEach(cantanteBloque => {
       Object.entries(cantanteBloque).forEach(([id, veces]) => {
@@ -849,40 +850,40 @@ async function cargarAnalisisMensual() {
       });
     });
 
-    // Creamos lista de canciones con títulos
+    // Lista de canciones con títulos y veces
     const listaCanciones = Object.keys(cancionesMes).map(id => {
       const c = cancionesCache.find(x => x.id === id);
       return { id, titulo: c?.titulo || "—", veces: cancionesMes[id] };
-    });
+    }).sort((a, b) => b.veces - a.veces);
 
-    // Orden por popularidad
-    const resumen = listaCanciones.sort((a, b) => b.veces - a.veces);
+    const resumenHtml = listaCanciones.map(c => `<li>${c.titulo} (${c.veces})</li>`).join("");
+
+    // Cantante predominante del mes
+    let cantantePredominante = "-";
+    let maxCanciones = 0;
+    Object.keys(mapaMeses[mes]).forEach(c => {
+      const total = Object.values(mapaMeses[mes][c]).reduce((a, b) => a + b, 0);
+      if (total > maxCanciones) {
+        maxCanciones = total;
+        cantantePredominante = c;
+      }
+    });
 
     const card = document.createElement("div");
     card.className = "card";
     card.style.marginTop = "12px";
-
-    // Lista de canciones con veces tocadas
-    const resumenHtml = resumen.map(c => `<li>${c.titulo} (${c.veces})</li>`).join("");
-
-    // Cantante más frecuente del mes
-    const cantantesMes = Object.keys(mapaMeses[mes]);
-    let cantantePredominante = "";
-    let maxCanciones = 0;
-    cantantesMes.forEach(c => {
-      const total = Object.values(mapaMeses[mes][c]).reduce((a, b) => a + b, 0);
-      if (total > maxCanciones) { cantantePredominante = c; maxCanciones = total; }
-    });
 
     const abierto = mes === ultimoMes ? "open" : "";
 
     card.innerHTML = `
       <details ${abierto}>
         <summary>📅 ${nombreMes}</summary>
-        <p>🎤 Cantante predominante: ${cantantePredominante || "-"}</p>
+        <p>🎤 Cantante predominante: ${cantantePredominante}</p>
         <details class="details-slow" style="margin-top:6px;">
-          <summary>📌 resumen musical 🔥</summary>
-          <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
+          <summary>📌 Resumen musical 🔥</summary>
+          <div class="notas-card" style="margin-top:4px;">
+            <ul>${resumenHtml}</ul>
+          </div>
         </details>
       </details>
     `;
