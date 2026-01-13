@@ -1027,25 +1027,39 @@ if(modoEdicion){
       </div>
     </div>
   `;
-} else {
+  } else {
   const eventos = normalizarEventos(r);
-  const ultimo = eventos.at(-1);
-  
-  
+
+  const eventosOrdenados = [...eventos].sort(
+    (a, b) => new Date(b.fecha) - new Date(a.fecha)
+  );
+
+  const ultimo = eventosOrdenados.find(
+    e => e.cantante && e.cantante !== "—"
+  ) || eventosOrdenados[0];
+
   fechasHtml = `
     <div class="fechas-box">
-    ${ultimo
-  ? `${isoToDisplay(ultimo.fecha)}${ultimo.cantante && ultimo.cantante !== "—" ? ` (${ultimo.cantante})` : ""}`
-  : ""
-}
-      ${r.eventos.length > 1
+      ${ultimo
+        ? `${isoToDisplay(ultimo.fecha)}${
+            ultimo.cantante && ultimo.cantante !== "—"
+              ? ` (${ultimo.cantante})`
+              : ""
+          }`
+        : ""
+      }
+      ${eventos.length > 1
         ? `<button class="small"
-            onclick="alert('Historial:\\n${r.eventos
-              .map(e => isoToDisplay(e.fecha) + ' (' + e.cantante + ')')
+            onclick="alert('Historial:\\n${eventosOrdenados
+              .map(e =>
+                isoToDisplay(e.fecha) +
+                (e.cantante && e.cantante !== "—"
+                  ? ' (' + e.cantante + ')'
+                  : '')
+              )
               .join("\\n")}')">Ver más</button>`
         : ""}
-    </div>
-  `;
+    </div>`;
 }
     const tr = document.createElement("tr");
     tr.innerHTML = `<td style="text-align:left">${r.titulo}</td><td>${r.veces}</td><td>${fechasHtml}</td>`;
