@@ -896,12 +896,11 @@ cont.appendChild(acordeon);
 
       if (!ev.fecha) return;
 
-const cantante = ev.cantante && ev.cantante !== "—"
+      const cantante = ev.cantante && ev.cantante !== "—"
   ? ev.cantante
   : "Sin asignar";
-      
-      const mes = ev.fecha.slice(0, 7); // YYYY-MM
-      const cantante = ev.cantante;
+
+const mes = ev.fecha.slice(0, 7); // YYYY-MM
 
       // Conteo global por mes
       if (!mapaMeses[mes]) mapaMeses[mes] = {};
