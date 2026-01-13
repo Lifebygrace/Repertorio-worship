@@ -545,6 +545,21 @@ async function marcarTocada(id){
 }
 
 
+// 🔁 Sincroniza cantante en secciones_historico según fecha
+async function sincronizarCantanteHistorico(fecha, nuevoCantante) {
+  const snap = await getDocs(collection(db, "secciones_historico"));
+
+  snap.forEach(async docu => {
+    const data = docu.data();
+    if (data.fecha === fecha) {
+      await updateDoc(doc(db, "secciones_historico", docu.id), {
+        cantante: nuevoCantante
+      });
+    }
+  });
+}
+
+
 async function editarEvento(id, idx, campo, valor){
   const ref = doc(db,"registro",id);
   const snap = await getDoc(ref);
@@ -553,10 +568,22 @@ async function editarEvento(id, idx, campo, valor){
   const data = snap.data();
   const eventos = data.eventos || [];
 
+  // Guardamos la fecha original ANTES del cambio
+  const fechaOriginal = eventos[idx].fecha;
+
+  // Aplicamos el cambio
   eventos[idx][campo] = valor;
   await setDoc(ref, { eventos });
+
+  // 🔁 SI CAMBIA EL CANTANTE → sincronizar análisis mensual
+  if (campo === "cantante") {
+    await sincronizarCantanteHistorico(fechaOriginal, valor);
+  }
+
   cargarRegistro();
 }
+
+
 
 async function borrarEvento(id, idx){
   if(!confirm("¿Borrar este registro?")) return;
