@@ -536,9 +536,7 @@ async function actualizarRegistroCard(id){
   }
 
   const data = snap.data();
-  const eventos = data.eventos
-    || (data.fechas || []).map(f => ({ fecha: f, cantante: "—" }));
-
+  const eventos = normalizarEventos(data);
   const veces = eventos.length;
   const ultima = eventos.at(-1);
 
@@ -966,9 +964,8 @@ async function cargarRegistro(){
   snap.forEach(d=> registroCache[d.id] = d.data());
   const combinado = cancionesCache.map(c => {
   const r = registroCache[c.id] || { eventos: [] };
-
-  const eventos = r.eventos
-    || (r.fechas || []).map(f => ({ fecha: f, cantante: "—" }));
+  
+  const eventos = normalizarEventos(r);
 
   return {
     id: c.id,
@@ -1031,11 +1028,16 @@ if(modoEdicion){
     </div>
   `;
 } else {
-  const ultimo = r.eventos.at(-1);
-
+  const eventos = normalizarEventos(r);
+  const ultimo = eventos.at(-1);
+  
+  
   fechasHtml = `
     <div class="fechas-box">
-      ${ultimo ? `${isoToDisplay(ultimo.fecha)} (${ultimo.cantante})` : ""}
+    ${ultimo
+  ? `${isoToDisplay(ultimo.fecha)}${ultimo.cantante && ultimo.cantante !== "—" ? ` (${ultimo.cantante})` : ""}`
+  : ""
+}
       ${r.eventos.length > 1
         ? `<button class="small"
             onclick="alert('Historial:\\n${r.eventos
