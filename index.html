@@ -887,8 +887,9 @@ cont.appendChild(acordeon);
   snapRegistro.forEach(docu => {
     const eventos = normalizarEventos(docu.data());
     eventos.forEach(ev => {
-      if (!ev.fecha || !ev.cantante || ev.cantante === "—") return;
+if (!ev.fecha) return;
 
+const cantante = ev.cantante || "Sin asignar";
       const mes = ev.fecha.slice(0, 7); // YYYY-MM
       const cantante = ev.cantante;
 
