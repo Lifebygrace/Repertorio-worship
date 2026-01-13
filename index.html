@@ -579,21 +579,26 @@ await setDoc(ref, { eventos }, { merge: true });
   cargarAnalisisCantantes();
 }
 
-
+  
 async function editarEvento(id, idx, campo, valor){
   const ref = doc(db,"registro",id);
   const snap = await getDoc(ref);
   if(!snap.exists()) return;
 
-  const data = snap.data();
-  const eventos = data.eventos || [];
+  // 🔥 SIEMPRE normalizamos
+  const eventos = normalizarEventos(snap.data());
 
   eventos[idx][campo] = valor;
+
+  // 🔒 REESCRIBE eventos correctamente
   await setDoc(ref, { eventos }, { merge: true });
-cargarAnalisisMensual();
-cargarAnalisisCantantes();
+
+  cargarAnalisisMensual();
+  cargarAnalisisCantantes();
 }
 
+
+  
 async function borrarEvento(id, idx){
   if(!confirm("¿Borrar este registro?")) return;
 
@@ -601,12 +606,13 @@ async function borrarEvento(id, idx){
   const snap = await getDoc(ref);
   if(!snap.exists()) return;
 
-  const eventos = snap.data().eventos || [];
+  const eventos = normalizarEventos(snap.data());
   eventos.splice(idx, 1);
 
-await setDoc(ref, { eventos }, { merge: true });
-cargarAnalisisMensual();
-cargarAnalisisCantantes();
+  await setDoc(ref, { eventos }, { merge: true });
+
+  cargarAnalisisMensual();
+  cargarAnalisisCantantes();
 }
 
 
