@@ -512,11 +512,11 @@ async function actualizarRegistroCard(id){
 }
 
 /* Marcar tocada +1 */
-
+/* Marcar tocada +1 */
 async function marcarTocada(id){
   const cantante = prompt(
-  "¿Quién cantó esta canción?\n" + CANTANTES.join(", ")
-);
+    "¿Quién cantó esta canción?\n" + CANTANTES.join(", ")
+  );
   if(!cantante) return;
 
   const ref = doc(db,"registro",id);
@@ -526,6 +526,7 @@ async function marcarTocada(id){
 
   if(snap.exists()){
     const data = snap.data();
+
     if(Array.isArray(data.eventos)){
       eventos = data.eventos;
     } else if(Array.isArray(data.fechas)){
@@ -542,9 +543,14 @@ async function marcarTocada(id){
     cantante
   });
 
+  // ✅ UNA sola escritura
   await setDoc(ref, { eventos });
+
+  // ✅ refrescar vistas
   actualizarRegistroCard(id);
   cargarRegistro();
+  cargarAnalisisMensual();
+  cargarAnalisisCantantes();
 }
 
 
@@ -558,7 +564,9 @@ async function editarEvento(id, idx, campo, valor){
 
   eventos[idx][campo] = valor;
   await setDoc(ref, { eventos });
-  cargarRegistro();
+cargarRegistro();
+cargarAnalisisMensual();
+cargarAnalisisCantantes();
 }
 
 async function borrarEvento(id, idx){
@@ -571,8 +579,10 @@ async function borrarEvento(id, idx){
   const eventos = snap.data().eventos || [];
   eventos.splice(idx, 1);
 
-  await setDoc(ref, { eventos });
-  cargarRegistro();
+await setDoc(ref, { eventos });
+cargarRegistro();
+cargarAnalisisMensual();
+cargarAnalisisCantantes();
 }
 
 /* Render lista de canciones (aplica búsqueda) */
@@ -1126,34 +1136,29 @@ function generarResumenMes(mes, mapaMeses, datosMes){
     </div>
   `;
 }
+
 async function guardarAnalisisMes(mes){
-  const canciones = {};
-  document.querySelectorAll(`.cantante-input[data-mes="${mes}"]`).forEach(i=>{
+  const evaluaciones = {};
+  let observaciones = "";
+
+  // Captura evaluaciones
+  document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
     const id = i.dataset.id;
-    canciones[id] = canciones[id] || {};
-    canciones[id].cantante = i.value.trim();
+    evaluaciones[id] = i.value;
   });
 
-  document.querySelectorAll(`.nota-input[data-mes="${mes}"]`).forEach(i=>{
-    const id = i.dataset.id;
-    canciones[id] = canciones[id] || {};
-    canciones[id].notas = i.value.trim();
-  });
+  // Captura observaciones generales si existe
+  const obsInput = document.querySelector(`.notas-generales[data-mes="${mes}"]`);
+  if(obsInput) observaciones = obsInput.value.trim();
 
-  const notasGenerales = document.querySelector(`.notas-generales[data-mes="${mes}"]`).value.trim();
-document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
-  const id = i.dataset.id;
-  canciones[id] = canciones[id] || {};
-  canciones[id].eval = i.value;
-});
-await setDoc(
-  doc(db,"analisis_mensual", mes),
-  {
-    evaluaciones,
-    observaciones
-  },
-  { merge: true }
-);
+  await setDoc(
+    doc(db,"analisis_mensual", mes),
+    {
+      evaluaciones,
+      observaciones
+    },
+    { merge: true }
+  );
 
   alert("✅ Análisis mensual guardado");
 }
@@ -1171,34 +1176,23 @@ async function cargarAnalisisCantantes(){
   const cont = document.getElementById("analisis-cantantes");
   cont.innerHTML = "<h2>🎤 Análisis por cantante</h2>";
 
-const snap = await getDocs(collection(db,"registro"));
-
+  const snap = await getDocs(collection(db,"registro"));
   const porCantante = {};
 
   snap.forEach(docu=>{
-    const s = docu.data();
-    if(!s.cantante || !s.fecha) return;
+    const eventos = docu.data().eventos || [];
 
-    const mes = s.fecha.slice(0,7);
-    const cantante = s.cantante;
+    eventos.forEach(ev=>{
+      if(!ev.fecha || !ev.cantante) return;
 
-    if(!porCantante[cantante]) porCantante[cantante] = {};
+      const mes = ev.fecha.slice(0,7);
+      const cantante = ev.cantante;
 
-    if(!porCantante[cantante][mes]){
-      porCantante[cantante][mes] = {
-        canciones:{},
-        observaciones:""
-      };
-    }
+      if(!porCantante[cantante]) porCantante[cantante] = {};
+      if(!porCantante[cantante][mes]) porCantante[cantante][mes] = {};
 
-    s.canciones.forEach(nombre=>{
-      const c = cancionesCache.find(x =>
-        normalizar(x.titulo) === normalizar(nombre)
-      );
-      if(!c) return;
-
-      porCantante[cantante][mes].canciones[c.id] =
-        (porCantante[cantante][mes].canciones[c.id] || 0) + 1;
+      porCantante[cantante][mes][docu.id] =
+        (porCantante[cantante][mes][docu.id] || 0) + 1;
     });
   });
 
@@ -1206,7 +1200,6 @@ const snap = await getDocs(collection(db,"registro"));
     cont.appendChild(renderCantante(nombre, porCantante[nombre]));
   });
 }
-
 
 
 function renderCantante(nombre, meses){
@@ -1222,10 +1215,11 @@ function renderCantante(nombre, meses){
         const fecha = new Date(mes+"-01")
           .toLocaleDateString("es-ES",{month:"long",year:"numeric"});
 
-        const canciones = meses[mes].canciones;
-        const lista = Object.keys(canciones).map(id=>{
+        // ✅ Usar directamente el objeto de canciones del mes
+        const cancionesMes = meses[mes] || {};
+        const lista = Object.keys(cancionesMes).map(id=>{
           const c = cancionesCache.find(x=>x.id===id);
-          return `<li>${c?.titulo || "—"} (${canciones[id]})</li>`;
+          return `<li>${c?.titulo || "—"} (${cancionesMes[id]})</li>`;
         }).join("");
 
         return `
