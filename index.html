@@ -821,12 +821,18 @@ async function cargarAnalisisMensual() {
   const cont = document.getElementById("analisis-mensual");
   cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
   
-  const btn = document.createElement("button");
+const btn = document.createElement("button");
 btn.textContent = "📅 Mostrar meses anteriores";
 btn.onclick = () => {
   document.getElementById("acordeon-meses").classList.toggle("oculto");
 };
 cont.appendChild(btn);
+
+const acordeon = document.createElement("div");
+acordeon.id = "acordeon-meses";
+acordeon.className = "oculto";
+acordeon.style.marginTop = "12px";
+cont.appendChild(acordeon);
 
   // Traer TODOS los registros desde Firestore
   const snapRegistro = await getDocs(collection(db, "registro"));
@@ -859,10 +865,6 @@ cont.appendChild(btn);
     cont.innerHTML += "<p>No hay datos aún.</p>";
     return;
   }
-  
-  const acordeon = document.getElementById("acordeon-meses");
-if (!acordeon) return;
-acordeon.innerHTML = "";
 
 meses.forEach(mes => {
   const fecha = new Date(mes + "-01");
