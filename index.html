@@ -1020,7 +1020,7 @@ async function mostrarWorshipPack(tipo) {
     return;
   }
 
-  // Mostrar el pack
+  // Mostrar el pack//
   const snap = await getDoc(doc(db, "secciones", tipo));
   if (!snap.exists()) {
     cont.innerHTML = "<p>No hay canciones guardadas para esta sección.</p>";
