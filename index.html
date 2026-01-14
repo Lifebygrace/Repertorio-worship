@@ -385,6 +385,23 @@ function pad(n){ return String(n).padStart(2,'0'); }
 function isoToday(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function isoToDisplay(iso){ if(!iso) return '—'; if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){ const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; } const dt=new Date(iso); if(isNaN(dt.getTime())) return iso; return `${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()}`; }
 
+/* =========================
+   Fechas – análisis mensual
+========================= */
+function obtenerDomingosDelMes(mes) {
+  const [y, m] = mes.split("-").map(Number);
+  const fechas = [];
+  const d = new Date(y, m - 1, 1);
+
+  while (d.getMonth() === m - 1) {
+    if (d.getDay() === 0) { // Domingo
+      fechas.push(d.toISOString().slice(0,10));
+    }
+    d.setDate(d.getDate() + 1);
+  }
+  return fechas;
+}
+
 /* Inicialización: escucha realtime de canciones */
 async function inicializarCanciones(){
   const col = collection(db,"canciones");
@@ -772,7 +789,7 @@ async function cargarAnalisisMensual() {
 meses.forEach((mes, index) => {
     const fecha = new Date(mes+"-01");
     const nombreMes = fecha.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
-    const datosMes = analisisGuardado[mes] || { canciones:{}, cantante:"", evaluaciones:{}, observaciones:"" };
+    const datosMes = analisisGuardado[mes] || { canciones:{}, cantante:{}, evaluaciones:{}, observaciones:"" };
     const cancionesMes = mapaMeses[mes].canciones;
 
     const listaCanciones = Object.keys(cancionesMes).map(id => {
@@ -787,15 +804,29 @@ const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
     card.className = "card";
     card.style.marginTop = "12px";
 
-    // Cantante
-    const cantanteHtml = modoEdicion 
-      ? `<label>🎤 Cantante: <select class="cantante-select" data-mes="${mes}">
-           <option value="Carolina" ${datosMes.cantante==="Carolina"?"selected":""}>Carolina</option>
-           <option value="Jason" ${datosMes.cantante==="Jason"?"selected":""}>Jason</option>
-           <option value="Milly" ${datosMes.cantante==="Milly"?"selected":""}>Milly</option>
-         </select></label>`
-      : `<p>🎤 Cantante: ${datosMes.cantante || "-"}</p>`;
+// Cantantes
+const domingos = obtenerDomingosDelMes(mes);
 
+const cantanteHtml = `
+  <div>
+    <strong>🎤 Cantantes del mes</strong>
+    ${domingos.map(fecha => `
+      <div style="margin-top:4px">
+        ${isoToDisplay(fecha)} →
+        ${
+          modoEdicion
+            ? `<select class="cantante-select" data-mes="${mes}" data-fecha="${fecha}">
+                <option value=""></option>
+                <option value="Milly" ${datosMes.cantantes?.[fecha]==="Milly"?"selected":""}>Milly</option>
+                <option value="Carolina" ${datosMes.cantantes?.[fecha]==="Carolina"?"selected":""}>Carolina</option>
+                <option value="Jason" ${datosMes.cantantes?.[fecha]==="Jason"?"selected":""}>Jason</option>
+              </select>`
+            : `<span>${datosMes.cantantes?.[fecha] || "-"}</span>`
+        }
+      </div>
+    `).join("")}
+  </div>
+`;
   
     // Top 3 canciones con veces tocadas y emoji de valoración
     const resumenHtml = resumen.map(c=>{
@@ -860,14 +891,17 @@ if (index === 0) {
           const id = sel.dataset.id;
           evaluaciones[id] = sel.value;
         });
-        const cantante = document.querySelector(`.cantante-select[data-mes="${mes}"]`).value;
+        const cantantes = {};
+document.querySelectorAll(`.cantante-select[data-mes="${mes}"]`).forEach(sel => {
+  cantantes[sel.dataset.fecha] = sel.value;
+});
         const observaciones = document.querySelector(`.obs-textarea[data-mes="${mes}"]`).value;
         await setDoc(doc(db,"analisis_mensual",mes),{
-          canciones: mapaMeses[mes].canciones,
-          evaluaciones,
-          cantante,
-          observaciones
-        });
+  canciones: mapaMeses[mes].canciones,
+  evaluaciones,
+  cantantes,
+  observaciones
+});
         alert("✅ Análisis mensual guardado");
       });
     });
