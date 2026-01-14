@@ -274,6 +274,12 @@ details > *{
 
   <div id="contenedor-semana" style="display:none; margin-top:10px;">
   <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
+  <select id="cantante-semana" style="margin-bottom:10px">
+  <option value="">🎤 Cantante</option>
+  <option value="Milly">Milly</option>
+  <option value="Carolina">Carolina</option>
+  <option value="Jason">Jason</option>
+</select>
   <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
   <textarea id="notas-edit-semana" placeholder="Notas de esta semana..."></textarea>
   <button onclick="guardarSeccion('semana')">Guardar sección</button>
@@ -625,12 +631,20 @@ async function cargarSeccion(tipo){
     }
 
     if(snap.exists()){
+      if (modoEdicion && tipo === "semana") {
+  const sel = document.getElementById("cantante-semana");
+  if (sel) sel.value = data.cantante || "";
+}
       const data = snap.data();
       // Sección principal con título y canciones
-      cont.innerHTML = `
-        <h3>${data.titulo || ""}</h3>
-        <ul>${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}</ul>
-      `;
+     cont.innerHTML = `
+  <h3>${data.titulo || ""}</h3>
+  ${tipo === "semana"
+    ? `<p>🎤 Cantante: <strong>${data.cantante || "-"}</strong></p>`
+    : ""
+  }
+  <ul>${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}</ul>
+`;
 
       // Renderizar notas si existe el contenedor
       if(notasBox){
@@ -677,13 +691,18 @@ function toggleNotas(tipo){
 async function guardarSeccion(tipo){
   const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
   const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").map(s=>s.trim()).filter(Boolean);
+  const cantante =
+  tipo === "semana"
+    ? document.getElementById("cantante-semana")?.value || ""
+    : undefined;
   const notas = document.getElementById(`notas-edit-${tipo}`).value.trim();
 
-  await setDoc(doc(db, "secciones", tipo), { 
-    titulo, 
-    canciones, 
-    notas 
-  });
+ await setDoc(doc(db, "secciones", tipo), { 
+  titulo, 
+  canciones, 
+  ...(tipo === "semana" && { cantante }),
+  notas 
+});
 
   alert("✅ Sección guardada");
   cargarSeccion(tipo);
@@ -808,10 +827,11 @@ const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
 const domingos = obtenerDomingosDelMes(mes);
 
 const cantanteHtml = `
-  <div>
-    <strong>🎤 Cantantes del mes</strong>
+  <details class="details-slow" style="margin-top:6px;">
+    <summary>🎤 Cantantes del mes</summary>
+
     ${domingos.map(fecha => `
-      <div style="margin-top:4px">
+      <div style="margin-top:6px">
         ${isoToDisplay(fecha)} →
         ${
           modoEdicion
@@ -821,11 +841,12 @@ const cantanteHtml = `
                 <option value="Carolina" ${datosMes.cantantes?.[fecha]==="Carolina"?"selected":""}>Carolina</option>
                 <option value="Jason" ${datosMes.cantantes?.[fecha]==="Jason"?"selected":""}>Jason</option>
               </select>`
-            : `<span>${datosMes.cantantes?.[fecha] || "-"}</span>`
+            : `<strong>${datosMes.cantantes?.[fecha] || "-"}</strong>`
         }
       </div>
     `).join("")}
-  </div>
+
+  </details>
 `;
   
     // Top 3 canciones con veces tocadas y emoji de valoración
