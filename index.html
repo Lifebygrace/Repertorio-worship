@@ -631,11 +631,13 @@ async function cargarSeccion(tipo){
     }
 
     if(snap.exists()){
-      if (modoEdicion && tipo === "semana") {
+
+      const data = snap.data();
+            if (modoEdicion && tipo === "semana") {
   const sel = document.getElementById("cantante-semana");
   if (sel) sel.value = data.cantante || "";
 }
-      const data = snap.data();
+      
       // Sección principal con título y canciones
      cont.innerHTML = `
   <h3>${data.titulo || ""}</h3>
@@ -727,6 +729,8 @@ function activarEdicion(){
     alert("🔒 Modo edición desactivado");
   }
   cargarSeccion("semana"); cargarSeccion("mes"); cargarCanciones(); cargarRegistro();
+  if (document.getElementById("analisis-mensual").style.display === "block") {
+  cargarAnalisisMensual();
 }
 
 /* Búsqueda */
@@ -792,7 +796,7 @@ async function cargarAnalisisMensual() {
 
     fechas.forEach(f => {
       const mes = f.slice(0,7);
-      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, cantante: "", evaluaciones:{}, observaciones:"" };
+      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, cantantes: "", evaluaciones:{}, observaciones:"" };
       mapaMeses[mes].canciones[cancion.id] = (mapaMeses[mes].canciones[cancion.id] || 0) + 1;
     });
   });
@@ -808,7 +812,7 @@ async function cargarAnalisisMensual() {
 meses.forEach((mes, index) => {
     const fecha = new Date(mes+"-01");
     const nombreMes = fecha.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
-    const datosMes = analisisGuardado[mes] || { canciones:{}, cantante:{}, evaluaciones:{}, observaciones:"" };
+    const datosMes = analisisGuardado[mes] || { canciones:{}, cantantes:{}, evaluaciones:{}, observaciones:"" };
     const cancionesMes = mapaMeses[mes].canciones;
 
     const listaCanciones = Object.keys(cancionesMes).map(id => {
