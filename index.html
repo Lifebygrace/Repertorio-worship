@@ -996,10 +996,10 @@ fechasHtml = `
     ${ultima ? isoToDisplay(ultima) : ""}
     ${
       r.fechas.length > 1
-        ? `<button class="small"
-  onclick="verHistorialConCantante(JSON.parse('${JSON.stringify(r.fechas)}'))">
-  Ver más
-</button>
+        ? `<button class="small ver-mas-btn"
+            data-fechas='${JSON.stringify(r.fechas)}'>
+            Ver más
+           </button>`
         : ""
     }
   </div>
@@ -1013,8 +1013,20 @@ fechasHtml = `
   document.getElementById('sortTitulo').textContent = ordenActual.campo==='titulo' ? (ordenActual.sentido==='asc' ? '🔼' : '🔽') : '';
   document.getElementById('sortVeces').textContent = ordenActual.campo==='veces' ? (ordenActual.sentido==='asc' ? '🔼' : '🔽') : '';
   document.getElementById('sortUltima').textContent = ordenActual.campo==='ultima' ? (ordenActual.sentido==='asc' ? '🔼' : '🔽') : '';
-}
 
+// Activar botones "Ver más"
+document.addEventListener("click", e => {
+  const btn = e.target.closest(".ver-mas-btn");
+  if (!btn) return;
+
+  try {
+    const fechas = JSON.parse(btn.dataset.fechas || "[]");
+    verHistorialConCantante(fechas);
+  } catch (err) {
+    console.error("Error parseando fechas:", err);
+    alert("Error mostrando el historial");
+  }
+});
 /* =========================
    Historial con cantante
 ========================= */
