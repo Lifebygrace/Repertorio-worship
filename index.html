@@ -391,6 +391,32 @@ function pad(n){ return String(n).padStart(2,'0'); }
 function isoToday(){ const d=new Date(); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
 function isoToDisplay(iso){ if(!iso) return '—'; if(/^\d{4}-\d{2}-\d{2}$/.test(iso)){ const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; } const dt=new Date(iso); if(isNaN(dt.getTime())) return iso; return `${pad(dt.getDate())}/${pad(dt.getMonth()+1)}/${dt.getFullYear()}`; }
 
+
+async function obtenerCantantePorFecha(fechaISO){
+  try {
+    const mes = fechaISO.slice(0,7); // YYYY-MM
+    const analisisSnap = await getDoc(doc(db,"analisis_mensual",mes));
+
+    if (analisisSnap.exists()) {
+      const data = analisisSnap.data();
+      if (data.cantantes && data.cantantes[fechaISO]) {
+        return data.cantantes[fechaISO];
+      }
+    }
+
+    // fallback: cantante de la semana
+    const semanaSnap = await getDoc(doc(db,"secciones","semana"));
+    if (semanaSnap.exists()) {
+      return semanaSnap.data().cantante || "—";
+    }
+
+    return "—";
+  } catch (e) {
+    console.error("Error obteniendo cantante:", e);
+    return "—";
+  }
+}
+
 /* =========================
    Fechas – análisis mensual
 ========================= */
@@ -963,9 +989,21 @@ async function cargarRegistro(){
     if(modoEdicion){
       fechasHtml = `<div class="fechas-box">${r.fechas.map((f,idx)=>`<div><input type="date" value="${f}" onchange="modificarFecha('${r.id}',${idx},this.value)"> <button class="small" onclick="borrarFecha('${r.id}',${idx})">❌</button></div>`).join("")}<div style="margin-top:4px"><button class="small" onclick="agregarFechaManual('${r.id}')">➕ Añadir fecha</button></div></div>`;
     } else {
-      const ultima = r.fechas.length ? r.fechas[r.fechas.length-1] : "";
-      fechasHtml = `<div class="fechas-box">${ultima ? isoToDisplay(ultima) : ''} ${r.fechas.length>1 ? `<button class="small" onclick="alert('Historial de fechas:\\n${r.fechas.join("\\n")}')">Ver más</button>` : ""}</div>`;
+const ultima = r.fechas.length ? r.fechas[r.fechas.length-1] : "";
+
+fechasHtml = `
+  <div class="fechas-box">
+    ${ultima ? isoToDisplay(ultima) : ""}
+    ${
+      r.fechas.length > 1
+        ? `<button class="small" onclick="verHistorialConCantante(${JSON.stringify(r.fechas)})">
+            Ver más
+           </button>`
+        : ""
     }
+  </div>
+`;
+     }
     const tr = document.createElement("tr");
     tr.innerHTML = `<td style="text-align:left">${r.titulo}</td><td>${r.veces}</td><td>${fechasHtml}</td>`;
     tbody.appendChild(tr);
@@ -974,6 +1012,21 @@ async function cargarRegistro(){
   document.getElementById('sortTitulo').textContent = ordenActual.campo==='titulo' ? (ordenActual.sentido==='asc' ? '🔼' : '🔽') : '';
   document.getElementById('sortVeces').textContent = ordenActual.campo==='veces' ? (ordenActual.sentido==='asc' ? '🔼' : '🔽') : '';
   document.getElementById('sortUltima').textContent = ordenActual.campo==='ultima' ? (ordenActual.sentido==='asc' ? '🔼' : '🔽') : '';
+}
+
+/* =========================
+   Historial con cantante
+========================= */
+
+async function verHistorialConCantante(fechas){
+  let texto = "📅 Historial de canciones\n\n";
+
+  for (const f of fechas) {
+    const cantante = await obtenerCantantePorFecha(f);
+    texto += `${isoToDisplay(f)} → ${cantante || "—"}\n`;
+  }
+
+  alert(texto);
 }
 
 /* Fecha helpers */
@@ -1139,6 +1192,7 @@ window.addEventListener('load', ()=>{
   cargarSeccion("semana");
   cargarSeccion("mes");
   window.toggleAnalisis = toggleAnalisis;
+  window.verHistorialConCantante = verHistorialConCantante;
 });
 </script>
 </body>
