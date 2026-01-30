@@ -376,6 +376,45 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+
+/* =========================
+   SECCIONES EN TIEMPO REAL
+========================= */
+function escucharSeccion(tipo) {
+  const ref = doc(db, "secciones", tipo);
+
+  onSnapshot(ref, snap => {
+    if (!snap.exists()) return;
+
+    const data = snap.data();
+
+    const cont = document.getElementById(`mostrar-${tipo}`);
+    cont.innerHTML = `
+      <h3>${data.titulo || ""}</h3>
+      ${tipo === "semana"
+        ? `<p>🎤 Cantante: <strong>${data.cantante || "-"}</strong></p>`
+        : ""}
+      <ul>
+        ${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}
+      </ul>
+    `;
+
+    const notasBox = document.getElementById(`notas-${tipo}`);
+    if (notasBox) {
+      notasBox.innerHTML = `
+        <div class="notas-card">
+          <h3>📝 Notas</h3>
+          ${renderNotas(data.notas)}
+        </div>`;
+    }
+
+    // 🔁 Si el Worship Pack está abierto, refrescarlo
+    const pack = document.getElementById(`worshippack-${tipo}`);
+    if (pack && pack.style.display === "block") {
+      mostrarWorshipPack(tipo);
+    }
+  });
+}
 /* Estado */
 let modoEdicion = false;
 let cancionesCache = [];
@@ -1157,10 +1196,12 @@ document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
 async function mostrarWorshipPack(tipo) {
   const cont = document.getElementById(`worshippack-${tipo}`);
-  const boton = document.querySelector(`button[onclick="mostrarWorshipPack('${tipo}')"]`);
+  const boton = document.querySelector(
+    `button[onclick="mostrarWorshipPack('${tipo}')"]`
+  );
   if (!cont || !boton) return;
 
-  // Si ya está visible, la ocultamos y restauramos el texto del botón
+  // Toggle
   if (cont.style.display === "block") {
     cont.style.display = "none";
     cont.innerHTML = "";
@@ -1168,28 +1209,31 @@ async function mostrarWorshipPack(tipo) {
     return;
   }
 
-  // Mostrar el pack//
   const snap = await getDoc(doc(db, "secciones", tipo));
   if (!snap.exists()) {
-    cont.innerHTML = "<p>No hay canciones guardadas para esta sección.</p>";
+    cont.innerHTML = "<p>No hay canciones guardadas.</p>";
     cont.style.display = "block";
     boton.textContent = "🔽 Ocultar pack";
     return;
   }
 
   const data = snap.data();
-  const lista = (data.canciones || []).map(t => normalizar(t));
-  cont.innerHTML = ""; // limpiar
+  cont.innerHTML = "";
 
-  // Mostrar tarjetas de las canciones de la lista
-  cancionesCache.forEach(c => {
-    if (lista.includes(normalizar(c.titulo))) {
-      cont.appendChild(construirCard(c));
+  // 🔑 CLAVE: recorrer en el orden escrito
+  data.canciones.forEach(tituloSemana => {
+    const cancion = cancionesCache.find(
+      c => normalizar(c.titulo) === normalizar(tituloSemana)
+    );
+
+    if (cancion) {
+      cont.appendChild(construirCard(cancion));
     }
   });
 
   if (!cont.innerHTML) {
-    cont.innerHTML = "<p>⚠️ Ninguna de las canciones guardadas coincide con las del repertorio.</p>";
+    cont.innerHTML =
+      "<p>⚠️ Ninguna de las canciones coincide con el repertorio.</p>";
   }
 
   cont.style.display = "block";
@@ -1224,8 +1268,8 @@ window.addEventListener('load', ()=>{
   window.mostrarWorshipPack = mostrarWorshipPack;
   window.toggleNotas = toggleNotas;
   inicializarCanciones();
-  cargarSeccion("semana");
-  cargarSeccion("mes");
+  escucharSeccion("semana");
+  escucharSeccion("mes");
   window.toggleAnalisis = toggleAnalisis;
   window.verHistorialConCantante = verHistorialConCantante;
 });
