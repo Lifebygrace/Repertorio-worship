@@ -543,40 +543,18 @@ async function actualizarRegistroCard(id){
   } catch(e){ console.error("Error actualizarRegistroCard:", e); }
 }
 
-async function marcarTocada(songId){
-  const fecha = isoToday();
-
-  const semanaSnap = await getDoc(doc(db,"secciones","semana"));
-  const cantante = semanaSnap.exists() ? (semanaSnap.data().cantante || "—") : "—";
-
-  // 1 servicio por fecha
-  const servicioRef = doc(db,"servicios",fecha);
-  await setDoc(servicioRef,{fecha,cantante},{merge:true});
-
-  // guardar canción en ese servicio
-  await addDoc(collection(servicioRef,"canciones"),{ songId });
-
-  // contador visual
-  const regRef = doc(db,"registro",songId);
-  const snap = await getDoc(regRef);
-  const data = snap.exists()?snap.data():{veces:0,fechas:[]};
-  const nuevas = [...(data.fechas||[]), fecha];
-  await setDoc(regRef,{veces:nuevas.length, fechas:nuevas});
-
-  actualizarRegistroCard(songId);
-}
-
-  // Guardar canción dentro del servicio
-  await addDoc(collection(servicioRef,"canciones"),{
-    songId
-  });
-
-  // 🔹 OPCIONAL: seguir usando registro solo como contador visual
-  const regRef = doc(db,"registro",songId);
-  const snap = await getDoc(regRef);
-  const data = snap.exists()?snap.data():{veces:0,fechas:[]};
-  const nuevas = [...(data.fechas||[]), fecha];
-  await setDoc(regRef,{veces:nuevas.length, fechas:nuevas});
+/* Marcar tocada +1 */
+async function marcarTocada(id){
+  try{
+    const ref = doc(db,"registro",id);
+    const snap = await getDoc(ref);
+    const data = snap.exists()?snap.data():{veces:0,fechas:[]};
+    const nuevas = Array.isArray(data.fechas)?[...data.fechas]:[];
+    nuevas.push(isoToday());
+    await setDoc(ref, {veces: nuevas.length, fechas: nuevas});
+    actualizarRegistroCard(id);
+    if(document.getElementById("registro-canciones").style.display==="block") cargarRegistro();
+  } catch(e){ console.error("Error marcarTocada:", e); alert("Error marcando tocada (mira consola)."); }
 }
 
 /* Render lista de canciones (aplica búsqueda) */
@@ -828,32 +806,27 @@ async function cargarAnalisisMensual() {
 });
 
 
-  const snapServicios = await getDocs(collection(db,"servicios"));
+
+  const snapRegistro = await getDocs(collection(db,"registro"));
   const analisisSnap = await getDocs(collection(db,"analisis_mensual"));
 
   const analisisGuardado = {};
   analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
   // Agrupar por mes
-const mapaMeses = {};
-for (const docu of snapServicios.docs) {
-  const data = docu.data();
-  const mes = data.fecha.slice(0,7);
+  const mapaMeses = {}; 
+  snapRegistro.forEach(docu => {
+    const data = docu.data();
+    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+    const cancion = cancionesCache.find(c => c.id === docu.id);
+    if(!cancion) return;
 
-  if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, cantantes:{} };
-
-  // cantante por fecha
-  mapaMeses[mes].cantantes[data.fecha] = data.cantante;
-
-  // canciones del servicio
-  const cancionesSnap = await getDocs(collection(db,"servicios",docu.id,"canciones"));
-
-  cancionesSnap.forEach(c => {
-    const songId = c.data().songId;
-    if(!mapaMeses[mes].canciones[songId]) mapaMeses[mes].canciones[songId]=0;
-    mapaMeses[mes].canciones[songId]++;
+    fechas.forEach(f => {
+      const mes = f.slice(0,7);
+      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, cantantes: "", evaluaciones:{}, observaciones:"" };
+      mapaMeses[mes].canciones[cancion.id] = (mapaMeses[mes].canciones[cancion.id] || 0) + 1;
+    });
   });
-}
 
   let meses = Object.keys(mapaMeses).sort().reverse(); // Mes más reciente primero
   if(!meses.length){
@@ -1059,17 +1032,13 @@ document.addEventListener("click", e => {
 ========================= */
 
 async function verHistorialConCantante(fechas){
-  let texto = "📅 Historial real\n\n";
+  let texto = "📅 Historial de canciones\n\n";
 
-  for(const fecha of fechas){
-    const servicioSnap = await getDoc(doc(db,"servicios",fecha));
-    if(servicioSnap.exists()){
-      const data = servicioSnap.data();
-      texto += `${isoToDisplay(fecha)} → ${data.cantante}\n`;
-    } else {
-      texto += `${isoToDisplay(fecha)} → —\n`;
-    }
+  for (const f of fechas) {
+    const cantante = await obtenerCantantePorFecha(f);
+    texto += `${isoToDisplay(f)} → ${cantante || "—"}\n`;
   }
+
   alert(texto);
 }
 
@@ -1238,50 +1207,6 @@ window.addEventListener('load', ()=>{
   window.toggleAnalisis = toggleAnalisis;
   window.verHistorialConCantante = verHistorialConCantante;
 });
-
-async function migrarHistorialAServicios(){
-  console.log("🚀 Iniciando migración...");
-
-  const registroSnap = await getDocs(collection(db,"registro"));
-  const cancionesPorFecha = {};
-
-  registroSnap.forEach(docu=>{
-    const songId = docu.id;
-    const data = docu.data();
-    const fechas = data.fechas || [];
-
-    fechas.forEach(f=>{
-      if(!cancionesPorFecha[f]) cancionesPorFecha[f]=[];
-      cancionesPorFecha[f].push(songId);
-    });
-  });
-
-  console.log("📅 Fechas encontradas:", Object.keys(cancionesPorFecha).length);
-
-  for(const fecha of Object.keys(cancionesPorFecha)){
-    const mes = fecha.slice(0,7);
-    const analisisRef = doc(db,"analisis_mensual",mes);
-    const analisisSnap = await getDoc(analisisRef);
-
-    let cantante = "—";
-    if(analisisSnap.exists()){
-      const cantantes = analisisSnap.data().cantantes || {};
-      cantante = cantantes[fecha] || "—";
-    }
-
-    const servicioRef = doc(db,"servicios",fecha);
-    await setDoc(servicioRef,{fecha,cantante,migrado:true});
-
-    const canciones = cancionesPorFecha[fecha];
-    for(const songId of canciones){
-      await addDoc(collection(servicioRef,"canciones"),{songId});
-    }
-
-    console.log(`✅ Servicio creado ${fecha}`);
-  }
-
-  console.log("🎉 MIGRACIÓN TERMINADA");
-}
 </script>
 </body>
 </html>
