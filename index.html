@@ -866,26 +866,43 @@ async function guardarSeccion(tipo){
 }
 
 /* MODO EDICIÓN con PIN 2025 */
-function activarEdicion(){
-  if(!modoEdicion){
+function activarEdicion() {
+  if (!modoEdicion) {
     const pin = prompt("Introduce el PIN para editar:");
-    if(pin === "2025"){
+    if (pin === "2025") {
       modoEdicion = true;
+
       document.querySelector(".edit-banner").style.display = "block";
       document.getElementById("btnAgregar").style.display = "block";
+
+      // 🔓 Abrir secciones (solo UI, NO render)
+      document.getElementById("seccion-semana").style.display = "block";
+      document.getElementById("seccion-mes").style.display = "block";
+
       alert("✏️ Modo edición activado");
-    } else if(pin) {
-      return alert("PIN incorrecto");
+    } else if (pin) {
+      alert("PIN incorrecto");
+      return;
     }
   } else {
     modoEdicion = false;
+
     document.querySelector(".edit-banner").style.display = "none";
     document.getElementById("btnAgregar").style.display = "none";
+
     alert("🔒 Modo edición desactivado");
   }
- cargarSeccion("semana"); cargarSeccion("mes"); cargarCanciones(); cargarRegistro();
+
+  // ❌ ELIMINADAS PARA SIEMPRE
+  // cargarSeccion("semana");
+  // cargarSeccion("mes");
+
+  // ✅ Estas sí pueden quedarse
+  cargarCanciones();
+  cargarRegistro();
+
   if (document.getElementById("analisis-mensual").style.display === "block") {
-  cargarAnalisisMensual();
+    cargarAnalisisMensual();
   }
 }
 
