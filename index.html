@@ -883,7 +883,7 @@ function activarEdicion(){
     document.getElementById("btnAgregar").style.display = "none";
     alert("🔒 Modo edición desactivado");
   }
-  cargarCanciones(); cargarRegistro();
+ cargarSeccion("semana"); cargarSeccion("mes"); cargarCanciones(); cargarRegistro();
   if (document.getElementById("analisis-mensual").style.display === "block") {
   cargarAnalisisMensual();
   }
