@@ -871,27 +871,33 @@ const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
     card.style.marginTop = "12px";
 
 // Cantantes
-const domingos = obtenerDomingosDelMes(mes);
+const domingos = obtenerDomingosDelMes(mes).map(f => ajustarAServicio(f));
 
 const cantanteHtml = `
   <details class="details-slow" style="margin-top:6px;">
     <summary>🎤 Cantantes del mes</summary>
 
-    ${domingos.map(fecha => `
-      <div style="margin-top:6px">
-        ${isoToDisplay(fecha)} →
-        ${
-          modoEdicion
-            ? `<select class="cantante-select" data-mes="${mes}" data-fecha="${fecha}">
-                <option value=""></option>
-                <option value="Milly" ${datosMes.cantantes?.[fecha]==="Milly"?"selected":""}>Milly</option>
-                <option value="Carolina" ${datosMes.cantantes?.[fecha]==="Carolina"?"selected":""}>Carolina</option>
-                <option value="Jason" ${datosMes.cantantes?.[fecha]==="Jason"?"selected":""}>Jason</option>
-              </select>`
-            : `<strong>${datosMes.cantantes?.[fecha] || "-"}</strong>`
-        }
-      </div>
-    `).join("")}
+    ${domingos.map(fechaOriginal => {
+      const fecha = ajustarAServicio(fechaOriginal);
+
+      return `
+        <div style="margin-top:6px">
+          ${isoToDisplay(fecha)} →
+          ${
+            modoEdicion
+              ? `<select class="cantante-select"
+                    data-mes="${mes}"
+                    data-fecha="${fecha}">
+                  <option value=""></option>
+                  <option value="Milly" ${datosMes.cantantes?.[fecha]==="Milly"?"selected":""}>Milly</option>
+                  <option value="Carolina" ${datosMes.cantantes?.[fecha]==="Carolina"?"selected":""}>Carolina</option>
+                  <option value="Jason" ${datosMes.cantantes?.[fecha]==="Jason"?"selected":""}>Jason</option>
+                </select>`
+              : `<strong>${datosMes.cantantes?.[fecha] || "-"}</strong>`
+          }
+        </div>
+      `;
+    }).join("")}
 
   </details>
 `;
