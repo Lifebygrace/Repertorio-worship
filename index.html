@@ -875,10 +875,6 @@ function activarEdicion() {
       document.querySelector(".edit-banner").style.display = "block";
       document.getElementById("btnAgregar").style.display = "block";
 
-      // 🔓 Abrir secciones (solo UI, NO render)
-      document.getElementById("seccion-semana").style.display = "block";
-      document.getElementById("seccion-mes").style.display = "block";
-
       alert("✏️ Modo edición activado");
     } else if (pin) {
       alert("PIN incorrecto");
@@ -898,6 +894,8 @@ function activarEdicion() {
   // cargarSeccion("mes");
 
   // ✅ Estas sí pueden quedarse
+  escucharSeccion("semana");
+  escucharSeccion("mes");
   cargarCanciones();
   cargarRegistro();
 
