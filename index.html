@@ -543,18 +543,30 @@ async function actualizarRegistroCard(id){
   } catch(e){ console.error("Error actualizarRegistroCard:", e); }
 }
 
-/* Marcar tocada +1 */
-async function marcarTocada(id){
-  try{
-    const ref = doc(db,"registro",id);
-    const snap = await getDoc(ref);
-    const data = snap.exists()?snap.data():{veces:0,fechas:[]};
-    const nuevas = Array.isArray(data.fechas)?[...data.fechas]:[];
-    nuevas.push(isoToday());
-    await setDoc(ref, {veces: nuevas.length, fechas: nuevas});
-    actualizarRegistroCard(id);
-    if(document.getElementById("registro-canciones").style.display==="block") cargarRegistro();
-  } catch(e){ console.error("Error marcarTocada:", e); alert("Error marcando tocada (mira consola)."); }
+async function marcarTocada(songId){
+  const fecha = isoToday();
+
+  // Obtener cantante actual de la semana
+  const semanaSnap = await getDoc(doc(db,"secciones","semana"));
+  const cantante = semanaSnap.exists() ? (semanaSnap.data().cantante || "—") : "—";
+
+  // Crear servicio
+  const servicioRef = await addDoc(collection(db,"servicios"),{
+    fecha,
+    cantante
+  });
+
+  // Guardar canción dentro del servicio
+  await addDoc(collection(servicioRef,"canciones"),{
+    songId
+  });
+
+  // 🔹 OPCIONAL: seguir usando registro solo como contador visual
+  const regRef = doc(db,"registro",songId);
+  const snap = await getDoc(regRef);
+  const data = snap.exists()?snap.data():{veces:0,fechas:[]};
+  const nuevas = [...(data.fechas||[]), fecha];
+  await setDoc(regRef,{veces:nuevas.length, fechas:nuevas});
 }
 
 /* Render lista de canciones (aplica búsqueda) */
