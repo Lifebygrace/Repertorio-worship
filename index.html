@@ -238,20 +238,6 @@ details[open] > *:not(summary){
 details > *{
   will-change: transform, opacity;
 }
-
-.drag-item {
-  cursor: grab;
-  padding: 6px 8px;
-  border-radius: 6px;
-}
-
-.drag-item:active {
-  cursor: grabbing;
-}
-
-.drag-item.drag-over {
-  background: rgba(255, 140, 66, 0.25);
-}
   </style>
 </head>
 <body>
@@ -408,17 +394,9 @@ function escucharSeccion(tipo) {
       ${tipo === "semana"
         ? `<p>🎤 Cantante: <strong>${data.cantante || "-"}</strong></p>`
         : ""}
-<ul id="lista-${tipo}" ${modoEdicion ? 'class="draggable-list"' : ''}>
-  ${(data.canciones || []).map((c, i) => `
-    <li
-      ${modoEdicion ? 'draggable="true"' : ''}
-      data-index="${i}"
-      class="${modoEdicion ? 'drag-item' : ''}"
-    >
-      ${modoEdicion ? '☰ ' : ''}${c}
-    </li>
-  `).join("")}
-</ul>
+      <ul>
+        ${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}
+      </ul>
     `;
 
     const notasBox = document.getElementById(`notas-${tipo}`);
@@ -429,64 +407,12 @@ function escucharSeccion(tipo) {
           ${renderNotas(data.notas)}
         </div>`;
     }
-    if (modoEdicion) {
-  setTimeout(() => activarDragAndDrop(tipo), 0);
-}
-    
+
     // 🔁 Si el Worship Pack está abierto, refrescarlo
     const pack = document.getElementById(`worshippack-${tipo}`);
     if (pack && pack.style.display === "block") {
       mostrarWorshipPack(tipo);
     }
-  });
-}
-
-
-function activarDragAndDrop(tipo) {
-  const lista = document.getElementById(`lista-${tipo}`);
-  if (!lista) return;
-
-  let dragIndex = null;
-
-  lista.querySelectorAll("li").forEach(item => {
-
-    item.addEventListener("dragstart", e => {
-      dragIndex = Number(item.dataset.index);
-      item.classList.add("dragging");
-    });
-
-    item.addEventListener("dragend", () => {
-      item.classList.remove("dragging");
-    });
-
-    item.addEventListener("dragover", e => {
-      e.preventDefault();
-      item.classList.add("drag-over");
-    });
-
-    item.addEventListener("dragleave", () => {
-      item.classList.remove("drag-over");
-    });
-
-    item.addEventListener("drop", async () => {
-      item.classList.remove("drag-over");
-
-      const dropIndex = Number(item.dataset.index);
-      if (dragIndex === null || dragIndex === dropIndex) return;
-
-      const ref = doc(db, "secciones", tipo);
-      const snap = await getDoc(ref);
-      if (!snap.exists()) return;
-
-      const canciones = [...(snap.data().canciones || [])];
-
-      // 🔁 Reordenar
-      const [movida] = canciones.splice(dragIndex, 1);
-      canciones.splice(dropIndex, 0, movida);
-
-      await updateDoc(ref, { canciones });
-    });
-
   });
 }
 /* Estado */
@@ -866,41 +792,26 @@ async function guardarSeccion(tipo){
 }
 
 /* MODO EDICIÓN con PIN 2025 */
-function activarEdicion() {
-  if (!modoEdicion) {
+function activarEdicion(){
+  if(!modoEdicion){
     const pin = prompt("Introduce el PIN para editar:");
-    if (pin === "2025") {
+    if(pin === "2025"){
       modoEdicion = true;
-
       document.querySelector(".edit-banner").style.display = "block";
       document.getElementById("btnAgregar").style.display = "block";
-
       alert("✏️ Modo edición activado");
-    } else if (pin) {
-      alert("PIN incorrecto");
-      return;
+    } else if(pin) {
+      return alert("PIN incorrecto");
     }
   } else {
     modoEdicion = false;
-
     document.querySelector(".edit-banner").style.display = "none";
     document.getElementById("btnAgregar").style.display = "none";
-
     alert("🔒 Modo edición desactivado");
   }
-
-  // ❌ ELIMINADAS PARA SIEMPRE
-  // cargarSeccion("semana");
-  // cargarSeccion("mes");
-
-  // ✅ Estas sí pueden quedarse
-  escucharSeccion("semana");
-  escucharSeccion("mes");
-  cargarCanciones();
-  cargarRegistro();
-
+  cargarSeccion("semana"); cargarSeccion("mes"); cargarCanciones(); cargarRegistro();
   if (document.getElementById("analisis-mensual").style.display === "block") {
-    cargarAnalisisMensual();
+  cargarAnalisisMensual();
   }
 }
 
