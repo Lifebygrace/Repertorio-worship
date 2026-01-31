@@ -1264,17 +1264,29 @@ function playClick(){
 
   const isAccent = beatCount === 0;
 
-  osc.type = "square";
-  osc.frequency.value = isAccent ? 1400 : 900;
-  gain.gain.value = isAccent ? 0.22 : 0.12;
+  // 🌲 Wood click
+  osc.type = "triangle";
+  osc.frequency.value = isAccent ? 1200 : 800;
+
+  // Envolvente corta tipo madera
+  const now = audioCtx.currentTime;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(
+    isAccent ? 0.35 : 0.22,
+    now + 0.005
+  );
+  gain.gain.exponentialRampToValueAtTime(
+    0.0001,
+    now + 0.04
+  );
 
   osc.connect(gain);
   gain.connect(audioCtx.destination);
 
-  osc.start();
-  osc.stop(audioCtx.currentTime + 0.05);
+  osc.start(now);
+  osc.stop(now + 0.05);
 
-  beatCount = (beatCount + 1) % 4; // 4/4 fijo
+  beatCount = (beatCount + 1) % 4; // 4/4
 }
 
 function startMetronome(){
