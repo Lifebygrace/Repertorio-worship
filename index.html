@@ -238,6 +238,24 @@ details[open] > *:not(summary){
 details > *{
   will-change: transform, opacity;
 }
+
+.btn-editar{
+  display:none;
+  margin-top:6px;
+  font-size:0.85rem;
+}
+
+body.modo-edicion .btn-editar{
+  display:inline-block;
+}
+
+.editor{
+  margin-top:8px;
+}
+
+.oculto{
+  display:none;
+}
   </style>
 </head>
 <body>
@@ -266,24 +284,24 @@ details > *{
   <h2>🎶 Canciones para la semana</h2>
   <div id="mostrar-semana" style="margin-top:8px"></div>
 
+<div class="bloque-editable" data-tipo="semana">
+
+  <!-- Vista -->
   <button onclick="toggleNotas('semana')">🗒️ Ver notas</button>
-  <div id="notas-semana" class="notas-toggle" style="display:none; margin-top:8px;"></div>
+  <div id="notas-semana" class="notas-toggle"></div>
 
-  <button onclick="mostrarWorshipPack('semana')">🎁 Worship Pack</button>
-  <div id="worshippack-semana" style="display:none; margin-top:8px;"></div>
+  <!-- Botón editar (solo en modo edición) -->
+  <button class="btn-editar" onclick="abrirEditor(this)">✏️ Editar notas</button>
 
-  <div id="contenedor-semana" style="display:none; margin-top:10px;">
-  <input id="titulo-semana" placeholder="Título (ej. Semana del 7 al 13)" />
-  <select id="cantante-semana" style="margin-bottom:10px">
-  <option value="">🎤 Cantante</option>
-  <option value="Milly">Milly</option>
-  <option value="Carolina">Carolina</option>
-  <option value="Jason">Jason</option>
-</select>
-  <textarea id="canciones-semana" placeholder="Canciones (una por línea)"></textarea>
-  <textarea id="notas-edit-semana" placeholder="Notas de esta semana..."></textarea>
-  <button onclick="guardarSeccion('semana')">Guardar sección</button>
-</div>
+  <!-- Editor oculto -->
+  <div class="editor oculto">
+    <textarea id="notas-edit-semana"></textarea>
+    <div style="margin-top:6px">
+      <button onclick="guardarNotasInline('semana', this)">💾 Guardar</button>
+      <button onclick="cancelarEditor(this)">❌ Cancelar</button>
+    </div>
+  </div>
+
 </div>
 
 <div class="section">
@@ -792,29 +810,28 @@ async function guardarSeccion(tipo){
 }
 
 /* MODO EDICIÓN con PIN 2025 */
+
 function activarEdicion(){
   if(!modoEdicion){
     const pin = prompt("Introduce el PIN para editar:");
-    if(pin === "2025"){
-      modoEdicion = true;
-      document.querySelector(".edit-banner").style.display = "block";
-      document.getElementById("btnAgregar").style.display = "block";
-      alert("✏️ Modo edición activado");
-    } else if(pin) {
-      return alert("PIN incorrecto");
-    }
+    if(pin !== "2025") return alert("PIN incorrecto");
+
+    modoEdicion = true;
+    document.body.classList.add("modo-edicion");
+    document.querySelector(".edit-banner").style.display = "block";
+    document.getElementById("btnAgregar").style.display = "block";
   } else {
     modoEdicion = false;
+    document.body.classList.remove("modo-edicion");
     document.querySelector(".edit-banner").style.display = "none";
     document.getElementById("btnAgregar").style.display = "none";
-    alert("🔒 Modo edición desactivado");
   }
-  cargarSeccion("semana"); cargarSeccion("mes"); cargarCanciones(); cargarRegistro();
-  if (document.getElementById("analisis-mensual").style.display === "block") {
-  cargarAnalisisMensual();
-  }
-}
 
+  // 🔁 SOLO refrescar vistas, NO mostrar inputs
+  cargarSeccion("semana");
+  cargarSeccion("mes");
+  cargarCanciones();
+}
 /* Búsqueda */
 function debounceBuscar(){ clearTimeout(debounceTimer); debounceTimer = setTimeout(cargarCanciones, 300); }
 
@@ -1190,6 +1207,31 @@ document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
   });
 
   alert("✅ Análisis mensual guardado");
+}
+
+function abrirEditor(btn){
+  const bloque = btn.closest(".bloque-editable");
+  bloque.querySelector(".editor").classList.remove("oculto");
+}
+
+function cancelarEditor(btn){
+  const editor = btn.closest(".editor");
+  editor.classList.add("oculto");
+}
+
+async function guardarNotasInline(tipo, btn){
+  const editor = btn.closest(".editor");
+  const texto = editor.querySelector("textarea").value.trim();
+
+  const ref = doc(db,"secciones",tipo);
+  const snap = await getDoc(ref);
+
+  await setDoc(ref, {
+    ...(snap.exists() ? snap.data() : {}),
+    notas: texto
+  });
+
+  editor.classList.add("oculto");
 }
 /* BOOT */
 
