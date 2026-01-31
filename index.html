@@ -1272,7 +1272,8 @@ function playClick(){
   const now = audioCtx.currentTime;
   gain.gain.setValueAtTime(0.0001, now);
   gain.gain.exponentialRampToValueAtTime(
-    isAccent ? 0.5 : 0.32,
+    //volumen del click del metronomo 
+    isAccent ? 0.6 : 0.38,
     now + 0.005
   );
   gain.gain.exponentialRampToValueAtTime(
