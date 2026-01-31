@@ -238,6 +238,56 @@ details[open] > *:not(summary){
 details > *{
   will-change: transform, opacity;
 }
+
+.metronome-ui{
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 10px;
+}
+
+.bpm-display{
+  font-size: 1.4rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+#bpmSlider{
+  width: 100%;
+}
+
+.metro-buttons{
+  display: flex;
+  justify-content: center;
+}
+
+.modal{
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.45);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+
+.modal-content{
+  background: var(--card-bg);
+  width: 90%;
+  max-width: 360px;
+  padding: 16px;
+  border-radius: 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
+  position: relative;
+}
+
+.close-btn{
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: transparent;
+  font-size: 1.2rem;
+}
   </style>
 </head>
 <body>
@@ -251,7 +301,7 @@ details > *{
   <div class="controls">
     <button onclick="toggleDark()">🌙 / ☀️</button>
     <button onclick="activarEdicion()">✏️ Editar</button>
-    <button onclick="window.open('https://www.metronomeonline.com','_blank')">🕒 Metrónomo</button>
+    <button onclick="abrirMetronomo()">🕒 Metrónomo</button>
     <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵 Mostrar lista</button>
   </div>
 </header>
@@ -1191,6 +1241,89 @@ document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
 
   alert("✅ Análisis mensual guardado");
 }
+
+let audioCtx;
+let metronomeInterval = null;
+let isRunning = false;
+let currentBpm = Number(localStorage.getItem("metroBpm")) || 80;
+
+const bpmSlider = () => document.getElementById("bpmSlider");
+const bpmValue  = () => document.getElementById("bpmValue");
+const metroBtn  = () => document.getElementById("metroToggle");
+
+function initMetronome(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+}
+
+function playClick(){
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  osc.type = "square";
+  osc.frequency.value = 1000;
+  gain.gain.value = 0.15;
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start();
+  osc.stop(audioCtx.currentTime + 0.05);
+}
+
+function startMetronome(){
+  initMetronome();
+  const interval = 60000 / currentBpm;
+
+  playClick();
+  metronomeInterval = setInterval(playClick, interval);
+  isRunning = true;
+  metroBtn().textContent = "⏸ Stop";
+}
+
+function stopMetronome(){
+  clearInterval(metronomeInterval);
+  metronomeInterval = null;
+  isRunning = false;
+  metroBtn().textContent = "▶️ Start";
+}
+
+function toggleMetronome(){
+  isRunning ? stopMetronome() : startMetronome();
+}
+
+function abrirMetronomo(){
+  document.getElementById("modal-metronomo").style.display = "flex";
+
+  bpmSlider().value = currentBpm;
+  bpmValue().textContent = currentBpm;
+}
+
+function cerrarMetronomo(){
+  stopMetronome();
+  document.getElementById("modal-metronomo").style.display = "none";
+}
+
+/* Eventos */
+document.addEventListener("input", e => {
+  if(e.target.id === "bpmSlider"){
+    currentBpm = Number(e.target.value);
+    bpmValue().textContent = currentBpm;
+    localStorage.setItem("metroBpm", currentBpm);
+
+    if(isRunning){
+      stopMetronome();
+      startMetronome();
+    }
+  }
+});
+
+document.addEventListener("click", e => {
+  if(e.target.id === "metroToggle"){
+    toggleMetronome();
+  }
+});
 /* BOOT */
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
@@ -1274,5 +1407,29 @@ window.addEventListener('load', ()=>{
   window.verHistorialConCantante = verHistorialConCantante;
 });
 </script>
+<div id="modal-metronomo" class="modal">
+  <div class="modal-content fade-apple">
+    <button class="close-btn" onclick="cerrarMetronomo()">✖</button>
+
+    <h3>🕒 Metrónomo</h3>
+
+    <div class="metronome-ui">
+      <div class="bpm-display">
+        <span id="bpmValue">80</span> BPM
+      </div>
+
+      <input
+        type="range"
+        min="50"
+        max="180"
+        value="80"
+        id="bpmSlider" />
+
+      <div class="metro-buttons">
+        <button id="metroToggle">▶️ Start</button>
+      </div>
+    </div>
+  </div>
+</div>
 </body>
 </html>
