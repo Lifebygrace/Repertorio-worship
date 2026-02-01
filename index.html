@@ -1256,6 +1256,10 @@ function initMetronome(){
   if(!audioCtx){
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   }
+
+  if(audioCtx.state === "suspended"){
+    audioCtx.resume();
+  }
 }
 
 function playClick(){
@@ -1343,6 +1347,18 @@ document.addEventListener("click", e => {
     toggleMetronome();
   }
 });
+// 🔊 Reactivar audio al volver a la app (iOS / PWA)
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "visible" && audioCtx){
+    audioCtx.resume();
+  }
+});
+
+window.addEventListener("pageshow", ()=>{
+  if (audioCtx) {
+    audioCtx.resume();
+  }
+});
 /* BOOT */
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
@@ -1425,6 +1441,7 @@ window.addEventListener('load', ()=>{
   inicializarCanciones();
   escucharSeccion("semana");
   escucharSeccion("mes");
+  initMetronome();
   window.toggleAnalisis = toggleAnalisis;
   window.verHistorialConCantante = verHistorialConCantante;
 });
