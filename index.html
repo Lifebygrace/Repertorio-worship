@@ -288,6 +288,18 @@ details > *{
   background: transparent;
   font-size: 1.2rem;
 }
+
+.metro-controls{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:28px;           /* ← separación horizontal */
+  margin-top:14px;
+}
+
+.metro-controls button{
+  min-width:110px;    /* tamaño consistente */
+}
   </style>
 </head>
 <body>
@@ -1510,8 +1522,10 @@ window.addEventListener('load', ()=>{
         id="bpmSlider" />
 
       <div class="metro-buttons">
-        <button id="metroToggle">▶️ Start</button>
-        <button id="tapTempo">TAP</button>
+        <div class="metro-controls">
+  <button id="metroToggle">▶ Start</button>
+  <button id="tapTempo">TAP</button>
+</div>
       </div>
     </div>
   </div>
