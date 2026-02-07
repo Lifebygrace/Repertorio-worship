@@ -300,6 +300,12 @@ details > *{
 .metro-controls button{
   min-width:110px;    /* tamaño consistente */
 }
+
+#tapTempo{
+  touch-action: manipulation;      /* evita doble-tap zoom */
+  -webkit-user-select: none;       /* evita selección */
+  user-select: none;
+}
   </style>
 </head>
 <body>
@@ -1416,6 +1422,19 @@ window.addEventListener("pageshow", ()=>{
     audioCtx.resume();
   }
 });
+
+let lastTouchEnd = 0;
+
+document.addEventListener("touchend", function (event) {
+  const now = Date.now();
+  if (now - lastTouchEnd <= 300) {
+    if (event.target.closest("#tapTempo")) {
+      event.preventDefault();
+    }
+  }
+  lastTouchEnd = now;
+}, { passive: false });
+
 /* BOOT */
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
