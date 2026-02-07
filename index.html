@@ -1247,6 +1247,10 @@ let audioCtx;
 let metronomeInterval = null;
 let isRunning = false;
 let currentBpm = Number(localStorage.getItem("metroBpm")) || 80;
+// TAP TEMPO
+let tapTimes = [];
+let lastTap = 0;
+const MAX_TAPS = 6;
 
 const bpmSlider = () => document.getElementById("bpmSlider");
 const bpmValue  = () => document.getElementById("bpmValue");
@@ -1311,6 +1315,43 @@ function stopMetronome(){
   isRunning = false;
   metroBtn().textContent = "▶️ Start";
 }
+function tapTempo(){
+  initMetronome();
+
+  const now = performance.now();
+
+  if(now - lastTap > 2000){
+    tapTimes = [];
+  }
+
+  lastTap = now;
+  tapTimes.push(now);
+
+  if(tapTimes.length > MAX_TAPS){
+    tapTimes.shift();
+  }
+
+  if(tapTimes.length >= 2){
+    let intervals = [];
+    for(let i = 1; i < tapTimes.length; i++){
+      intervals.push(tapTimes[i] - tapTimes[i-1]);
+    }
+
+    const avg = intervals.reduce((a,b)=>a+b) / intervals.length;
+    const bpm = Math.round(60000 / avg);
+
+    if(bpm >= 50 && bpm <= 180){
+      currentBpm = bpm;
+      bpmSlider().value = bpm;
+      bpmDisplay().textContent = bpm;
+
+      if(isRunning){
+        stopMetronome();
+        startMetronome();
+      }
+    }
+  }
+}
 
 function toggleMetronome(){
   isRunning ? stopMetronome() : startMetronome();
@@ -1347,6 +1388,10 @@ document.addEventListener("click", e => {
     toggleMetronome();
   }
 });
+
+document.getElementById("tapTempo").addEventListener("click", tapTempo);
+
+
 // 🔊 Reactivar audio al volver a la app (iOS / PWA)
 document.addEventListener("visibilitychange", ()=>{
   if(document.visibilityState === "visible" && audioCtx){
@@ -1466,6 +1511,7 @@ window.addEventListener('load', ()=>{
 
       <div class="metro-buttons">
         <button id="metroToggle">▶️ Start</button>
+        <button id="tapTempo">TAP</button>
       </div>
     </div>
   </div>
