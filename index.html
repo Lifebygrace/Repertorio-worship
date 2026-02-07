@@ -1358,7 +1358,7 @@ function tapTempo(){
     const avg = intervals.reduce((a,b)=>a+b) / intervals.length;
     const bpm = Math.round(60000 / avg);
 
-    if(bpm >= 50 && bpm <= 180){
+    if(bpm >= 50 && bpm <= 280){
       currentBpm = bpm;
       bpmSlider().value = bpm;
       bpmDisplay().textContent = bpm;
@@ -1536,7 +1536,7 @@ window.addEventListener('load', ()=>{
       <input
         type="range"
         min="50"
-        max="180"
+        max="280"
         value="80"
         id="bpmSlider" />
 
