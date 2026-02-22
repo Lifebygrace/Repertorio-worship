@@ -902,7 +902,7 @@ function debounceBuscar(){ clearTimeout(debounceTimer); debounceTimer = setTimeo
 /* Toggles y UI helpers */
 function toggleDark(){ document.body.classList.toggle("dark"); localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light"); }
 function toggleFormulario(){ const f = document.getElementById("formulario"); f.style.display = f.style.display === "none" ? "block" : "none"; }
-function toggleCanciones(){ cancionesVisible = !cancionesVisible; document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar lista" : "🎵 Mostrar lista"; cargarCanciones(); }
+function toggleCanciones(){ cancionesVisible = !cancionesVisible; document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar lista" : "🎵Mostrar lista"; cargarCanciones(); }
 function toggleRegistro(){ const el = document.getElementById("registro-canciones"); el.style.display = el.style.display === "block" ? "none" : "block"; if(el.style.display==="block") cargarRegistro(); }
 /* =========================
    ANÁLISIS MENSUAL
