@@ -1452,7 +1452,7 @@ document.addEventListener("touchend", function (event) {
 
 let mesListadoActual = new Date();
 
-function toggleListadoMensual(){
+window.toggleListadoMensual = function(){
   const el = document.getElementById("listado-mensual");
   el.style.display = el.style.display === "block" ? "none" : "block";
   if(el.style.display === "block"){
@@ -1460,7 +1460,7 @@ function toggleListadoMensual(){
   }
 }
 
-function cambiarMes(delta){
+window.cambiarMes = function(delta){
   mesListadoActual.setMonth(mesListadoActual.getMonth() + delta);
   renderListadoMensual();
 }
