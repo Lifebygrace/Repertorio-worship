@@ -321,6 +321,7 @@ details > *{
     <button onclick="activarEdicion()">✏️ Editar</button>
     <button onclick="abrirMetronomo()">🕒 Metrónomo</button>
     <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵 Mostrar lista</button>
+    <button onclick="toggleListadoMensual()">📅 Listado mensual</button>
   </div>
 </header>
 
@@ -375,6 +376,18 @@ details > *{
     <textarea id="notas-edit-mes" placeholder="Notas de este mes..."></textarea>
     <button onclick="guardarSeccion('mes')">Guardar sección</button>
   </div>
+</div>
+
+<div id="listado-mensual" class="section" style="display:none;">
+  <h2>📅 Listado mensual</h2>
+
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <button onclick="cambiarMes(-1)">⬅️</button>
+    <h3 id="mes-actual"></h3>
+    <button onclick="cambiarMes(1)">➡️</button>
+  </div>
+
+  <div id="domingos-container"></div>
 </div>
 
   <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
@@ -1436,6 +1449,89 @@ document.addEventListener("touchend", function (event) {
 }, { passive: false });
 
 /* BOOT */
+
+let mesListadoActual = new Date();
+
+function toggleListadoMensual(){
+  const el = document.getElementById("listado-mensual");
+  el.style.display = el.style.display === "block" ? "none" : "block";
+  if(el.style.display === "block"){
+    renderListadoMensual();
+  }
+}
+
+function cambiarMes(delta){
+  mesListadoActual.setMonth(mesListadoActual.getMonth() + delta);
+  renderListadoMensual();
+}
+
+async function renderListadoMensual(){
+
+  const mes = mesListadoActual.toISOString().slice(0,7);
+  const nombreMes = mesListadoActual.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+  document.getElementById("mes-actual").textContent = nombreMes.toUpperCase();
+
+  const domingos = obtenerDomingosDelMes(mes);
+  const cont = document.getElementById("domingos-container");
+  cont.innerHTML = "";
+
+  const docRef = doc(db,"listado_mensual",mes);
+  const snap = await getDoc(docRef);
+  const data = snap.exists() ? snap.data() : {};
+
+  domingos.forEach(fecha => {
+
+    const cancionesAsignadas = data[fecha] || [];
+
+    const div = document.createElement("div");
+    div.className = "card";
+
+    if(modoEdicion){
+      div.innerHTML = `
+        <h4>${isoToDisplay(fecha)}</h4>
+        <textarea data-fecha="${fecha}" class="edit-listado edit-input"
+          placeholder="Una canción por línea...">${cancionesAsignadas.join("\n")}</textarea>
+      `;
+    } else {
+      div.innerHTML = `
+        <h4>${isoToDisplay(fecha)}</h4>
+        <ul>
+          ${cancionesAsignadas.map(c=>`<li>${c}</li>`).join("") || "<li>—</li>"}
+        </ul>
+      `;
+    }
+
+    cont.appendChild(div);
+  });
+
+  if(modoEdicion){
+    const btnGuardar = document.createElement("button");
+    btnGuardar.textContent = "💾 Guardar listado";
+    btnGuardar.style.marginTop = "10px";
+    btnGuardar.onclick = () => guardarListadoMensual(mes);
+    cont.appendChild(btnGuardar);
+  }
+}
+
+async function guardarListadoMensual(mes){
+
+  const inputs = document.querySelectorAll(".edit-listado");
+  const datos = {};
+
+  inputs.forEach(input=>{
+    const fecha = input.dataset.fecha;
+    const canciones = input.value
+      .split("\n")
+      .map(s=>s.trim())
+      .filter(Boolean);
+
+    datos[fecha] = canciones;
+  });
+
+  await setDoc(doc(db,"listado_mensual",mes), datos);
+  alert("✅ Listado mensual guardado");
+  renderListadoMensual();
+}
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
 async function mostrarWorshipPack(tipo) {
