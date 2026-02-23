@@ -306,6 +306,14 @@ details > *{
   -webkit-user-select: none;       /* evita selección */
   user-select: none;
 }
+
+.domingo-proximo {
+  border: 2px solid #ff8c00;
+  background: linear-gradient(135deg, #3a2605, #4a3008);
+  box-shadow: 0 0 18px rgba(255, 140, 0, 0.5);
+  transform: scale(1.02);
+  transition: 0.3s ease;
+}
   </style>
 </head>
 <body>
@@ -1478,13 +1486,26 @@ async function renderListadoMensual(){
   const docRef = doc(db,"listado_mensual",mes);
   const snap = await getDoc(docRef);
   const data = snap.exists() ? snap.data() : {};
+  
+  const hoy = new Date();
+const hoyISO = hoy.toISOString().slice(0,10);
+
+// calcular próximo domingo
+let proximoDomingo = new Date(hoy);
+let diaSemana = hoy.getDay(); // 0 = domingo
+
+let diasHastaDomingo = diaSemana === 0 ? 0 : 7 - diaSemana;
+proximoDomingo.setDate(hoy.getDate() + diasHastaDomingo);
+
+const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
 
   domingos.forEach(fecha => {
 
     const cancionesAsignadas = data[fecha] || [];
 
     const div = document.createElement("div");
-    div.className = "card";
+const esProximo = fecha === proximoDomingoISO;
+div.className = esProximo ? "card domingo-proximo" : "card";
 
     if(modoEdicion){
       div.innerHTML = `
