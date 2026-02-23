@@ -386,7 +386,14 @@ details > *{
   </div>
 </div>
 
-<div id="listado-mensual" class="section" style="display:none;">
+<div id="listado-mensual" class="section" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); 
+     background:white; border:2px solid #ccc; padding:20px; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.3); 
+     max-height:80vh; overflow-y:auto; width:90%; max-width:600px; border-radius:8px;">
+
+  <!-- Botón de cerrar -->
+  <span class="close-btn" onclick="toggleListadoMensual()" 
+        style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:18px;">✖</span>
+
   <h2>📅 Listado mensual</h2>
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
