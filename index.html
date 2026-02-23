@@ -315,6 +315,27 @@ details > *{
   transform: scale(1.02);
   transition: all 0.3s ease;
 }
+    /* =================================
+   ✨ GLOW PULSANTE PARA DOMINGO RESALTADO
+================================= */
+@keyframes domingoGlow {
+  0% {
+    box-shadow: 0 0 10px rgba(255, 140, 0, 0.35),
+                0 0 20px rgba(255, 140, 0, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(255, 140, 0, 0.55),
+                0 0 32px rgba(255, 140, 0, 0.35);
+  }
+  100% {
+    box-shadow: 0 0 10px rgba(255, 140, 0, 0.35),
+                0 0 20px rgba(255, 140, 0, 0.2);
+  }
+}
+
+.domingo-proximo {
+  animation: domingoGlow 2.5s ease-in-out infinite;
+}
 
 /* ================================
    ☀ MODO CLARO
