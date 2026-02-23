@@ -315,85 +315,6 @@ details > *{
   transition: 0.3s ease;
 }
 
-/* --- ESTILOS DEL MODAL --- */
-.modal {
-  display: none; /* Se muestra con JS */
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.5); /* Fondo semi-transparente */
-  z-index: 1000;
-  justify-content: center;
-  align-items: center;
-}
-
-.modal-content {
-  background-color: var(--bg-secundario, #fff); /* Ajusta según modo oscuro/claro */
-  color: var(--text-color, #000);
-  padding: 20px;
-  border-radius: 10px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 90%;
-  overflow-y: auto;
-  box-shadow: 0 0 20px rgba(0,0,0,0.3);
-  position: relative;
-}
-
-/* Botón de cerrar */
-.close-btn {
-  position: absolute;
-  top: 10px;
-  right: 15px;
-  cursor: pointer;
-  font-size: 20px;
-}
-
-/* Navegación de mes */
-.mes-navigation {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-}
-
-/* Cartas de domingos */
-#domingos-container .card {
-  border-radius: 6px;
-  padding: 10px;
-  margin-bottom: 8px;
-  background-color: var(--bg-card, #f5f5f5);
-  color: var(--text-color, #000);
-}
-
-/* Domingo más cercano resaltado */
-#domingos-container .card.destacado {
-  background-color: orange;
-  color: #fff;
-}
-
-/* Inputs de edición */
-.edit-input {
-  width: 100%;
-  box-sizing: border-box;
-  padding: 5px;
-  border-radius: 4px;
-  border: 1px solid #ccc;
-  resize: vertical;
-  margin-top: 5px;
-}
-
-/* Botón guardar */
-#domingos-container button {
-  padding: 8px 15px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  background-color: var(--btn-color, #4caf50);
-  color: #fff;
-}
   </style>
 </head>
 <body>
@@ -466,21 +387,101 @@ details > *{
   </div>
 </div>
 
-<!-- LISTADO MENSUAL MODAL -->
-<div id="listado-mensual" class="modal">
+<!-- Modal Listado Mensual -->
+<div id="listado-mensual" class="modal" style="display:none;">
   <div class="modal-content">
-    <span class="close-btn" onclick="toggleListadoMensual()">✖️</span>
     <h2>📅 Listado mensual</h2>
 
-    <div class="mes-navigation">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
       <button onclick="cambiarMes(-1)">⬅️</button>
       <h3 id="mes-actual"></h3>
       <button onclick="cambiarMes(1)">➡️</button>
     </div>
 
     <div id="domingos-container"></div>
+
+    <button onclick="toggleListadoMensual()" style="margin-top:15px;">❌ Cerrar</button>
   </div>
 </div>
+
+<style>
+/* Variables de colores de tus notas */
+:root {
+  --bg-secundario: #1e1e2f;  /* fondo modal/notes */
+  --text-color: #f0f0f0;     /* texto normal */
+  --bg-card: #2a2a40;         /* fondo de cada tarjeta */
+  --btn-color: #ff9800;       /* botones y destacado */
+}
+
+/* Fondo semitransparente de modal */
+.modal {
+  position: fixed;
+  top:0; left:0;
+  width:100%; height:100%;
+  background-color: rgba(0,0,0,0.5);
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+  padding-top:50px;
+  z-index:1000;
+}
+
+/* Contenido del modal */
+.modal-content {
+  background-color: var(--bg-secundario);
+  color: var(--text-color);
+  padding: 20px;
+  border-radius: 10px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 90%;
+  overflow-y: auto;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+}
+
+/* Tarjetas de domingos */
+#domingos-container .card {
+  background-color: var(--bg-card);
+  color: var(--text-color);
+  padding:10px;
+  margin-bottom:10px;
+  border-radius:5px;
+}
+
+/* Domingo más cercano */
+#domingos-container .card.destacado {
+  background-color: var(--btn-color);
+  color: var(--bg-secundario);
+}
+
+/* Botones dentro del modal */
+#domingos-container button,
+.modal-content > button {
+  background-color: var(--btn-color);
+  color: var(--bg-secundario);
+  border:none;
+  padding:5px 10px;
+  border-radius:5px;
+  cursor:pointer;
+}
+#domingos-container button:hover,
+.modal-content > button:hover {
+  opacity:0.8;
+}
+
+/* Textarea de edición */
+.edit-listado {
+  width:100%;
+  min-height:50px;
+  margin-top:5px;
+  background-color: var(--bg-card);
+  color: var(--text-color);
+  border:1px solid #555;
+  border-radius:5px;
+  padding:5px;
+  resize:vertical;
+}
+</style>
 
   <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
 
