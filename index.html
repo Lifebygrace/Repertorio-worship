@@ -306,6 +306,14 @@ details > *{
   -webkit-user-select: none;       /* evita selección */
   user-select: none;
 }
+
+.domingo-proximo {
+  border: 2px solid #ff8c00;
+  background: linear-gradient(135deg, #3a2605, #4a3008);
+  box-shadow: 0 0 18px rgba(255, 140, 0, 0.5);
+  transform: scale(1.02);
+  transition: 0.3s ease;
+}
   </style>
 </head>
 <body>
@@ -378,7 +386,14 @@ details > *{
   </div>
 </div>
 
-<div id="listado-mensual" class="section" style="display:none;">
+<div id="listado-mensual" class="section" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); 
+     background:white; border:2px solid #ccc; padding:20px; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.3); 
+     max-height:80vh; overflow-y:auto; width:90%; max-width:600px; border-radius:8px;">
+
+  <!-- Botón de cerrar -->
+  <span class="close-btn" onclick="toggleListadoMensual()" 
+        style="position:absolute; top:10px; right:15px; cursor:pointer; font-size:18px;">✖</span>
+
   <h2>📅 Listado mensual</h2>
 
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -902,7 +917,7 @@ function debounceBuscar(){ clearTimeout(debounceTimer); debounceTimer = setTimeo
 /* Toggles y UI helpers */
 function toggleDark(){ document.body.classList.toggle("dark"); localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light"); }
 function toggleFormulario(){ const f = document.getElementById("formulario"); f.style.display = f.style.display === "none" ? "block" : "none"; }
-function toggleCanciones(){ cancionesVisible = !cancionesVisible; document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar lista" : "🎵 Mostrar lista"; cargarCanciones(); }
+function toggleCanciones(){ cancionesVisible = !cancionesVisible; document.getElementById("toggleCancionesBtn").textContent = cancionesVisible ? "🎵 Ocultar lista" : "🎵Mostrar lista"; cargarCanciones(); }
 function toggleRegistro(){ const el = document.getElementById("registro-canciones"); el.style.display = el.style.display === "block" ? "none" : "block"; if(el.style.display==="block") cargarRegistro(); }
 /* =========================
    ANÁLISIS MENSUAL
@@ -1478,13 +1493,26 @@ async function renderListadoMensual(){
   const docRef = doc(db,"listado_mensual",mes);
   const snap = await getDoc(docRef);
   const data = snap.exists() ? snap.data() : {};
+  
+  const hoy = new Date();
+const hoyISO = hoy.toISOString().slice(0,10);
+
+// calcular próximo domingo
+let proximoDomingo = new Date(hoy);
+let diaSemana = hoy.getDay(); // 0 = domingo
+
+let diasHastaDomingo = diaSemana === 0 ? 0 : 7 - diaSemana;
+proximoDomingo.setDate(hoy.getDate() + diasHastaDomingo);
+
+const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
 
   domingos.forEach(fecha => {
 
     const cancionesAsignadas = data[fecha] || [];
 
     const div = document.createElement("div");
-    div.className = "card";
+const esProximo = fecha === proximoDomingoISO;
+div.className = esProximo ? "card domingo-proximo" : "card";
 
     if(modoEdicion){
       div.innerHTML = `
