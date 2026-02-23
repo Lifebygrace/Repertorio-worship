@@ -390,6 +390,9 @@ details > *{
 <!-- Modal Listado Mensual -->
 <div id="listado-mensual" class="modal" style="display:none;">
   <div class="modal-content">
+    <!-- Botón cerrar esquina superior derecha -->
+    <button class="modal-close" onclick="toggleListadoMensual()">❌</button>
+
     <h2>📅 Listado mensual</h2>
 
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -399,8 +402,6 @@ details > *{
     </div>
 
     <div id="domingos-container"></div>
-
-    <button onclick="toggleListadoMensual()" style="margin-top:15px;">❌ Cerrar</button>
   </div>
 </div>
 
@@ -430,13 +431,29 @@ details > *{
 .modal-content {
   background-color: var(--bg-secundario);
   color: var(--text-color);
-  padding: 20px;
-  border-radius: 10px;
+  padding: 20px 20px 30px 20px;
+  border-radius: 15px;
   max-width: 600px;
   width: 90%;
   max-height: 90%;
   overflow-y: auto;
   box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  position: relative;
+}
+
+/* Botón cerrar esquina superior derecha */
+.modal-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background-color: var(--btn-color);
+  color: var(--bg-secundario);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-weight: bold;
+  cursor: pointer;
 }
 
 /* Tarjetas de domingos */
@@ -445,7 +462,7 @@ details > *{
   color: var(--text-color);
   padding:10px;
   margin-bottom:10px;
-  border-radius:5px;
+  border-radius: 15px; /* esquinas más redondeadas */
 }
 
 /* Domingo más cercano */
@@ -455,8 +472,7 @@ details > *{
 }
 
 /* Botones dentro del modal */
-#domingos-container button,
-.modal-content > button {
+#domingos-container button {
   background-color: var(--btn-color);
   color: var(--bg-secundario);
   border:none;
@@ -465,7 +481,7 @@ details > *{
   cursor:pointer;
 }
 #domingos-container button:hover,
-.modal-content > button:hover {
+.modal-close:hover {
   opacity:0.8;
 }
 
@@ -477,7 +493,7 @@ details > *{
   background-color: var(--bg-card);
   color: var(--text-color);
   border:1px solid #555;
-  border-radius:5px;
+  border-radius:10px;
   padding:5px;
   resize:vertical;
 }
@@ -1558,8 +1574,7 @@ window.cambiarMes = function(delta){
   renderListadoMensual();
 }
 
-async function renderListadoMensual(){
-
+async function renderListadoMensual() {
   const mes = mesListadoActual.toISOString().slice(0,7);
   const nombreMes = mesListadoActual.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
   document.getElementById("mes-actual").textContent = nombreMes.toUpperCase();
@@ -1571,26 +1586,24 @@ async function renderListadoMensual(){
   const docRef = doc(db,"listado_mensual",mes);
   const snap = await getDoc(docRef);
   const data = snap.exists() ? snap.data() : {};
-  
+
   const hoy = new Date();
-const hoyISO = hoy.toISOString().slice(0,10);
 
-// calcular próximo domingo
-let proximoDomingo = new Date(hoy);
-let diaSemana = hoy.getDay(); // 0 = domingo
-
-let diasHastaDomingo = diaSemana === 0 ? 0 : 7 - diaSemana;
-proximoDomingo.setDate(hoy.getDate() + diasHastaDomingo);
-
-const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
+  // calcular próximo domingo
+  let proximoDomingo = new Date(hoy);
+  let diaSemana = hoy.getDay(); // 0 = domingo
+  let diasHastaDomingo = diaSemana === 0 ? 0 : 7 - diaSemana;
+  proximoDomingo.setDate(hoy.getDate() + diasHastaDomingo);
+  const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
 
   domingos.forEach(fecha => {
-
     const cancionesAsignadas = data[fecha] || [];
-
+    
     const div = document.createElement("div");
-const esProximo = fecha === proximoDomingoISO;
-div.className = esProximo ? "card domingo-proximo" : "card";
+
+    // Destacar domingo más cercano
+    const esProximo = fecha === proximoDomingoISO;
+    div.className = "card" + (esProximo ? " destacado" : "");
 
     if(modoEdicion){
       div.innerHTML = `
