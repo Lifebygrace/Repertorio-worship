@@ -261,58 +261,29 @@ details > *{
   justify-content: center;
 }
 
-.modal{
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.45);
+#listado-mensual {
   display: none;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.modal-content{
-  background: var(--card-bg);
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  border: 2px solid #ccc;
+  padding: 20px;
+  z-index: 9999;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+  max-height: 80vh;
+  overflow-y: auto;
   width: 90%;
-  max-width: 360px;
-  padding: 16px;
-  border-radius: 16px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.25);
-  position: relative;
+  max-width: 600px;
+  border-radius: 8px;
 }
-
-.close-btn{
+#listado-mensual .close-btn {
   position: absolute;
-  top: 8px;
-  right: 10px;
-  background: transparent;
-  font-size: 1.2rem;
-}
-
-.metro-controls{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-  gap:28px;           /* ← separación horizontal */
-  margin-top:14px;
-}
-
-.metro-controls button{
-  min-width:110px;    /* tamaño consistente */
-}
-
-#tapTempo{
-  touch-action: manipulation;      /* evita doble-tap zoom */
-  -webkit-user-select: none;       /* evita selección */
-  user-select: none;
-}
-
-.domingo-proximo {
-  border: 2px solid #ff8c00;
-  background: linear-gradient(135deg, #3a2605, #4a3008);
-  box-shadow: 0 0 18px rgba(255, 140, 0, 0.5);
-  transform: scale(1.02);
-  transition: 0.3s ease;
+  top: 10px;
+  right: 15px;
+  cursor: pointer;
+  font-size: 18px;
 }
 
   </style>
