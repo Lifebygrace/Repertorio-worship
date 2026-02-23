@@ -347,6 +347,26 @@ body.dark .domingo-proximo h4,
 body.dark .domingo-proximo li {
   color: #ffffff;
 }
+
+    /* =================================
+   ✨ GLOW PULSANTE SUTIL
+================================= */
+@keyframes glowPulse {
+  0% {
+    box-shadow: 0 0 18px rgba(255, 140, 0, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 28px rgba(255, 140, 0, 0.45);
+  }
+  100% {
+    box-shadow: 0 0 18px rgba(255, 140, 0, 0.25);
+  }
+}
+
+.domingo-proximo {
+  animation: glowPulse 2.5s ease-in-out infinite;
+}
+    
     /* =========================
    MODAL LISTADO MENSUAL
 ========================= */
@@ -396,6 +416,27 @@ body.dark .modal-listado .close-btn {
 .modal-listado.show {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
+}
+    /* =================================
+   🏷 ETIQUETA PRÓXIMO SERVICIO
+================================= */
+.proximo-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+  opacity: 0.85;
+}
+
+/* En modo claro */
+body:not(.dark) .proximo-label {
+  color: #5a5a5a; /* gris suave */
+}
+
+/* En modo oscuro */
+body.dark .proximo-label {
+  color: #bbbbbb; /* gris claro elegante */
 }
   </style>
 </head>
@@ -1607,22 +1648,28 @@ const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
 const esProximo = fecha === proximoDomingoISO;
 div.className = esProximo ? "card domingo-proximo" : "card";
 
-    if(modoEdicion){
-      div.innerHTML = `
-        <h4>${isoToDisplay(fecha)}</h4>
-        <textarea data-fecha="${fecha}" class="edit-listado edit-input"
-          placeholder="Una canción por línea...">${cancionesAsignadas.join("\n")}</textarea>
-      `;
-    } else {
-      div.innerHTML = `
-        <h4>${isoToDisplay(fecha)}</h4>
-        <ul>
-          ${cancionesAsignadas.map(c=>`<li>${c}</li>`).join("") || "<li>—</li>"}
-        </ul>
-      `;
-    }
+   if (modoEdicion) {
+  div.innerHTML = `
+    <h4>
+      ${isoToDisplay(fecha)}
+      ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
+    </h4>
+    <textarea data-fecha="${fecha}" class="edit-listado edit-input"
+      placeholder="Una canción por línea...">${cancionesAsignadas.join("\n")}</textarea>
+  `;
+} else {
+  div.innerHTML = `
+    <h4>
+      ${isoToDisplay(fecha)}
+      ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
+    </h4>
+    <ul>
+      ${cancionesAsignadas.map(c => `<li>${c}</li>`).join("") || "<li>—</li>"}
+    </ul>
+  `;
+}
 
-    cont.appendChild(div);
+cont.appendChild(div);
   });
 
   if(modoEdicion){
