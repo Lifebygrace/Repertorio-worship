@@ -324,11 +324,13 @@ details > *{
   transition: 0.3s ease;
 }
 
-/* 🌙 MODO OSCURO */
 body.dark .modal-listado {
-  background: rgba(25, 25, 25, 0.95); /* gris oscuro semi transparente */
+  background: rgba(20, 20, 20, 0.85);
   color: #ffffff;
-  border: 2px solid #444;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
 }
 
 /* Títulos en modo oscuro */
