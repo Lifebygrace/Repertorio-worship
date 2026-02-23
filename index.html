@@ -754,14 +754,22 @@ async function obtenerCantantePorFecha(fechaISO){
 function obtenerDomingosDelMes(mes) {
   const [y, m] = mes.split("-").map(Number);
   const fechas = [];
-  const d = new Date(y, m - 1, 1);
 
-  while (d.getMonth() === m - 1) {
-    if (d.getDay() === 0) { // Domingo
-      fechas.push(d.toISOString().slice(0,10));
-    }
-    d.setDate(d.getDate() + 1);
+  // Encuentra el primer día del mes
+  let d = new Date(y, m - 1, 1);
+
+  // Ajusta al primer domingo del mes
+  const diaSemana = d.getDay(); // 0=domingo
+  if (diaSemana !== 0) {
+    d.setDate(d.getDate() + (7 - diaSemana));
   }
+
+  // Agrega todos los domingos del mes
+  while (d.getMonth() === m - 1) {
+    fechas.push(d.toISOString().slice(0, 10));
+    d.setDate(d.getDate() + 7);
+  }
+
   return fechas;
 }
 
