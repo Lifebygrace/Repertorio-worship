@@ -307,12 +307,45 @@ details > *{
   user-select: none;
 }
 
+/* ================================
+   DOMINGO RESALTADO (BASE)
+================================ */
 .domingo-proximo {
-  border: 2px solid #ff8c00;
-  background: linear-gradient(135deg, #3a2605, #4a3008);
-  box-shadow: 0 0 18px rgba(255, 140, 0, 0.5);
+  border-radius: 12px;
   transform: scale(1.02);
-  transition: 0.3s ease;
+  transition: all 0.3s ease;
+}
+
+
+/* ================================
+   ☀ MODO CLARO
+================================ */
+body:not(.dark) .domingo-proximo {
+  background: linear-gradient(135deg, #ffb347, #ff8c00);
+  border: 2px solid #ff8c00;
+  box-shadow: 0 6px 18px rgba(255, 140, 0, 0.35);
+  color: #ffffff;
+}
+
+body:not(.dark) .domingo-proximo h4,
+body:not(.dark) .domingo-proximo li {
+  color: #ffffff;
+}
+
+
+/* ================================
+   🌙 MODO OSCURO (Mejora opcional elegante)
+================================ */
+body.dark .domingo-proximo {
+  background: linear-gradient(135deg, #2a1a00, #3a2400);
+  border: 1px solid rgba(255, 140, 0, 0.4);
+  box-shadow: 0 0 22px rgba(255, 140, 0, 0.25);
+  color: #ffffff;
+}
+
+body.dark .domingo-proximo h4,
+body.dark .domingo-proximo li {
+  color: #ffffff;
 }
     /* =========================
    MODAL LISTADO MENSUAL
@@ -350,14 +383,16 @@ body.dark .modal-listado .close-btn {
   color: #ffffff;
 }
 
-    /* Estado inicial oculto */
+  /* Base modal */
 .modal-listado {
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.95);
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transform: translate(-50%, -48%) scale(0.96);
+  transition: 
+    opacity 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* Estado visible */
+/* Visible */
 .modal-listado.show {
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
@@ -1523,7 +1558,7 @@ window.toggleListadoMensual = function(){
     el.classList.remove("show");
     setTimeout(() => {
       el.style.display = "none";
-    }, 250);
+    }, 350);
   } else {
     el.style.display = "block";
     setTimeout(() => {
