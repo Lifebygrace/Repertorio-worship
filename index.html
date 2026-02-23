@@ -319,7 +319,7 @@ details > *{
 ========================= */
 
 .modal-listado {
-  background: white;
+  background: #fff8dc;
   color: black;
   transition: 0.3s ease;
 }
@@ -348,6 +348,19 @@ body.dark .modal-listado li {
 /* Botón cerrar */
 body.dark .modal-listado .close-btn {
   color: #ffffff;
+}
+
+    /* Estado inicial oculto */
+.modal-listado {
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.95);
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Estado visible */
+.modal-listado.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
 }
   </style>
 </head>
@@ -1505,8 +1518,17 @@ let mesListadoActual = new Date();
 
 window.toggleListadoMensual = function(){
   const el = document.getElementById("listado-mensual");
-  el.style.display = el.style.display === "block" ? "none" : "block";
+
   if(el.style.display === "block"){
+    el.classList.remove("show");
+    setTimeout(() => {
+      el.style.display = "none";
+    }, 250);
+  } else {
+    el.style.display = "block";
+    setTimeout(() => {
+      el.classList.add("show");
+    }, 10);
     renderListadoMensual();
   }
 }
