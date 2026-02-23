@@ -1452,7 +1452,8 @@ window.cambiarMes = function(delta){
   renderListadoMensual();
 }
 
-async function renderListadoMensual() {
+async function renderListadoMensual(){
+
   const mes = mesListadoActual.toISOString().slice(0,7);
   const nombreMes = mesListadoActual.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
   document.getElementById("mes-actual").textContent = nombreMes.toUpperCase();
@@ -1464,24 +1465,26 @@ async function renderListadoMensual() {
   const docRef = doc(db,"listado_mensual",mes);
   const snap = await getDoc(docRef);
   const data = snap.exists() ? snap.data() : {};
-
+  
   const hoy = new Date();
+const hoyISO = hoy.toISOString().slice(0,10);
 
-  // calcular próximo domingo
-  let proximoDomingo = new Date(hoy);
-  let diaSemana = hoy.getDay(); // 0 = domingo
-  let diasHastaDomingo = diaSemana === 0 ? 0 : 7 - diaSemana;
-  proximoDomingo.setDate(hoy.getDate() + diasHastaDomingo);
-  const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
+// calcular próximo domingo
+let proximoDomingo = new Date(hoy);
+let diaSemana = hoy.getDay(); // 0 = domingo
+
+let diasHastaDomingo = diaSemana === 0 ? 0 : 7 - diaSemana;
+proximoDomingo.setDate(hoy.getDate() + diasHastaDomingo);
+
+const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
 
   domingos.forEach(fecha => {
-    const cancionesAsignadas = data[fecha] || [];
-    
-    const div = document.createElement("div");
 
-    // Destacar domingo más cercano
-    const esProximo = fecha === proximoDomingoISO;
-    div.className = "card" + (esProximo ? " destacado" : "");
+    const cancionesAsignadas = data[fecha] || [];
+
+    const div = document.createElement("div");
+const esProximo = fecha === proximoDomingoISO;
+div.className = esProximo ? "card domingo-proximo" : "card";
 
     if(modoEdicion){
       div.innerHTML = `
