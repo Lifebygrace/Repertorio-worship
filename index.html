@@ -755,18 +755,22 @@ function obtenerDomingosDelMes(mes) {
   const [y, m] = mes.split("-").map(Number);
   const fechas = [];
 
-  // Encuentra el primer día del mes
   let d = new Date(y, m - 1, 1);
 
-  // Ajusta al primer domingo del mes
-  const diaSemana = d.getDay(); // 0=domingo
+  // Ir al primer domingo del mes
+  const diaSemana = d.getDay();
   if (diaSemana !== 0) {
     d.setDate(d.getDate() + (7 - diaSemana));
   }
 
-  // Agrega todos los domingos del mes
   while (d.getMonth() === m - 1) {
-    fechas.push(d.toISOString().slice(0, 10));
+
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+
+    fechas.push(`${year}-${month}-${day}`);
+
     d.setDate(d.getDate() + 7);
   }
 
