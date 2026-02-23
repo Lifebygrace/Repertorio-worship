@@ -657,6 +657,48 @@ const db = getFirestore(app);
    SECCIONES EN TIEMPO REAL
 ========================= */
 function escucharSeccion(tipo) {
+
+  // 🔥 CASO ESPECIAL: SEMANA (automático desde analisis_mensual)
+  if (tipo === "semana") {
+
+    const proximoDomingo = calcularProximoDomingo();
+    const mesActual = proximoDomingo.slice(0, 7);
+
+    const ref = doc(db, "analisis_mensual", mesActual);
+
+    onSnapshot(ref, snap => {
+
+      const cont = document.getElementById("mostrar-semana");
+
+      let canciones = [];
+      let cantante = "-";
+
+      if (snap.exists()) {
+        const dataMes = snap.data();
+
+        canciones = dataMes.domingos?.[proximoDomingo] || [];
+        cantante = dataMes.cantantes?.[proximoDomingo] || "-";
+      }
+
+      cont.innerHTML = `
+        <h3>Servicio ${isoToDisplay(proximoDomingo)}</h3>
+        <p>🎤 Cantante: <strong>${cantante}</strong></p>
+        <ul>
+          ${canciones.map(c => `<li>${c}</li>`).join("") || "<li>—</li>"}
+        </ul>
+      `;
+
+      // 🔁 Si el Worship Pack está abierto, refrescarlo
+      const pack = document.getElementById("worshippack-semana");
+      if (pack && pack.style.display === "block") {
+        mostrarWorshipPack("semana");
+      }
+    });
+
+    return; // ⚠️ Muy importante
+  }
+
+  // 🔹 RESTO DE SECCIONES (normal)
   const ref = doc(db, "secciones", tipo);
 
   onSnapshot(ref, snap => {
@@ -667,9 +709,6 @@ function escucharSeccion(tipo) {
     const cont = document.getElementById(`mostrar-${tipo}`);
     cont.innerHTML = `
       <h3>${data.titulo || ""}</h3>
-      ${tipo === "semana"
-        ? `<p>🎤 Cantante: <strong>${data.cantante || "-"}</strong></p>`
-        : ""}
       <ul>
         ${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}
       </ul>
@@ -684,13 +723,13 @@ function escucharSeccion(tipo) {
         </div>`;
     }
 
-    // 🔁 Si el Worship Pack está abierto, refrescarlo
     const pack = document.getElementById(`worshippack-${tipo}`);
     if (pack && pack.style.display === "block") {
       mostrarWorshipPack(tipo);
     }
   });
 }
+
 /* Estado */
 let modoEdicion = false;
 let cancionesCache = [];
@@ -1698,14 +1737,21 @@ async function renderListadoMensual(){
   const hoy = new Date();
 const hoyISO = hoy.toISOString().slice(0,10);
 
-// calcular próximo domingo
+///////
+//////CALCULAR PROXIMO DOMINGO 
+
 let proximoDomingo = new Date(hoy);
-let diaSemana = hoy.getDay(); // 0 = domingo
+let diaSemana = hoy.getDay();
 
 let diasHastaDomingo = diaSemana === 0 ? 0 : 7 - diaSemana;
 proximoDomingo.setDate(hoy.getDate() + diasHastaDomingo);
 
-const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
+// Formato local (NO UTC)
+const year = proximoDomingo.getFullYear();
+const month = String(proximoDomingo.getMonth() + 1).padStart(2, "0");
+const day = String(proximoDomingo.getDate()).padStart(2, "0");
+
+const proximoDomingoISO = `${year}-${month}-${day}`;
 
   domingos.forEach(fecha => {
 
