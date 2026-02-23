@@ -314,6 +314,34 @@ details > *{
   transform: scale(1.02);
   transition: 0.3s ease;
 }
+    /* =========================
+   MODAL LISTADO MENSUAL
+========================= */
+
+.modal-listado {
+  background: white;
+  color: black;
+  transition: 0.3s ease;
+}
+
+/* 🌙 MODO OSCURO */
+body.dark-mode .modal-listado {
+  background: rgba(40, 40, 40, 0.95); /* gris oscuro semitransparente */
+  color: white;
+  border: 2px solid #444;
+}
+
+/* Títulos en modo oscuro */
+body.dark-mode .modal-listado h2,
+body.dark-mode .modal-listado h3,
+body.dark-mode .modal-listado h4 {
+  color: white;
+}
+
+/* Botón cerrar en oscuro */
+body.dark-mode .modal-listado .close-btn {
+  color: white;
+}
   </style>
 </head>
 <body>
@@ -386,8 +414,9 @@ details > *{
   </div>
 </div>
 
-<div id="listado-mensual" class="section" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); 
-     background:white; border:2px solid #ccc; padding:20px; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.3); 
+<div id="listado-mensual" class="section modal-listado" 
+     style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+     border:2px solid #ccc; padding:20px; z-index:9999; box-shadow:0 4px 20px rgba(0,0,0,0.3); 
      max-height:80vh; overflow-y:auto; width:90%; max-width:600px; border-radius:8px;">
 
   <!-- Botón de cerrar -->
