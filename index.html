@@ -1682,65 +1682,62 @@ window.cambiarMes = function(delta){
   renderListadoMensual();
 }
 
-async function renderListadoMensual(){
+async function renderListadoMensual() {
+  const hoy = new Date();
 
-  const mes = mesListadoActual.toISOString().slice(0,7);
-  const nombreMes = mesListadoActual.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
+  // 🔹 Calcular próximo domingo
+  let proximoDomingo = new Date(hoy);
+  let diaSemana = hoy.getDay(); // 0 = domingo
+  let diasHastaDomingo = diaSemana === 0 ? 0 : 7 - diaSemana;
+  proximoDomingo.setDate(hoy.getDate() + diasHastaDomingo);
+  const proximoDomingoISO = proximoDomingo.toISOString().slice(0, 10);
+
+  // 🔹 Inicializar mes según próximo domingo
+  let mesListadoActual = new Date(proximoDomingo);
+
+  const mes = mesListadoActual.toISOString().slice(0, 7);
+  const nombreMes = mesListadoActual.toLocaleDateString("es-ES", { month: "long", year: "numeric" });
   document.getElementById("mes-actual").textContent = nombreMes.toUpperCase();
 
   const domingos = obtenerDomingosDelMes(mes);
   const cont = document.getElementById("domingos-container");
   cont.innerHTML = "";
 
-  const docRef = doc(db,"listado_mensual",mes);
+  const docRef = doc(db, "listado_mensual", mes);
   const snap = await getDoc(docRef);
   const data = snap.exists() ? snap.data() : {};
-  
-  const hoy = new Date();
-const hoyISO = hoy.toISOString().slice(0,10);
-
-// calcular próximo domingo
-let proximoDomingo = new Date(hoy);
-let diaSemana = hoy.getDay(); // 0 = domingo
-
-let diasHastaDomingo = diaSemana === 0 ? 0 : 7 - diaSemana;
-proximoDomingo.setDate(hoy.getDate() + diasHastaDomingo);
-
-const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
 
   domingos.forEach(fecha => {
-
     const cancionesAsignadas = data[fecha] || [];
-
     const div = document.createElement("div");
-const esProximo = fecha === proximoDomingoISO;
-div.className = esProximo ? "card domingo-proximo" : "card";
+    const esProximo = fecha === proximoDomingoISO;
+    div.className = esProximo ? "card domingo-proximo" : "card";
 
-   if (modoEdicion) {
-  div.innerHTML = `
-    <h4>
-      ${isoToDisplay(fecha)}
-      ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
-    </h4>
-    <textarea data-fecha="${fecha}" class="edit-listado edit-input"
-      placeholder="Una canción por línea...">${cancionesAsignadas.join("\n")}</textarea>
-  `;
-} else {
-  div.innerHTML = `
-    <h4>
-      ${isoToDisplay(fecha)}
-      ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
-    </h4>
-    <ul>
-      ${cancionesAsignadas.map(c => `<li>${c}</li>`).join("") || "<li>—</li>"}
-    </ul>
-  `;
-}
+    if (modoEdicion) {
+      div.innerHTML = `
+        <h4>
+          ${isoToDisplay(fecha)}
+          ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
+        </h4>
+        <textarea data-fecha="${fecha}" class="edit-listado edit-input"
+          placeholder="Una canción por línea...">${cancionesAsignadas.join("\n")}</textarea>
+      `;
+    } else {
+      div.innerHTML = `
+        <h4>
+          ${isoToDisplay(fecha)}
+          ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
+        </h4>
+        <ul>
+          ${cancionesAsignadas.map(c => `<li>${c}</li>`).join("") || "<li>—</li>"}
+        </ul>
+      `;
+    }
 
-cont.appendChild(div);
+    cont.appendChild(div);
   });
 
-  if(modoEdicion){
+  if (modoEdicion) {
     const btnGuardar = document.createElement("button");
     btnGuardar.textContent = "💾 Guardar listado";
     btnGuardar.style.marginTop = "10px";
