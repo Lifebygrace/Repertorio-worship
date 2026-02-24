@@ -1656,6 +1656,47 @@ document.addEventListener("touchend", function (event) {
 }, { passive: false });
 
 /* BOOT */
+async function sincronizarSemanaSiCambio() {
+
+  const proximoDomingo = calcularProximoDomingo();
+
+  const controlRef = doc(db, "control", "semana_sync");
+  const controlSnap = await getDoc(controlRef);
+
+  const ultimoDomingoGuardado = controlSnap.exists()
+    ? controlSnap.data().domingo
+    : null;
+
+  // Si no cambió el domingo, no hacer nada
+  if (ultimoDomingoGuardado === proximoDomingo) return;
+
+  // Obtener canciones del listado mensual
+  const mes = proximoDomingo.slice(0,7);
+  const analisisRef = doc(db, "analisis_mensual", mes);
+  const analisisSnap = await getDoc(analisisRef);
+
+  if (!analisisSnap.exists()) return;
+
+  const dataMes = analisisSnap.data();
+
+  const canciones = dataMes.domingos?.[proximoDomingo] || [];
+  const cantante = dataMes.cantantes?.[proximoDomingo] || "-";
+
+  // Copiar a sección semana
+  await setDoc(doc(db, "secciones", "semana"), {
+    titulo: "Canciones para la semana",
+    canciones: canciones,
+    cantante: cantante
+  });
+
+  // Guardar nuevo domingo sincronizado
+  await setDoc(controlRef, {
+    domingo: proximoDomingo
+  });
+
+  console.log("✅ Semana actualizada automáticamente");
+}
+
 
 let mesListadoActual = new Date();
 
@@ -1848,6 +1889,10 @@ window.addEventListener('load', ()=>{
   inicializarCanciones();
   escucharSeccion("semana");
   escucharSeccion("mes");
+  sincronizarSemanaSiCambio();
+  setInterval(() => {
+  sincronizarSemanaSiCambio();
+  }, 60 * 60 * 1000);
   initMetronome();
   window.toggleAnalisis = toggleAnalisis;
   window.verHistorialConCantante = verHistorialConCantante;
