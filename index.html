@@ -1655,7 +1655,7 @@ document.addEventListener("touchend", function (event) {
   lastTouchEnd = now;
 }, { passive: false });
 
-/* BOOT */
+/* l */
 async function sincronizarSemanaSiCambio() {
 
   const proximoDomingo = calcularProximoDomingo();
@@ -1756,16 +1756,27 @@ const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
 const esProximo = fecha === proximoDomingoISO;
 div.className = esProximo ? "card domingo-proximo" : "card";
 
-   if (modoEdicion) {
-  div.innerHTML = `
-    <h4>
-      ${isoToDisplay(fecha)}
-      ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
-    </h4>
-    <textarea data-fecha="${fecha}" class="edit-listado edit-input"
-      placeholder="Una canción por línea...">${cancionesAsignadas.join("\n")}</textarea>
+ if (modoEdicion) {
+  const h4 = document.createElement("h4");
+  h4.innerHTML = `
+    ${isoToDisplay(fecha)}
+    ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
   `;
-} else {
+  div.appendChild(h4);
+
+  const textarea = document.createElement("textarea");
+  textarea.dataset.fecha = fecha;
+  textarea.className = "edit-listado edit-input";
+  textarea.placeholder = "Una canción por línea...";
+  textarea.value = cancionesAsignadas.join("\n");
+
+  // 🔔 Escuchar cambios y sincronizar con "Canciones para la semana"
+  textarea.addEventListener("input", () => {
+    if (esProximo) actualizarSemana(textarea.value);
+  });
+
+  div.appendChild(textarea);
+}else {
   div.innerHTML = `
     <h4>
       ${isoToDisplay(fecha)}
@@ -1807,6 +1818,16 @@ async function guardarListadoMensual(mes){
   await setDoc(doc(db,"listado_mensual",mes), datos);
   alert("✅ Listado mensual guardado");
   renderListadoMensual();
+}
+
+function actualizarSemana(contenido) {
+  const semanaTextarea = document.querySelector("#mostrar-semana textarea.edit-listado");
+  if (semanaTextarea) {
+    semanaTextarea.value = contenido
+      .split("\n")
+      .filter(c => c.trim() !== "")
+      .join("\n");
+  }
 }
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
