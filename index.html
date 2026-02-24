@@ -1768,86 +1768,15 @@ async function guardarListadoMensual(mes){
   renderListadoMensual();
 }
 
-/* =========================
-   CANCIONES PARA LA SEMANA
-   (Fuente: listado_mensual)
-========================= */
-
-function escucharSemanaDesdeListado() {
-
-  const proximoDomingoISO = calcularProximoDomingoISO();
-  const mes = proximoDomingoISO.slice(0, 7);
-
-  const ref = doc(db, "listado_mensual", mes);
-
-  onSnapshot(ref, snap => {
-
-    const cont = document.getElementById("mostrar-semana");
-
-    if (!snap.exists()) {
-      cont.innerHTML = `
-        <h3>🎶 Canciones para la semana</h3>
-        <p><em>No hay listado disponible.</em></p>
-      `;
-      return;
-    }
-
-    const data = snap.data();
-    const canciones = data[proximoDomingoISO] || [];
-
-    cont.innerHTML = `
-      <div class="semana-card">
-        <h3>🎶 Canciones para la semana</h3>
-        <p class="fecha-servicio">
-          Servicio: <strong>${isoToDisplay(proximoDomingoISO)}</strong>
-        </p>
-        <ul>
-          ${
-            canciones.length
-              ? canciones.map(c => `<li>${c}</li>`).join("")
-              : `<li class="sin-canciones">⚠️ No hay canciones asignadas</li>`
-          }
-        </ul>
-      </div>
-    `;
-
-    // 🔥 BONUS: refrescar Worship Pack si está abierto
-    const pack = document.getElementById("worshippack-semana");
-    if (pack && pack.style.display === "block") {
-      mostrarWorshipPack("semana");
-    }
-
-  });
-}
-
-async function obtenerDatosProximoServicio() {
-  const proximoDomingoISO = calcularProximoDomingoISO();
-  const mes = proximoDomingoISO.slice(0,7);
-
-  const ref = doc(db, "listado_mensual", mes);
-  const snap = await getDoc(ref);
-
-  if (!snap.exists()) {
-    return { canciones: [], fecha: proximoDomingoISO };
-  }
-
-  const data = snap.data();
-  const canciones = data[proximoDomingoISO] || [];
-
-  return { canciones, fecha: proximoDomingoISO };
-}
-
-/* Mostrar / ocultar Worship Pack (desde listado_mensual) */
+/* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
 async function mostrarWorshipPack(tipo) {
-
   const cont = document.getElementById(`worshippack-${tipo}`);
   const boton = document.querySelector(
     `button[onclick="mostrarWorshipPack('${tipo}')"]`
   );
-
   if (!cont || !boton) return;
 
-  // Toggle cerrar
+  // Toggle
   if (cont.style.display === "block") {
     cont.style.display = "none";
     cont.innerHTML = "";
@@ -1855,48 +1784,6 @@ async function mostrarWorshipPack(tipo) {
     return;
   }
 
-  // 🔥 Solo modificar comportamiento cuando es "semana"
-  if (tipo === "semana") {
-
-    const proximoDomingoISO = calcularProximoDomingoISO();
-    const mes = proximoDomingoISO.slice(0, 7);
-
-    const snap = await getDoc(doc(db, "listado_mensual", mes));
-
-    if (!snap.exists()) {
-      cont.innerHTML = "<p>No hay listado mensual.</p>";
-      cont.style.display = "block";
-      boton.textContent = "🔽 Ocultar pack";
-      return;
-    }
-
-    const data = snap.data();
-    const cancionesSemana = data[proximoDomingoISO] || [];
-
-    cont.innerHTML = "";
-
-    cancionesSemana.forEach(tituloSemana => {
-      const cancion = cancionesCache.find(
-        c => normalizar(c.titulo) === normalizar(tituloSemana)
-      );
-
-      if (cancion) {
-        cont.appendChild(construirCard(cancion));
-      }
-    });
-
-    if (!cont.innerHTML) {
-      cont.innerHTML =
-        "<p>⚠️ Ninguna de las canciones coincide con el repertorio.</p>";
-    }
-
-    cont.style.display = "block";
-    boton.textContent = "🔽 Ocultar pack";
-
-    return;
-  }
-
-  // 🔒 Para otros tipos (ej: nuevas del mes) mantener comportamiento original
   const snap = await getDoc(doc(db, "secciones", tipo));
   if (!snap.exists()) {
     cont.innerHTML = "<p>No hay canciones guardadas.</p>";
@@ -1908,9 +1795,10 @@ async function mostrarWorshipPack(tipo) {
   const data = snap.data();
   cont.innerHTML = "";
 
-  data.canciones.forEach(titulo => {
+  // 🔑 CLAVE: recorrer en el orden escrito
+  data.canciones.forEach(tituloSemana => {
     const cancion = cancionesCache.find(
-      c => normalizar(c.titulo) === normalizar(titulo)
+      c => normalizar(c.titulo) === normalizar(tituloSemana)
     );
 
     if (cancion) {
@@ -1958,7 +1846,7 @@ window.addEventListener('load', ()=>{
   window.cerrarMetronomo = cerrarMetronomo;
   window.toggleMetronome = toggleMetronome;
   inicializarCanciones();
-  cargarSemanaDesdeListado();
+  escucharSeccion("semana");
   escucharSeccion("mes");
   initMetronome();
   window.toggleAnalisis = toggleAnalisis;
