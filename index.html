@@ -1655,48 +1655,7 @@ document.addEventListener("touchend", function (event) {
   lastTouchEnd = now;
 }, { passive: false });
 
-/* l */
-async function sincronizarSemanaSiCambio() {
-
-  const proximoDomingo = calcularProximoDomingo();
-
-  const controlRef = doc(db, "control", "semana_sync");
-  const controlSnap = await getDoc(controlRef);
-
-  const ultimoDomingoGuardado = controlSnap.exists()
-    ? controlSnap.data().domingo
-    : null;
-
-  // Si no cambió el domingo, no hacer nada
-  if (ultimoDomingoGuardado === proximoDomingo) return;
-
-  // Obtener canciones del listado mensual
-  const mes = proximoDomingo.slice(0,7);
-  const analisisRef = doc(db, "analisis_mensual", mes);
-  const analisisSnap = await getDoc(analisisRef);
-
-  if (!analisisSnap.exists()) return;
-
-  const dataMes = analisisSnap.data();
-
-  const canciones = dataMes.domingos?.[proximoDomingo] || [];
-  const cantante = dataMes.cantantes?.[proximoDomingo] || "-";
-
-  // Copiar a sección semana
-  await setDoc(doc(db, "secciones", "semana"), {
-    titulo: "Canciones para la semana",
-    canciones: canciones,
-    cantante: cantante
-  });
-
-  // Guardar nuevo domingo sincronizado
-  await setDoc(controlRef, {
-    domingo: proximoDomingo
-  });
-
-  console.log("✅ Semana actualizada automáticamente");
-}
-
+/* BOOT */
 
 let mesListadoActual = new Date();
 
@@ -1756,27 +1715,16 @@ const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
 const esProximo = fecha === proximoDomingoISO;
 div.className = esProximo ? "card domingo-proximo" : "card";
 
- if (modoEdicion) {
-  const h4 = document.createElement("h4");
-  h4.innerHTML = `
-    ${isoToDisplay(fecha)}
-    ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
+   if (modoEdicion) {
+  div.innerHTML = `
+    <h4>
+      ${isoToDisplay(fecha)}
+      ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
+    </h4>
+    <textarea data-fecha="${fecha}" class="edit-listado edit-input"
+      placeholder="Una canción por línea...">${cancionesAsignadas.join("\n")}</textarea>
   `;
-  div.appendChild(h4);
-
-  const textarea = document.createElement("textarea");
-  textarea.dataset.fecha = fecha;
-  textarea.className = "edit-listado edit-input";
-  textarea.placeholder = "Una canción por línea...";
-  textarea.value = cancionesAsignadas.join("\n");
-
-  // 🔔 Escuchar cambios y sincronizar con "Canciones para la semana"
-  textarea.addEventListener("input", () => {
-    if (esProximo) actualizarSemana(textarea.value);
-  });
-
-  div.appendChild(textarea);
-}else {
+} else {
   div.innerHTML = `
     <h4>
       ${isoToDisplay(fecha)}
@@ -1818,16 +1766,6 @@ async function guardarListadoMensual(mes){
   await setDoc(doc(db,"listado_mensual",mes), datos);
   alert("✅ Listado mensual guardado");
   renderListadoMensual();
-}
-
-function actualizarSemana(contenido) {
-  const semanaTextarea = document.querySelector("#mostrar-semana textarea.edit-listado");
-  if (semanaTextarea) {
-    semanaTextarea.value = contenido
-      .split("\n")
-      .filter(c => c.trim() !== "")
-      .join("\n");
-  }
 }
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
@@ -1910,10 +1848,6 @@ window.addEventListener('load', ()=>{
   inicializarCanciones();
   escucharSeccion("semana");
   escucharSeccion("mes");
-  sincronizarSemanaSiCambio();
-  setInterval(() => {
-  sincronizarSemanaSiCambio();
-  }, 60 * 60 * 1000);
   initMetronome();
   window.toggleAnalisis = toggleAnalisis;
   window.verHistorialConCantante = verHistorialConCantante;
