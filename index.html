@@ -1657,7 +1657,8 @@ document.addEventListener("touchend", function (event) {
 
 /* BOOT */
 
-let mesListadoActual = new Date();
+let proximoDomingo = calcularProximoDomingo();
+let mesListadoActual = new Date(proximoDomingo); // inicializa con el mes del próximo servicio
 
 window.toggleListadoMensual = function(){
   const el = document.getElementById("listado-mensual");
