@@ -1707,37 +1707,55 @@ proximoDomingo.setDate(hoy.getDate() + diasHastaDomingo);
 
 const proximoDomingoISO = proximoDomingo.toISOString().slice(0,10);
 
-  domingos.forEach(fecha => {
+domingos.forEach(fecha => {
 
-    const cancionesAsignadas = data[fecha] || [];
+  const infoDia = data[fecha] || { canciones: [], cantante: "" };
+  const cancionesAsignadas = infoDia.canciones || [];
+  const cantanteAsignado = infoDia.cantante || "";
 
-    const div = document.createElement("div");
-const esProximo = fecha === proximoDomingoISO;
-div.className = esProximo ? "card domingo-proximo" : "card";
+  const div = document.createElement("div");
+  const esProximo = fecha === proximoDomingoISO;
+  div.className = esProximo ? "card domingo-proximo" : "card";
 
-   if (modoEdicion) {
-  div.innerHTML = `
-    <h4>
-      ${isoToDisplay(fecha)}
-      ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
-    </h4>
-    <textarea data-fecha="${fecha}" class="edit-listado edit-input"
-      placeholder="Una canción por línea...">${cancionesAsignadas.join("\n")}</textarea>
-  `;
-} else {
-  div.innerHTML = `
-    <h4>
-      ${isoToDisplay(fecha)}
-      ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
-    </h4>
-    <ul>
-      ${cancionesAsignadas.map(c => `<li>${c}</li>`).join("") || "<li>—</li>"}
-    </ul>
-  `;
-}
+  if (modoEdicion) {
 
-cont.appendChild(div);
-  });
+    div.innerHTML = `
+      <h4>
+        ${isoToDisplay(fecha)}
+        ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
+      </h4>
+
+      🎤 Cantante:
+      <select class="cantante-listado" data-fecha="${fecha}">
+        <option value=""></option>
+        <option value="Carolina" ${cantanteAsignado==="Carolina"?"selected":""}>Carolina</option>
+        <option value="Milly" ${cantanteAsignado==="Milly"?"selected":""}>Milly</option>
+        <option value="Jason" ${cantanteAsignado==="Jason"?"selected":""}>Jason</option>
+      </select>
+
+      <textarea data-fecha="${fecha}" 
+        class="edit-listado edit-input"
+        placeholder="Una canción por línea...">${cancionesAsignadas.join("\n")}</textarea>
+    `;
+
+  } else {
+
+    div.innerHTML = `
+      <h4>
+        ${isoToDisplay(fecha)}
+        ${esProximo ? '<span class="proximo-label">Próximo servicio 🔥</span>' : ''}
+      </h4>
+
+      <p>🎤 Cantante: <strong>${cantanteAsignado || "-"}</strong></p>
+
+      <ul>
+        ${cancionesAsignadas.map(c => `<li>${c}</li>`).join("")}
+      </ul>
+    `;
+  }
+
+  cont.appendChild(div);
+});
 
   if(modoEdicion){
     const btnGuardar = document.createElement("button");
@@ -1748,25 +1766,35 @@ cont.appendChild(div);
   }
 }
 
-async function guardarListadoMensual(mes){
+window.guardarListadoMensual = async function(){
 
-  const inputs = document.querySelectorAll(".edit-listado");
-  const datos = {};
+  const mes = mesListadoActual.toISOString().slice(0,7);
+  const datosGuardar = {};
 
-  inputs.forEach(input=>{
-    const fecha = input.dataset.fecha;
-    const canciones = input.value
+  document.querySelectorAll(".edit-listado").forEach(textarea => {
+
+    const fecha = textarea.dataset.fecha;
+
+    const canciones = textarea.value
       .split("\n")
-      .map(s=>s.trim())
+      .map(s => s.trim())
       .filter(Boolean);
 
-    datos[fecha] = canciones;
+    const select = document.querySelector(`.cantante-listado[data-fecha="${fecha}"]`);
+    const cantante = select ? select.value : "";
+
+    datosGuardar[fecha] = {
+      canciones,
+      cantante
+    };
+
   });
 
-  await setDoc(doc(db,"listado_mensual",mes), datos);
+  await setDoc(doc(db,"listado_mensual",mes), datosGuardar);
+
   alert("✅ Listado mensual guardado");
   renderListadoMensual();
-}
+};
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
 async function mostrarWorshipPack(tipo) {
