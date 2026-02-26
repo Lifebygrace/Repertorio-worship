@@ -1247,17 +1247,12 @@ const cantanteHtml = `
       const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
       if(modoEdicion){
         return `<li>${c.titulo} (${c.veces}) - 
-         <select class="eval-select" data-id="${c.id}" data-mes="${mes}" data-fecha="${fecha}">
-  <option value="" ${val===""?"selected":""}></option>
-  <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️</option>
-  <option value="Bien" ${val==="Bien"?"selected":""}>👍</option>
-  <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀</option>
-</select>
-
-<select class="cantante-select" data-mes="${mes}" data-fecha="${fecha}">
-  <option value="${cantante}" selected>${cantante}</option>
-  <!-- otros cantantes -->
-</select>
+          <select class="eval-select" data-id="${c.id}" data-mes="${mes}">
+            <option value="" ${val===""?"selected":""}></option>
+            <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️</option>
+            <option value="Bien" ${val==="Bien"?"selected":""}>👍</option>
+            <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀</option>
+          </select>
         </li>`;
       } else {
         return `<li>${c.titulo} (${c.veces}) ${emoji}</li>`;
@@ -1304,26 +1299,21 @@ if (index === 0) {
     document.querySelectorAll(".guardar-analisis-btn").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
         const mes = btn.dataset.mes;
-        const dias = {}; // objeto que guardará todas las fechas
-
-// Guardamos el cantante de cada domingo
+        const evaluaciones = {};
+        document.querySelectorAll(`.eval-select[data-mes="${mes}"]`).forEach(sel=>{
+          const id = sel.dataset.id;
+          evaluaciones[id] = sel.value;
+        });
+        const cantantes = {};
 document.querySelectorAll(`.cantante-select[data-mes="${mes}"]`).forEach(sel => {
-  const fecha = sel.dataset.fecha;
-  dias[fecha] = { cantante: sel.value, evaluaciones: {} };
+  cantantes[sel.dataset.fecha] = sel.value;
 });
-
-// Guardamos las evaluaciones por fecha
-document.querySelectorAll(`.eval-select[data-mes="${mes}"]`).forEach(sel=>{
-  const id = sel.dataset.id;
-  const fecha = sel.dataset.fecha;
-  if(!dias[fecha]) dias[fecha] = { cantante:"", evaluaciones:{} };
-  dias[fecha].evaluaciones[id] = sel.value;
-});
-
-// Guardamos todo en Firestore
-await setDoc(doc(db,"analisis_mensual",mes), {
-  dias,
-  observaciones: document.querySelector(`.obs-textarea[data-mes="${mes}"]`).value
+        const observaciones = document.querySelector(`.obs-textarea[data-mes="${mes}"]`).value;
+        await setDoc(doc(db,"analisis_mensual",mes),{
+  canciones: mapaMeses[mes].canciones,
+  evaluaciones,
+  cantantes,
+  observaciones
 });
         alert("✅ Análisis mensual guardado");
       });
