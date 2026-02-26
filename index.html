@@ -493,19 +493,6 @@ body:not(.dark) .proximo-label {
 body.dark .proximo-label {
   color: #bbbbbb; /* gris claro elegante */
 }
-
-#select-cantante-mes {
-  padding: 4px 8px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-}
-
-body.dark #select-cantante-mes {
-  background: #222;
-  color: white;
-  border: 1px solid #444;
-}
-
   </style>
 </head>
 <body>
@@ -1699,30 +1686,7 @@ async function renderListadoMensual(){
   const mes = mesListadoActual.toISOString().slice(0,7);
   const nombreMes = mesListadoActual.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
   document.getElementById("mes-actual").textContent = nombreMes.toUpperCase();
-  const contMes = document.getElementById("mes-actual");
-const cantanteContainer = document.createElement("div");
 
-if (modoEdicion) {
-  cantanteContainer.innerHTML = `
-    <label style="font-size:0.9rem;">
-      Cantante 🎤:
-      <select id="select-cantante-mes">
-        <option value="">Seleccionar</option>
-        <option value="Carolina" ${cantanteMes==="Carolina"?"selected":""}>Carolina</option>
-        <option value="Milly" ${cantanteMes==="Milly"?"selected":""}>Milly</option>
-        <option value="Jason" ${cantanteMes==="Jason"?"selected":""}>Jason</option>
-      </select>
-    </label>
-  `;
-} else {
-  cantanteContainer.innerHTML = `
-    <p style="margin:5px 0 10px 0; font-size:0.9rem; opacity:0.8;">
-      Cantante 🎤: <strong>${cantanteMes || "—"}</strong>
-    </p>
-  `;
-}
-
-contMes.parentNode.insertBefore(cantanteContainer, contMes.nextSibling);
   const domingos = obtenerDomingosDelMes(mes);
   const cont = document.getElementById("domingos-container");
   cont.innerHTML = "";
@@ -1730,7 +1694,7 @@ contMes.parentNode.insertBefore(cantanteContainer, contMes.nextSibling);
   const docRef = doc(db,"listado_mensual",mes);
   const snap = await getDoc(docRef);
   const data = snap.exists() ? snap.data() : {};
-  const cantanteMes = data.cantante || "";
+  
   const hoy = new Date();
 const hoyISO = hoy.toISOString().slice(0,10);
 
@@ -1788,12 +1752,6 @@ async function guardarListadoMensual(mes){
 
   const inputs = document.querySelectorAll(".edit-listado");
   const datos = {};
-  
-  const selectCantante = document.getElementById("select-cantante-mes");
-if (selectCantante) {
-  datos.cantante = selectCantante.value;
-}
-
 
   inputs.forEach(input=>{
     const fecha = input.dataset.fecha;
