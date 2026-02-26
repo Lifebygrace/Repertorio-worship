@@ -1131,7 +1131,19 @@ function toggleAnalisis() {
 async function cargarAnalisisMensual() {
   const cont = document.getElementById("analisis-mensual");
   cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
-  
+  // 🔥 BLOQUE NUEVO – Análisis por periodo
+cont.innerHTML += `
+  <div id="analisis-periodo" class="card" style="margin-top:12px;">
+    <h3>📈 Análisis por periodo</h3>
+
+    <div style="margin-bottom:10px;">
+      <button onclick="analizarPeriodo(3)">Últimos 3 meses</button>
+      <button onclick="analizarPeriodo(0)">Siempre</button>
+    </div>
+
+    <div id="resultado-periodo"></div>
+  </div>
+`;
   const toggleBtn = document.createElement("button");
   toggleBtn.textContent = "📂 Ver meses anteriores";
   toggleBtn.style.margin = "8px 0";
@@ -1796,6 +1808,114 @@ window.guardarListadoMensual = async function(){
   renderListadoMensual();
 };
 
+///////
+////// ANALIZAR PERIODO
+window.analizarPeriodo = async function(mesesAtras){
+
+  const cont = document.getElementById("resultado-periodo");
+  cont.innerHTML = "Analizando...";
+
+  const snap = await getDocs(collection(db,"analisis_mensual"));
+
+  let meses = snap.docs.map(d => d.id).sort().reverse();
+
+  if(mesesAtras > 0){
+    meses = meses.slice(0, mesesAtras);
+  }
+
+  const acumulado = {
+    Excelente: {},
+    Bien: {},
+    "A mejorar": {}
+  };
+
+  for(const mes of meses){
+    const data = snap.docs.find(d => d.id === mes)?.data();
+    if(!data?.evaluaciones) continue;
+
+    for(const [id, valor] of Object.entries(data.evaluaciones)){
+      if(!valor) continue;
+
+      const cancion = cancionesCache.find(c=>c.id===id);
+      if(!cancion) continue;
+
+      if(!acumulado[valor][id]){
+        acumulado[valor][id] = {
+          titulo: cancion.titulo,
+          veces: 0,
+          cantantes: new Set()
+        };
+      }
+
+      acumulado[valor][id].veces++;
+
+      if(data.cantantes){
+        Object.values(data.cantantes).forEach(c=>{
+          if(c) acumulado[valor][id].cantantes.add(c);
+        });
+      }
+    }
+  }
+
+  const total =
+    Object.keys(acumulado["Excelente"]).length +
+    Object.keys(acumulado["Bien"]).length +
+    Object.keys(acumulado["A mejorar"]).length;
+
+  window.cacheResultados = acumulado;
+
+  cont.innerHTML = `
+    <p>Total evaluadas: <strong>${total}</strong></p>
+
+    <p onclick="mostrarDetallePeriodo('Excelente')" style="cursor:pointer">
+      🚀 ${Object.keys(acumulado["Excelente"]).length} fueron excelentes
+    </p>
+
+    <p onclick="mostrarDetallePeriodo('Bien')" style="cursor:pointer">
+      👍 ${Object.keys(acumulado["Bien"]).length} fueron buenas
+    </p>
+
+    <p onclick="mostrarDetallePeriodo('A mejorar')" style="cursor:pointer">
+      ‼️ ${Object.keys(acumulado["A mejorar"]).length} necesitan mejorar
+    </p>
+
+    <div id="detalle-periodo"></div>
+  `;
+};
+
+window.mostrarDetallePeriodo = function(tipo){
+
+  const datos = window.cacheResultados[tipo];
+  const cont = document.getElementById("detalle-periodo");
+
+  if(!datos || !Object.keys(datos).length){
+    cont.innerHTML = "<p>No hay canciones.</p>";
+    return;
+  }
+
+  const emoji = tipo==="Excelente" ? "🚀"
+              : tipo==="Bien" ? "👍"
+              : "‼️";
+
+  let html = `<h4 style="margin-top:10px">${emoji} Canciones</h4><ul>`;
+
+  Object.values(datos)
+    .sort((a,b)=>b.veces - a.veces)
+    .forEach(c=>{
+      html += `
+        <li>
+          <strong>${c.titulo}</strong> (${c.veces})
+          <br>
+          🎤 ${[...c.cantantes].join(", ") || "-"}
+        </li>
+      `;
+    });
+
+  html += "</ul>";
+
+  cont.innerHTML = html;
+};
+
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
 async function mostrarWorshipPack(tipo) {
   const cont = document.getElementById(`worshippack-${tipo}`);
@@ -1879,6 +1999,7 @@ window.addEventListener('load', ()=>{
   initMetronome();
   window.toggleAnalisis = toggleAnalisis;
   window.verHistorialConCantante = verHistorialConCantante;
+  window.cacheResultados = {};
 });
 </script>
 <div id="modal-metronomo" class="modal">
