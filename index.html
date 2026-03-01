@@ -1253,10 +1253,11 @@ const resumenHtml = resumen.map(c => {
   const domingos = obtenerDomingosDelMes(mes).map(f => ajustarAServicio(f));
 
   if (modoEdicion) {
-    // Modo edición: un select por cada domingo
     const selectsPorDomingo = domingos.map(fecha => {
-      const val = datosMes.evaluaciones?.[fecha]?.[c.id]?.valoracion || "";
+      const valObj = datosMes.evaluaciones?.[fecha]?.[c.id] || {};
+      const val = valObj.valoracion || "";
       const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
+
       return `
         <div style="margin-top:4px;">
           ${isoToDisplay(fecha)} →
@@ -1273,9 +1274,12 @@ const resumenHtml = resumen.map(c => {
 
     return `<li><strong>${c.titulo} (${c.veces})</strong>${selectsPorDomingo}</li>`;
   } else {
-    // Modo lectura: mostrar solo el último emoji disponible del mes
-    const ultimaFecha = domingos.slice(-1)[0];
-    const val = datosMes.evaluaciones?.[ultimaFecha]?.[c.id]?.valoracion || "";
+    // Modo lectura: tomar la última valoración disponible del mes
+    let val = "";
+    for (const fecha of domingos) {
+      const v = datosMes.evaluaciones?.[fecha]?.[c.id]?.valoracion;
+      if (v) val = v;
+    }
     const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
     return `<li>${c.titulo} (${c.veces}) ${emoji}</li>`;
   }
