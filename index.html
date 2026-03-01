@@ -1254,25 +1254,10 @@ const cantanteHtml = `
   </details>
 `;
   
-    // Top 3 canciones con veces tocadas y emoji de valoración
-const resumenHtml = resumenCompleto.map(c => {
-  return `<li>${c.titulo}</li>`;
-}).join("");
-      const val = datosMes.evaluaciones?.[c.id] || "";
-      const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
-      if(modoEdicion){
-        return `<li>${c.titulo} (${c.veces}) - 
-          <select class="eval-select" data-id="${c.id}" data-mes="${mes}">
-            <option value="" ${val===""?"selected":""}></option>
-            <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️</option>
-            <option value="Bien" ${val==="Bien"?"selected":""}>👍</option>
-            <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀</option>
-          </select>
-        </li>`;
-      } else {
-        return `<li>${c.titulo} (${c.veces}) ${emoji}</li>`;
-      }
-    }).join("");
+// 📌 Resumen musical completo (con repeticiones reales)
+const resumenHtml = resumenCompleto
+  .map(c => `<li>${c.titulo}</li>`)
+  .join("");
 
     // Observaciones con mismo estilo de top 3
     const obsHtml = modoEdicion 
