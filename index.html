@@ -1168,20 +1168,42 @@ cont.innerHTML += `
   const analisisGuardado = {};
   analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
-  // Agrupar por mes
-  const mapaMeses = {}; 
-  snapRegistro.forEach(docu => {
-    const data = docu.data();
-    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
-    const cancion = cancionesCache.find(c => c.id === docu.id);
-    if(!cancion) return;
+const mapaMeses = {};
+const entradasPorMes = {};
 
-    fechas.forEach(f => {
-      const mes = f.slice(0,7);
-      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, cantantes: "", evaluaciones:{}, observaciones:"" };
-      mapaMeses[mes].canciones[cancion.id] = (mapaMeses[mes].canciones[cancion.id] || 0) + 1;
+  // Agrupar por mes
+ snapRegistro.forEach(docu => {
+  const data = docu.data();
+  const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+  const cancion = cancionesCache.find(c => c.id === docu.id);
+  if (!cancion) return;
+
+  fechas.forEach(f => {
+    const mes = f.slice(0,7);
+
+    // 🧮 mapaMeses (estadísticas)
+    if (!mapaMeses[mes]) {
+      mapaMeses[mes] = {
+        canciones: {},
+        cantantes: {},
+        evaluaciones: {},
+        observaciones: ""
+      };
+    }
+
+    mapaMeses[mes].canciones[cancion.id] =
+      (mapaMeses[mes].canciones[cancion.id] || 0) + 1;
+
+    // 📌 entradasPorMes (detalle real)
+    if (!entradasPorMes[mes]) entradasPorMes[mes] = [];
+
+    entradasPorMes[mes].push({
+      fecha: f,
+      id: cancion.id,
+      titulo: cancion.titulo
     });
   });
+});
 
   let meses = Object.keys(mapaMeses).sort().reverse(); // Mes más reciente primero
   if(!meses.length){
@@ -1192,23 +1214,53 @@ cont.innerHTML += `
   const ultimoMes = meses[0];
 
 meses.forEach((mes, index) => {
-    const fecha = new Date(mes+"-01");
-    const nombreMes = fecha.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
-    const datosMes = analisisGuardado[mes] || { canciones:{}, cantantes:{}, evaluaciones:{}, observaciones:"" };
-    const cancionesMes = mapaMeses[mes].canciones;
 
-    const listaCanciones = Object.keys(cancionesMes).map(id => {
-      const c = cancionesCache.find(x=>x.id===id);
-      return { id, titulo: c?.titulo || "—", veces: cancionesMes[id] };
-    });
+  const fecha = new Date(mes + "-01");
+  const nombreMes = fecha.toLocaleDateString("es-ES", {
+    month: "long",
+    year: "numeric"
+  });
 
-// Ordenar TODAS las canciones por popularidad 🔥
-const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
+  const datosMes = analisisGuardado[mes] || {
+    canciones: {},
+    cantantes: {},
+    evaluaciones: {},
+    observaciones: ""
+  };
 
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.marginTop = "12px";
+  const cancionesMes = mapaMeses[mes].canciones;
 
+  const listaCanciones = Object.keys(cancionesMes).map(id => {
+    const c = cancionesCache.find(x => x.id === id);
+    return {
+      id,
+      titulo: c?.titulo || "—",
+      veces: cancionesMes[id]
+    };
+  });
+
+  // 👇 aquí sigue tu resumen musical, cantantes, HTML, etc.
+});
+
+
+// 📌 RESUMEN MUSICAL REAL (todas las veces tocadas, sin agrupar)
+const entradas = entradasPorMes[mes] || [];
+
+const resumenHtml = await Promise.all(
+  entradas
+    .sort((a,b)=>a.fecha.localeCompare(b.fecha)) // ordenar por fecha
+    .map(async e => {
+      const cantante = datosMes.cantantes?.[e.fecha] 
+        || await obtenerCantantePorFecha(e.fecha);
+
+      return `<li>
+        ${isoToDisplay(e.fecha)} – 
+        <strong>${e.titulo}</strong> – 🎤 ${cantante || "—"}
+      </li>`;
+    })
+);
+
+const resumenFinal = resumenHtml.join("");
 // Cantantes
 const domingos = obtenerDomingosDelMes(mes).map(f => ajustarAServicio(f));
 
@@ -1241,23 +1293,7 @@ const cantanteHtml = `
   </details>
 `;
   
-    // Top 3 canciones con veces tocadas y emoji de valoración
-    const resumenHtml = resumen.map(c=>{
-      const val = datosMes.evaluaciones?.[c.id] || "";
-      const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
-      if(modoEdicion){
-        return `<li>${c.titulo} (${c.veces}) - 
-          <select class="eval-select" data-id="${c.id}" data-mes="${mes}">
-            <option value="" ${val===""?"selected":""}></option>
-            <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️</option>
-            <option value="Bien" ${val==="Bien"?"selected":""}>👍</option>
-            <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀</option>
-          </select>
-        </li>`;
-      } else {
-        return `<li>${c.titulo} (${c.veces}) ${emoji}</li>`;
-      }
-    }).join("");
+
 
     // Observaciones con mismo estilo de top 3
     const obsHtml = modoEdicion 
@@ -1272,7 +1308,7 @@ const cantanteHtml = `
         <div style="margin-top:8px;">${cantanteHtml}</div>
         <details class="details-slow" style="margin-top:6px;">
         <summary>📌 resumen musical 🔥</summary>
-          <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
+          <div class="notas-card" style="margin-top:4px;"><ul>${resumenFinal}</ul></div>
         </details>
         <details class="details-slow" style="margin-top:6px;">
         <summary>📝 Observaciones / Consejos</summary>
