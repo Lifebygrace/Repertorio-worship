@@ -1320,7 +1320,6 @@ document.querySelectorAll(`.cantante-select[data-mes="${mes}"]`).forEach(sel => 
   historial.push({
     fecha: new Date().toISOString(),
     valor: evaluaciones[id]
-    cantante: nombreCantante
   });
 
   await setDoc(evalRef, {
