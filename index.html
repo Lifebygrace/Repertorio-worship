@@ -1243,7 +1243,13 @@ const cantanteHtml = `
   
     // Top 3 canciones con veces tocadas y emoji de valoración
     const resumenHtml = resumen.map(c=>{
-      const val = datosMes.evaluaciones?.[c.id] || "";
+      let val = "";
+const fechasMes = Object.keys(datosMes.evaluaciones || {});
+fechasMes.forEach(f=>{
+  if(datosMes.evaluaciones[f]?.[c.id]){
+    val = datosMes.evaluaciones[f][c.id].valoracion;
+  }
+});
       const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
       if(modoEdicion){
         return `<li>${c.titulo} (${c.veces}) - 
@@ -1296,28 +1302,54 @@ if (index === 0) {
   });
 
   if(modoEdicion){
-    document.querySelectorAll(".guardar-analisis-btn").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
-        const mes = btn.dataset.mes;
-        const evaluaciones = {};
-        document.querySelectorAll(`.eval-select[data-mes="${mes}"]`).forEach(sel=>{
-          const id = sel.dataset.id;
-          evaluaciones[id] = sel.value;
-        });
-        const cantantes = {};
-document.querySelectorAll(`.cantante-select[data-mes="${mes}"]`).forEach(sel => {
-  cantantes[sel.dataset.fecha] = sel.value;
-});
-        const observaciones = document.querySelector(`.obs-textarea[data-mes="${mes}"]`).value;
-        await setDoc(doc(db,"analisis_mensual",mes),{
-  canciones: mapaMeses[mes].canciones,
-  evaluaciones,
-  cantantes,
-  observaciones
-});
-        alert("✅ Análisis mensual guardado");
+document.querySelectorAll(".guardar-analisis-btn").forEach(btn=>{
+  btn.addEventListener("click", async ()=>{
+    const mes = btn.dataset.mes;
+
+    // Obtener documento actual para no sobrescribir historial
+    const ref = doc(db,"analisis_mensual",mes);
+    const snap = await getDoc(ref);
+    const dataExistente = snap.exists() ? snap.data() : {};
+
+    const evaluaciones = dataExistente.evaluaciones || {};
+
+    // Obtener cantantes del mes
+    const cantantes = {};
+    document.querySelectorAll(`.cantante-select[data-mes="${mes}"]`).forEach(sel=>{
+      cantantes[sel.dataset.fecha] = sel.value;
+    });
+
+    // Para cada fecha del mes
+    Object.keys(cantantes).forEach(fecha=>{
+      if(!evaluaciones[fecha]) evaluaciones[fecha] = {};
+
+      document.querySelectorAll(`.eval-select[data-mes="${mes}"]`).forEach(sel=>{
+        const id = sel.dataset.id;
+        const valoracion = sel.value;
+
+        if(valoracion){
+          evaluaciones[fecha][id] = {
+            valoracion,
+            cantante: cantantes[fecha] || ""
+          };
+        }
       });
     });
+
+    const observaciones = document.querySelector(
+      `.obs-textarea[data-mes="${mes}"]`
+    ).value;
+
+    await setDoc(ref,{
+      canciones: mapaMeses[mes].canciones,
+      evaluaciones,
+      cantantes,
+      observaciones
+    });
+
+    alert("✅ Análisis mensual guardado correctamente");
+  });
+});
   }
 }
 
