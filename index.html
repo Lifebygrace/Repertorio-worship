@@ -1169,19 +1169,27 @@ cont.innerHTML += `
   analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
   // Agrupar por mes
-  const mapaMeses = {}; 
-  snapRegistro.forEach(docu => {
-    const data = docu.data();
-    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
-    const cancion = cancionesCache.find(c => c.id === docu.id);
-    if(!cancion) return;
+ const mapaMeses = {};
 
-    fechas.forEach(f => {
-      const mes = f.slice(0,7);
-      if(!mapaMeses[mes]) mapaMeses[mes] = { canciones:{}, cantantes: "", evaluaciones:{}, observaciones:"" };
-      mapaMeses[mes].canciones[cancion.id] = (mapaMeses[mes].canciones[cancion.id] || 0) + 1;
-    });
-  });
+docs.forEach(d=>{
+  const data = d.data();
+  const fechaObj = new Date(data.fecha);
+  const mes = fechaObj.toLocaleString("es-ES",{month:"long",year:"numeric"});
+
+  if(!mapaMeses[mes]){
+    mapaMeses[mes] = {
+      anio: fechaObj.getFullYear(),
+      mesIndex: fechaObj.getMonth(),
+      fechas: {}
+    };
+  }
+
+  const fechaISO = data.fecha;
+
+  if(!mapaMeses[mes].fechas[fechaISO]){
+    mapaMeses[mes].fechas[fechaISO] = data.canciones;
+  }
+});
 
   let meses = Object.keys(mapaMeses).sort().reverse(); // Mes más reciente primero
   if(!meses.length){
@@ -1240,59 +1248,67 @@ const cantanteHtml = `
 
   </details>
 `;
-  
-    // Top 3 canciones con veces tocadas y emoji de valoración
-    const resumenHtml = resumen.map(c=>{
-      let val = "";
-const fechasMes = Object.keys(datosMes.evaluaciones || {});
-fechasMes.forEach(f=>{
-  if(datosMes.evaluaciones[f]?.[c.id]){
-    val = datosMes.evaluaciones[f][c.id].valoracion;
-  }
-});
+// Top 3 canciones con valoraciones por domingo
+const resumenHtml = resumen.map(c => {
+  const domingos = obtenerDomingosDelMes(mes).map(f => ajustarAServicio(f));
+
+  if (modoEdicion) {
+    // Modo edición: un select por cada domingo
+    const selectsPorDomingo = domingos.map(fecha => {
+      const val = datosMes.evaluaciones?.[fecha]?.[c.id]?.valoracion || "";
       const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
-      if(modoEdicion){
-        return `<li>${c.titulo} (${c.veces}) - 
-          <select class="eval-select" data-id="${c.id}" data-mes="${mes}">
-            <option value="" ${val===""?"selected":""}></option>
-            <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️</option>
-            <option value="Bien" ${val==="Bien"?"selected":""}>👍</option>
-            <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀</option>
+      return `
+        <div style="margin-top:4px;">
+          ${isoToDisplay(fecha)} →
+          <select class="eval-select" data-mes="${mes}" data-fecha="${fecha}" data-id="${c.id}">
+            <option value="" ${val === "" ? "selected" : ""}></option>
+            <option value="A mejorar" ${val === "A mejorar" ? "selected" : ""}>‼️ A mejorar</option>
+            <option value="Bien" ${val === "Bien" ? "selected" : ""}>👍 Bien</option>
+            <option value="Excelente" ${val === "Excelente" ? "selected" : ""}>🚀 Excelente</option>
           </select>
-        </li>`;
-      } else {
-        return `<li>${c.titulo} (${c.veces}) ${emoji}</li>`;
-      }
+          <span>${emoji}</span>
+        </div>
+      `;
     }).join("");
 
-    // Observaciones con mismo estilo de top 3
-    const obsHtml = modoEdicion 
-      ? `<ul><li><textarea class="obs-textarea" data-mes="${mes}" placeholder="Escribe observaciones o consejos aquí..." style="width:100%;height:60px;margin-top:4px;">${datosMes.observaciones||""}</textarea></li></ul>`
-      : `<ul><li>${datosMes.observaciones||""}</li></ul>`;
+    return `<li><strong>${c.titulo} (${c.veces})</strong>${selectsPorDomingo}</li>`;
+  } else {
+    // Modo lectura: mostrar solo el último emoji disponible del mes
+    const ultimaFecha = domingos.slice(-1)[0];
+    const val = datosMes.evaluaciones?.[ultimaFecha]?.[c.id]?.valoracion || "";
+    const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
+    return `<li>${c.titulo} (${c.veces}) ${emoji}</li>`;
+  }
+}).join("");
 
-    const abierto = mes === ultimoMes ? "open" : "";
+// Observaciones con mismo estilo de top 3
+const obsHtml = modoEdicion 
+  ? `<ul><li><textarea class="obs-textarea" data-mes="${mes}" placeholder="Escribe observaciones o consejos aquí..." style="width:100%;height:60px;margin-top:4px;">${datosMes.observaciones || ""}</textarea></li></ul>`
+  : `<ul><li>${datosMes.observaciones || ""}</li></ul>`;
 
-    card.innerHTML = `
-      <details ${abierto}>
-        <summary>📅 ${nombreMes}</summary>
-        <div style="margin-top:8px;">${cantanteHtml}</div>
-        <details class="details-slow" style="margin-top:6px;">
-        <summary>📌 resumen musical 🔥</summary>
-          <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
-        </details>
-        <details class="details-slow" style="margin-top:6px;">
-        <summary>📝 Observaciones / Consejos</summary>
-          <div class="notas-card" style="margin-top:4px;">${obsHtml}</div>
-        </details>
-        ${modoEdicion ? `<button class="guardar-analisis-btn" data-mes="${mes}" style="margin-top:8px;">💾 Guardar análisis</button>` : ""}
-      </details>
-    `;
+const abierto = mes === ultimoMes ? "open" : "";
+
+card.innerHTML = `
+  <details ${abierto}>
+    <summary>📅 ${nombreMes}</summary>
+    <div style="margin-top:8px;">${cantanteHtml}</div>
+    <details class="details-slow" style="margin-top:6px;">
+      <summary>📌 Resumen musical 🔥</summary>
+      <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
+    </details>
+    <details class="details-slow" style="margin-top:6px;">
+      <summary>📝 Observaciones / Consejos</summary>
+      <div class="notas-card" style="margin-top:4px;">${obsHtml}</div>
+    </details>
+    ${modoEdicion ? `<button class="guardar-analisis-btn" data-mes="${mes}" style="margin-top:8px;">💾 Guardar análisis</button>` : ""}
+  </details>
+`;
 
 if (index === 0) {
   // 🟢 Mes más reciente
   cont.appendChild(card);
 
-  // ⬇️ Botón JUSTO debajo del contenido del mes actual
+  // ⬇️ Botón justo debajo del contenido del mes actual
   cont.appendChild(toggleBtn);
   cont.appendChild(mesesAnterioresCont);
 } else {
@@ -1305,49 +1321,38 @@ if (index === 0) {
 document.querySelectorAll(".guardar-analisis-btn").forEach(btn=>{
   btn.addEventListener("click", async ()=>{
     const mes = btn.dataset.mes;
-
-    // Obtener documento actual para no sobrescribir historial
     const ref = doc(db,"analisis_mensual",mes);
     const snap = await getDoc(ref);
     const dataExistente = snap.exists() ? snap.data() : {};
 
     const evaluaciones = dataExistente.evaluaciones || {};
 
-    // Obtener cantantes del mes
-    const cantantes = {};
-    document.querySelectorAll(`.cantante-select[data-mes="${mes}"]`).forEach(sel=>{
-      cantantes[sel.dataset.fecha] = sel.value;
-    });
-
-    // Para cada fecha del mes
-    Object.keys(cantantes).forEach(fecha=>{
-      if(!evaluaciones[fecha]) evaluaciones[fecha] = {};
-
-      document.querySelectorAll(`.eval-select[data-mes="${mes}"]`).forEach(sel=>{
+    document.querySelectorAll(`.eval-select[data-mes="${mes}"]`)
+      .forEach(sel=>{
+        const fecha = sel.dataset.fecha;
         const id = sel.dataset.id;
         const valoracion = sel.value;
 
+        const cantanteSel = document.querySelector(
+          `.cantante-select[data-mes="${mes}"][data-fecha="${fecha}"][data-id="${id}"]`
+        );
+
+        const cantante = cantanteSel?.value || "";
+
         if(valoracion){
+          if(!evaluaciones[fecha]) evaluaciones[fecha] = {};
           evaluaciones[fecha][id] = {
             valoracion,
-            cantante: cantantes[fecha] || ""
+            cantante
           };
         }
       });
-    });
-
-    const observaciones = document.querySelector(
-      `.obs-textarea[data-mes="${mes}"]`
-    ).value;
 
     await setDoc(ref,{
-      canciones: mapaMeses[mes].canciones,
-      evaluaciones,
-      cantantes,
-      observaciones
+      evaluaciones
     });
 
-    alert("✅ Análisis mensual guardado correctamente");
+    alert("✅ Análisis guardado correctamente");
   });
 });
   }
