@@ -1309,9 +1309,28 @@ document.querySelectorAll(`.cantante-select[data-mes="${mes}"]`).forEach(sel => 
   cantantes[sel.dataset.fecha] = sel.value;
 });
         const observaciones = document.querySelector(`.obs-textarea[data-mes="${mes}"]`).value;
-        await setDoc(doc(db,"analisis_mensual",mes),{
+        for (const id in evaluaciones) {
+           if (!evaluaciones[id]) continue;
+
+  const evalRef = doc(db, "analisis_mensual", mes, "evaluaciones", id);
+  const snap = await getDoc(evalRef);
+
+  const historial = snap.exists() ? snap.data().historial || [] : [];
+
+  historial.push({
+    fecha: new Date().toISOString(),
+    valor: evaluaciones[id]
+    cantante: nombreCantante
+  });
+
+  await setDoc(evalRef, {
+    historial
+  });
+}
+
+// Guardar datos generales del mes
+await setDoc(doc(db,"analisis_mensual",mes),{
   canciones: mapaMeses[mes].canciones,
-  evaluaciones,
   cantantes,
   observaciones
 });
@@ -1829,12 +1848,42 @@ window.analizarPeriodo = async function(mesesAtras){
     "A mejorar": {}
   };
 
-  for(const mes of meses){
-    const data = snap.docs.find(d => d.id === mes)?.data();
-    if(!data?.evaluaciones) continue;
+for (const mes of meses) {
 
-    for(const [id, valor] of Object.entries(data.evaluaciones)){
-      if(!valor) continue;
+  const evaluacionesSnap = await getDocs(
+    collection(db, "analisis_mensual", mes, "evaluaciones")
+  );
+
+  for (const docEval of evaluacionesSnap.docs) {
+
+    const id = docEval.id;
+    const dataEval = docEval.data();
+    const historial = dataEval.historial || [];
+
+    for (const registro of historial) {
+
+      const valor = registro.valor;
+      if (!valor) continue;
+
+      const cancion = cancionesCache.find(c => c.id === id);
+      if (!cancion) continue;
+
+      if (!acumulado[valor][id]) {
+        acumulado[valor][id] = {
+          titulo: cancion.titulo,
+          veces: 0,
+          cantantes: new Set()
+        };
+      }
+
+      acumulado[valor][id].veces++;
+
+      if (registro.cantante) {
+        acumulado[valor][id].cantantes.add(registro.cantante);
+      }
+    }
+  }
+}
 
       const cancion = cancionesCache.find(c=>c.id===id);
       if(!cancion) continue;
