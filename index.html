@@ -1202,12 +1202,25 @@ meses.forEach((mes, index) => {
       return { id, titulo: c?.titulo || "—", veces: cancionesMes[id] };
     });
 
-// Ordenar TODAS las canciones por popularidad 🔥
-const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
+// 🔥 RESUMEN MUSICAL COMPLETO (con repeticiones)
+const resumenCompleto = [];
 
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.marginTop = "12px";
+snapRegistro.forEach(docu => {
+  const data = docu.data();
+  const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+  const cancion = cancionesCache.find(c => c.id === docu.id);
+  if(!cancion) return;
+
+  fechas.forEach(f => {
+    if (f.startsWith(mes)) {
+      resumenCompleto.push({
+        id: docu.id,
+        titulo: cancion.titulo,
+        fecha: f
+      });
+    }
+  });
+});
 
 // Cantantes
 const domingos = obtenerDomingosDelMes(mes).map(f => ajustarAServicio(f));
@@ -1242,7 +1255,9 @@ const cantanteHtml = `
 `;
   
     // Top 3 canciones con veces tocadas y emoji de valoración
-    const resumenHtml = resumen.map(c=>{
+const resumenHtml = resumenCompleto.map(c => {
+  return `<li>${c.titulo}</li>`;
+}).join("");
       const val = datosMes.evaluaciones?.[c.id] || "";
       const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
       if(modoEdicion){
