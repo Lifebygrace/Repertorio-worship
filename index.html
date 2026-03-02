@@ -1129,6 +1129,48 @@ function toggleAnalisis() {
   if(el.style.display === "block") cargarAnalisisMensual();
 }
 
+/* =========================
+   ANÁLISIS REAL (GLOBAL)
+========================= */
+function toggleAnalisisReal(){
+  const el = document.getElementById("analisis-real");
+  if(!el) return;
+
+  el.style.display = el.style.display === "block" ? "none" : "block";
+
+  if(el.style.display === "block"){
+    cargarAnalisisReal();
+  }
+}
+
+async function cargarAnalisisReal(){
+  const cont = document.getElementById("analisis-real");
+  cont.innerHTML = "<h2>📈 Análisis real</h2>";
+
+  const snap = await getDocs(collection(db,"registro"));
+
+  let totalTocadas = 0;
+  let cancionesActivas = 0;
+
+  snap.forEach(docu=>{
+    const data = docu.data();
+    const veces = Number(data.veces || 0);
+    if(veces > 0){
+      cancionesActivas++;
+      totalTocadas += veces;
+    }
+  });
+
+  cont.innerHTML += `
+    <div class="notas-card">
+      <ul>
+        <li>🎵 Total canciones tocadas: <strong>${cancionesActivas}</strong></li>
+        <li>🔥 Total veces tocadas: <strong>${totalTocadas}</strong></li>
+      </ul>
+    </div>
+  `;
+}
+
 /* Carga y renderiza el análisis mensual */
 async function cargarAnalisisMensual() {
   const cont = document.getElementById("analisis-mensual");
