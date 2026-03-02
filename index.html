@@ -2147,13 +2147,37 @@ filtroSelect.addEventListener("change", e => {
       const domingoDiv = document.createElement("div");
       domingoDiv.style.marginBottom = "15px";
 
-      const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
-        const cancion = cancionesCache.find(c => c.id === id);
-        const titulo = cancion?.titulo || "—";
-        const val = datosGuardados.evaluaciones?.[id] || "";
-        const emoji = val === "Excelente" ? "🚀" : val === "Bien" ? "👍" : val === "A mejorar" ? "‼️" : "";
-        return `<li>${titulo} ${emoji}</li>`;
-      }).join("");
+   const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
+
+  const cancion = cancionesCache.find(c => c.id === id);
+  const titulo = cancion?.titulo || "—";
+  const val = datosGuardados.evaluaciones?.[id] || "";
+
+  if (modoEdicion) {
+    return `
+      <li>
+        ${titulo}
+        <select class="eval-real"
+                data-id="${id}"
+                data-fecha="${fecha}">
+          <option value=""></option>
+          <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀 Excelente</option>
+          <option value="Bien" ${val==="Bien"?"selected":""}>👍 Bien</option>
+          <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️ A mejorar</option>
+        </select>
+      </li>
+    `;
+  } else {
+
+    const emoji =
+      val==="Excelente"?"🚀":
+      val==="Bien"?"👍":
+      val==="A mejorar"?"‼️":"";
+
+    return `<li>${titulo} ${emoji}</li>`;
+  }
+
+}).join("");
 
       const cantanteHtml = modoEdicion
         ? `<select class="cantante-real" data-fecha="${fecha}">
