@@ -1929,134 +1929,92 @@ function toggleAnalisisReal(){
 }
 
 
-async function cargarAnalisisReal(){
+async function cargarAnalisisReal() {
   const cont = document.getElementById("analisis-real");
   cont.innerHTML = "";
 
   const hoy = new Date();
-  const mesActualKey = `${hoy.getFullYear()}-${String(hoy.getMonth()+1).padStart(2,"0")}`;
+  const mesActualKey = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}`;
 
-  const snapRegistro = await getDocs(collection(db,"registro"));
-  const snapAnalisis = await getDocs(collection(db,"analisis_real"));
+  const snapRegistro = await getDocs(collection(db, "registro"));
+  const snapAnalisis = await getDocs(collection(db, "analisis_real"));
 
   const analisisGuardado = {};
   snapAnalisis.forEach(d => analisisGuardado[d.id] = d.data());
 
-  // ===== AGRUPAR POR MES Y SOLO DOMINGOS =====
   const mapaMeses = {};
-  snapRegistro.forEach(docu=>{
+
+  // ===== AGRUPAR POR MES Y SOLO DOMINGOS =====
+  snapRegistro.forEach(docu => {
     const data = docu.data();
     const fechas = Array.isArray(data.fechas) ? data.fechas : [];
-    fechas.forEach(f=>{
+
+    fechas.forEach(f => {
       const fechaObj = new Date(f);
-      if(fechaObj.getDay() !== 0) return; // solo domingos
-      const mesKey = f.substring(0,7); // YYYY-MM
-      if(!mapaMeses[mesKey]) mapaMeses[mesKey] = {};
-      if(!mapaMeses[mesKey][f]) mapaMeses[mesKey][f] = [];
+      if (fechaObj.getDay() !== 0) return; // solo domingos
+      const mesKey = f.substring(0, 7); // YYYY-MM
+
+      if (!mapaMeses[mesKey]) mapaMeses[mesKey] = {};
+      if (!mapaMeses[mesKey][f]) mapaMeses[mesKey][f] = [];
+
       mapaMeses[mesKey][f].push(docu.id);
     });
   });
 
   const mesesOrdenados = Object.keys(mapaMeses).sort().reverse();
-
-  if(!mesesOrdenados.length){
+  if (!mesesOrdenados.length) {
     cont.innerHTML = "<p>No hay datos registrados.</p>";
     return;
   }
 
-  // ===== 1️⃣ ANÁLISIS POR CANTANTE 🎤 =====
-  const cantantes = ["Milly","Carolina","Jason"];
-  const tarjetaCantante = document.createElement("div");
-  tarjetaCantante.className = "card";
-  tarjetaCantante.style.marginBottom = "20px";
-
-  let htmlCantante = `<h2 style="font-size:18px;">🎤 Análisis por cantante</h2>`;
-  cantantes.forEach(cantante=>{
-    // Contar evaluaciones
-    let contadores = { "🚀":0, "👍":0, "‼️":0 };
-    let cancionesPorEmoji = { "🚀":[], "👍":[], "‼️":[] };
-
-    Object.keys(analisisGuardado).forEach(fecha=>{
-      const data = analisisGuardado[fecha];
-      if(data.cantante !== cantante) return;
-      Object.entries(data.evaluaciones || {}).forEach(([id,val])=>{
-        const emoji = val==="Excelente"?"🚀":val==="Bien"?"👍":val==="A mejorar"?"‼️":null;
-        if(!emoji) return;
-        contadores[emoji]++;
-        const cancion = cancionesCache.find(c=>c.id===id)?.titulo || id;
-        cancionesPorEmoji[emoji].push(cancion);
-      });
-    });
-
-    // Crear visual de barras simple
-    const total = contadores["🚀"] + contadores["👍"] + contadores["‼️"];
-    const widthFactor = total ? 100/total : 0;
-
-    htmlCantante += `
-      <div style="margin-bottom:15px;">
-        <h3 style="margin:5px 0;">${cantante}</h3>
-        <div style="display:flex; gap:5px; margin-bottom:5px;">
-          <div style="background:#4caf50; color:white; padding:2px 5px; flex:${contadores["🚀"]}; text-align:center;">🚀 ${contadores["🚀"]}</div>
-          <div style="background:#2196f3; color:white; padding:2px 5px; flex:${contadores["👍"]}; text-align:center;">👍 ${contadores["👍"]}</div>
-          <div style="background:#f44336; color:white; padding:2px 5px; flex:${contadores["‼️"]}; text-align:center;">‼️ ${contadores["‼️"]}</div>
-        </div>
-        <div>
-          ${["🚀","👍","‼️"].map(e=>{
-            if(cancionesPorEmoji[e].length===0) return "";
-            return `<strong>${e}</strong> ${cancionesPorEmoji[e].join(", ")}`;
-          }).join("<br>")}
-        </div>
-      </div>
-    `;
-  });
-
-  tarjetaCantante.innerHTML = htmlCantante;
-  cont.appendChild(tarjetaCantante);
-
   // ===== FUNCIÓN PARA CREAR CARD DE MES =====
-  function crearCardMes(mesKey){
+  function crearCardMes(mesKey) {
     const fechasOrdenadas = Object.keys(mapaMeses[mesKey]).sort();
     const fechaBase = new Date(mesKey + "-01");
-    const nombreMes = fechaBase.toLocaleString("es-ES",{month:"long",year:"numeric"});
+    const nombreMes = fechaBase.toLocaleString("es-ES", { month: "long", year: "numeric" });
 
     const cardMes = document.createElement("div");
     cardMes.className = "card";
     cardMes.style.marginBottom = "20px";
 
     cardMes.innerHTML = `
-      <h2 style="cursor:pointer; font-size:16px;">📅 ${nombreMes.toUpperCase()} ▼</h2>
+      <h2 style="cursor:pointer; font-size:1.2rem;">📅 ${nombreMes.toUpperCase()} ▼</h2>
       <div class="contenido-mes" style="display:none;"></div>
     `;
-
     const contenidoMes = cardMes.querySelector(".contenido-mes");
-    cardMes.querySelector("h2").addEventListener("click",()=>{
-      contenidoMes.style.display = contenidoMes.style.display === "block" ? "none" : "block";
+
+    cardMes.querySelector("h2").addEventListener("click", () => {
+      contenidoMes.style.display =
+        contenidoMes.style.display === "block" ? "none" : "block";
     });
 
-    fechasOrdenadas.forEach(fecha=>{
-      const datosGuardados = analisisGuardado[fecha] || { cantante:"", evaluaciones:{} };
-
+    fechasOrdenadas.forEach(fecha => {
+      const datosGuardados = analisisGuardado[fecha] || { cantante: "", evaluaciones: {} };
       const domingoDiv = document.createElement("div");
       domingoDiv.style.marginBottom = "15px";
 
-      const cancionesHtml = mapaMeses[mesKey][fecha].map(id=>{
-        const cancion = cancionesCache.find(c=>c.id===id);
+      const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
+        const cancion = cancionesCache.find(c => c.id === id);
         const titulo = cancion?.titulo || "—";
         const val = datosGuardados.evaluaciones?.[id] || "";
-        if(modoEdicion){
+        const emoji =
+          val === "Excelente" ? "🚀" :
+            val === "Bien" ? "👍" :
+              val === "A mejorar" ? "‼️" : "";
+
+        if (modoEdicion) {
           return `
             <li>
               ${titulo}
               <select class="eval-real" data-id="${id}" data-fecha="${fecha}">
                 <option value=""></option>
-                <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀</option>
-                <option value="Bien" ${val==="Bien"?"selected":""}>👍</option>
-                <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️</option>
+                <option value="Excelente" ${val === "Excelente" ? "selected" : ""}>🚀</option>
+                <option value="Bien" ${val === "Bien" ? "selected" : ""}>👍</option>
+                <option value="A mejorar" ${val === "A mejorar" ? "selected" : ""}>‼️</option>
               </select>
             </li>
           `;
         } else {
-          const emoji = val==="Excelente"?"🚀":val==="Bien"?"👍":val==="A mejorar"?"‼️":"";
           return `<li>${titulo} ${emoji}</li>`;
         }
       }).join("");
@@ -2064,15 +2022,15 @@ async function cargarAnalisisReal(){
       const cantanteHtml = modoEdicion
         ? `<select class="cantante-real" data-fecha="${fecha}">
             <option value=""></option>
-            <option value="Milly" ${datosGuardados.cantante==="Milly"?"selected":""}>Milly</option>
-            <option value="Carolina" ${datosGuardados.cantante==="Carolina"?"selected":""}>Carolina</option>
-            <option value="Jason" ${datosGuardados.cantante==="Jason"?"selected":""}>Jason</option>
+            <option value="Milly" ${datosGuardados.cantante === "Milly" ? "selected" : ""}>Milly</option>
+            <option value="Carolina" ${datosGuardados.cantante === "Carolina" ? "selected" : ""}>Carolina</option>
+            <option value="Jason" ${datosGuardados.cantante === "Jason" ? "selected" : ""}>Jason</option>
           </select>`
         : `<strong>${datosGuardados.cantante || "-"}</strong>`;
 
       domingoDiv.innerHTML = `
         <h4>▸ ${isoToDisplay(fecha)}</h4>
-        <p>🎤 Cantante: ${cantanteHtml}</p>
+        <p>🎤 ${cantanteHtml}</p>
         <ul>${cancionesHtml}</ul>
         ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
       `;
@@ -2080,36 +2038,79 @@ async function cargarAnalisisReal(){
       contenidoMes.appendChild(domingoDiv);
     });
 
-    if(modoEdicion){
-      contenidoMes.querySelectorAll(".guardar-real").forEach(btn=>{
-        btn.addEventListener("click", async ()=>{
-          const fecha = btn.dataset.fecha;
-          const evaluaciones = {};
-          contenidoMes.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`).forEach(sel=>{
-            evaluaciones[sel.dataset.id] = sel.value;
-          });
-          const cantanteSel = contenidoMes.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
-          const cantante = cantanteSel ? cantanteSel.value : "";
-          await setDoc(doc(db,"analisis_real",fecha),{
-            cantante,
-            evaluaciones
-          });
-          alert("✅ Análisis real guardado");
-        });
-      });
-    }
-
     return cardMes;
   }
 
+  // ===== TARJETA ANÁLISIS POR CANTANTE =====
+  const tarjetaCantante = document.createElement("div");
+  tarjetaCantante.className = "card";
+  tarjetaCantante.style.marginBottom = "20px";
+  tarjetaCantante.innerHTML = `<h2 style="font-size:1.2rem;">🎤 Análisis por cantante ▼</h2>
+    <div class="contenido-cantante" style="display:none;"></div>
+  `;
+  const contCantante = tarjetaCantante.querySelector(".contenido-cantante");
+
+  tarjetaCantante.querySelector("h2").addEventListener("click", () => {
+    contCantante.style.display = contCantante.style.display === "block" ? "none" : "block";
+  });
+
+  const cantantes = ["Milly", "Carolina", "Jason"];
+  cantantes.forEach(cantante => {
+    const barraDiv = document.createElement("div");
+    barraDiv.style.marginBottom = "15px";
+
+    // Contar evaluaciones
+    const cancionesCantante = snapRegistro.docs.filter(docu => {
+      const fdata = docu.data();
+      return Array.isArray(fdata.fechas) && fdata.fechas.some(f => {
+        const d = analisisGuardado[f];
+        return d?.cantante === cantante;
+      });
+    });
+
+    const conteo = { "Excelente": [], "Bien": [], "A mejorar": [] };
+    cancionesCantante.forEach(docu => {
+      const fdata = docu.data();
+      fdata.fechas.forEach(f => {
+        const evals = analisisGuardado[f]?.evaluaciones || {};
+        if (evals[docu.id] === "Excelente") conteo["Excelente"].push(fdata.titulo || docu.id);
+        if (evals[docu.id] === "Bien") conteo["Bien"].push(fdata.titulo || docu.id);
+        if (evals[docu.id] === "A mejorar") conteo["A mejorar"].push(fdata.titulo || docu.id);
+      });
+    });
+
+    barraDiv.innerHTML = `
+      <h4>${cantante}</h4>
+      <div style="cursor:pointer; margin-bottom:5px;">🚀 Excelente (${conteo["Excelente"].length}) ▼
+        <ul style="display:none; margin-left:20px;">${conteo["Excelente"].map(t => `<li>${t}</li>`).join("")}</ul>
+      </div>
+      <div style="cursor:pointer; margin-bottom:5px;">👍 Bien (${conteo["Bien"].length}) ▼
+        <ul style="display:none; margin-left:20px;">${conteo["Bien"].map(t => `<li>${t}</li>`).join("")}</ul>
+      </div>
+      <div style="cursor:pointer; margin-bottom:5px;">‼️ A mejorar (${conteo["A mejorar"].length}) ▼
+        <ul style="display:none; margin-left:20px;">${conteo["A mejorar"].map(t => `<li>${t}</li>`).join("")}</ul>
+      </div>
+    `;
+
+    // Toggle listas al hacer click
+    barraDiv.querySelectorAll("div").forEach(div => {
+      div.addEventListener("click", () => {
+        const ul = div.querySelector("ul");
+        if (ul) ul.style.display = ul.style.display === "block" ? "none" : "block";
+      });
+    });
+
+    contCantante.appendChild(barraDiv);
+  });
+
+  cont.appendChild(tarjetaCantante);
+
   // ===== MOSTRAR MES ACTUAL =====
-  if(mapaMeses[mesActualKey]){
-    cont.appendChild(crearCardMes(mesActualKey));
-  }
+  if (mapaMeses[mesActualKey]) cont.appendChild(crearCardMes(mesActualKey));
 
   // ===== MESES ANTERIORES =====
-  const mesesAnteriores = mesesOrdenados.filter(m=>m !== mesActualKey);
-  if(mesesAnteriores.length){
+  const mesesAnteriores = mesesOrdenados.filter(m => m !== mesActualKey);
+  if (mesesAnteriores.length) {
     const btn = document.createElement("button");
     btn.textContent = "📂 Ver meses anteriores";
     btn.style.margin = "15px 0";
@@ -2119,14 +2120,29 @@ async function cargarAnalisisReal(){
     contenedorAntiguos.style.display = "none";
     cont.appendChild(contenedorAntiguos);
 
-    btn.addEventListener("click",()=>{
+    btn.addEventListener("click", () => {
       const visible = contenedorAntiguos.style.display === "block";
       contenedorAntiguos.style.display = visible ? "none" : "block";
       btn.textContent = visible ? "📂 Ver meses anteriores" : "📂 Ocultar meses anteriores";
     });
 
-    mesesAnteriores.forEach(mesKey=>{
-      contenedorAntiguos.appendChild(crearCardMes(mesKey));
+    mesesAnteriores.forEach(mesKey => contenedorAntiguos.appendChild(crearCardMes(mesKey)));
+  }
+
+  // ===== GUARDAR EVALUACIONES =====
+  if (modoEdicion) {
+    document.querySelectorAll(".guardar-real").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const fecha = btn.dataset.fecha;
+        const evaluaciones = {};
+        document.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`).forEach(sel => {
+          evaluaciones[sel.dataset.id] = sel.value;
+        });
+        const cantanteSel = document.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
+        const cantante = cantanteSel ? cantanteSel.value : "";
+        await setDoc(doc(db, "analisis_real", fecha), { cantante, evaluaciones });
+        alert("✅ Análisis real guardado");
+      });
     });
   }
 }
