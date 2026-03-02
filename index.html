@@ -1810,110 +1810,79 @@ window.guardarListadoMensual = async function(){
 
 ///////
 ////// ANALIZAR PERIODO
-window.analizarPeriodo = async function(mesesAtras){
+window.analizarPeriodo = async function(mesesAtras) {
 
   const cont = document.getElementById("resultado-periodo");
-  cont.innerHTML = "Analizando...";
+  cont.innerHTML = "";
 
-  const snap = await getDocs(collection(db,"analisis_mensual"));
-
-  let meses = snap.docs.map(d => d.id).sort().reverse();
-
-  if(mesesAtras > 0){
-    meses = meses.slice(0, mesesAtras);
+  // 🔹 Fecha límite
+  const hoy = new Date();
+  const limite = new Date(hoy);
+  if (mesesAtras > 0) {
+    limite.setMonth(hoy.getMonth() - mesesAtras);
+  } else {
+    limite.setFullYear(1970); // "Siempre"
   }
 
-  const acumulado = {
-    Excelente: {},
-    Bien: {},
-    "A mejorar": {}
-  };
+  const limiteISO = limite.toISOString().slice(0,10);
 
-  for(const mes of meses){
-    const data = snap.docs.find(d => d.id === mes)?.data();
-    if(!data?.evaluaciones) continue;
+  // 🔹 Agregadores
+  const mapaCanciones = {};
+  let totalVeces = 0;
 
-    for(const [id, valor] of Object.entries(data.evaluaciones)){
-      if(!valor) continue;
+  // 🔹 Recorremos SOLO el registro
+  const snap = await getDocs(collection(db, "registro"));
 
-      const cancion = cancionesCache.find(c=>c.id===id);
-      if(!cancion) continue;
+  snap.forEach(docu => {
+    const data = docu.data();
+    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
 
-      if(!acumulado[valor][id]){
-        acumulado[valor][id] = {
-          titulo: cancion.titulo,
-          veces: 0,
-          cantantes: new Set()
-        };
-      }
+    const validas = fechas.filter(f => f >= limiteISO);
+    if (!validas.length) return;
 
-      acumulado[valor][id].veces++;
+    totalVeces += validas.length;
 
-      if(data.cantantes){
-        Object.values(data.cantantes).forEach(c=>{
-          if(c) acumulado[valor][id].cantantes.add(c);
-        });
-      }
-    }
-  }
+    mapaCanciones[docu.id] = (mapaCanciones[docu.id] || 0) + validas.length;
+  });
 
-  const total =
-    Object.keys(acumulado["Excelente"]).length +
-    Object.keys(acumulado["Bien"]).length +
-    Object.keys(acumulado["A mejorar"]).length;
+  const ranking = Object.entries(mapaCanciones)
+    .map(([id, veces]) => {
+      const c = cancionesCache.find(x => x.id === id);
+      return {
+        id,
+        titulo: c?.titulo || "—",
+        veces
+      };
+    })
+    .sort((a,b) => b.veces - a.veces);
 
-  window.cacheResultados = acumulado;
+  const mesesUsados = mesesAtras || Math.max(1,
+    (hoy.getFullYear() - limite.getFullYear()) * 12 +
+    (hoy.getMonth() - limite.getMonth())
+  );
 
+  // 🔹 Render
   cont.innerHTML = `
-    <p>Total evaluadas: <strong>${total}</strong></p>
+    <div class="notas-card">
+      <h3>📊 Resultado del periodo</h3>
+      <ul>
+        <li>🎵 Veces totales tocadas: <strong>${totalVeces}</strong></li>
+        <li>🎶 Canciones distintas: <strong>${ranking.length}</strong></li>
+        <li>📆 Promedio mensual: <strong>${(totalVeces / mesesUsados).toFixed(1)}</strong></li>
+      </ul>
+    </div>
 
-    <p onclick="mostrarDetallePeriodo('Excelente')" style="cursor:pointer">
-      🚀 ${Object.keys(acumulado["Excelente"]).length} fueron excelentes
-    </p>
-
-    <p onclick="mostrarDetallePeriodo('Bien')" style="cursor:pointer">
-      👍 ${Object.keys(acumulado["Bien"]).length} fueron buenas
-    </p>
-
-    <p onclick="mostrarDetallePeriodo('A mejorar')" style="cursor:pointer">
-      ‼️ ${Object.keys(acumulado["A mejorar"]).length} necesitan mejorar
-    </p>
-
-    <div id="detalle-periodo"></div>
+    <div class="notas-card" style="margin-top:8px">
+      <h3>🔥 Ranking</h3>
+      <ul>
+        ${
+          ranking.slice(0,10).map((c,i) =>
+            `<li>${i+1}. ${c.titulo} — <strong>${c.veces}</strong></li>`
+          ).join("")
+        }
+      </ul>
+    </div>
   `;
-};
-
-window.mostrarDetallePeriodo = function(tipo){
-
-  const datos = window.cacheResultados[tipo];
-  const cont = document.getElementById("detalle-periodo");
-
-  if(!datos || !Object.keys(datos).length){
-    cont.innerHTML = "<p>No hay canciones.</p>";
-    return;
-  }
-
-  const emoji = tipo==="Excelente" ? "🚀"
-              : tipo==="Bien" ? "👍"
-              : "‼️";
-
-  let html = `<h4 style="margin-top:10px">${emoji} Canciones</h4><ul>`;
-
-  Object.values(datos)
-    .sort((a,b)=>b.veces - a.veces)
-    .forEach(c=>{
-      html += `
-        <li>
-          <strong>${c.titulo}</strong> (${c.veces})
-          <br>
-          🎤 ${[...c.cantantes].join(", ") || "-"}
-        </li>
-      `;
-    });
-
-  html += "</ul>";
-
-  cont.innerHTML = html;
 };
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
