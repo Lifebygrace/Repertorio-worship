@@ -1971,6 +1971,7 @@ async function cargarAnalisisReal() {
 const tarjetaCantante = document.createElement("div");
 tarjetaCantante.className = "card";
 tarjetaCantante.style.marginBottom = "20px";
+
 tarjetaCantante.innerHTML = `
   <h2 style="cursor:pointer; font-size:1.3em;">🎤 Análisis por cantante ▼</h2>
   <div class="contenido-cantante" style="display:none; margin-top:15px;"></div>
@@ -1987,10 +1988,11 @@ const cantantes = ["Milly", "Carolina", "Jason"];
 
 cantantes.forEach(nombre => {
 
+  // Ahora guardamos conteo por canción
   const conteo = {
-    "Excelente": new Set(),
-    "Bien": new Set(),
-    "A mejorar": new Set()
+    "Excelente": {},
+    "Bien": {},
+    "A mejorar": {}
   };
 
   snapRegistro.forEach(docu => {
@@ -2009,23 +2011,26 @@ cantantes.forEach(nombre => {
       const cancion = cancionesCache.find(c => c.id === docu.id);
       const titulo = cancion?.titulo || docu.id;
 
-      conteo[evaluacion]?.add(titulo);
+      if (!conteo[evaluacion][titulo]) {
+        conteo[evaluacion][titulo] = 0;
+      }
+
+      conteo[evaluacion][titulo]++;
     });
   });
 
   const total =
-    conteo["Excelente"].size +
-    conteo["Bien"].size +
-    conteo["A mejorar"].size;
+    Object.keys(conteo["Excelente"]).length +
+    Object.keys(conteo["Bien"]).length +
+    Object.keys(conteo["A mejorar"]).length;
 
   const divCantante = document.createElement("div");
   divCantante.style.marginBottom = "25px";
+  divCantante.innerHTML = `<h3 style="margin-bottom:12px;">${nombre}</h3>`;
 
-  divCantante.innerHTML = `<h3 style="margin-bottom:10px;">${nombre}</h3>`;
+  Object.entries(conteo).forEach(([tipo, cancionesObj]) => {
 
-  Object.entries(conteo).forEach(([tipo, listaSet]) => {
-
-    const cantidad = listaSet.size;
+    const cantidad = Object.keys(cancionesObj).length;
     const porcentaje = total ? ((cantidad / total) * 100).toFixed(0) : 0;
 
     const color =
@@ -2039,10 +2044,10 @@ cantantes.forEach(nombre => {
       "‼️";
 
     const wrapper = document.createElement("div");
-    wrapper.style.marginBottom = "8px";
+    wrapper.style.marginBottom = "10px";
 
     wrapper.innerHTML = `
-      <div class="barra-estadistica"
+      <div class="barra-container"
            style="
              background:#e0e0e0;
              border-radius:6px;
@@ -2052,23 +2057,25 @@ cantantes.forEach(nombre => {
         <div style="
               width:${porcentaje}%;
               background:${color};
-              padding:6px;
+              padding:6px 10px;
               color:white;
               font-weight:bold;
+              white-space:nowrap;
             ">
-          ${emoji} ${tipo} (${cantidad}) — ${porcentaje}%
+          ${emoji} ${tipo} (${cantidad}) | ${porcentaje}%
         </div>
       </div>
       <ul style="
             display:none;
-            margin:8px 0 0 15px;
+            margin:8px 0 0 18px;
           ">
-        ${[...listaSet].map(t => `<li>${t}</li>`).join("")}
+        ${Object.entries(cancionesObj)
+          .map(([titulo, veces]) => `<li>${titulo} (${veces})</li>`)
+          .join("")}
       </ul>
     `;
 
-    // Toggle lista
-    const barra = wrapper.querySelector(".barra-estadistica");
+    const barra = wrapper.querySelector(".barra-container");
     const ul = wrapper.querySelector("ul");
 
     barra.addEventListener("click", () => {
