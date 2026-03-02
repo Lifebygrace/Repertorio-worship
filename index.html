@@ -1974,122 +1974,153 @@ tarjetaCantante.style.marginBottom = "20px";
 
 tarjetaCantante.innerHTML = `
   <h2 style="cursor:pointer; font-size:1.3em;">🎤 Análisis por cantante ▼</h2>
-  <div class="contenido-cantante" style="display:none; margin-top:15px;"></div>
+
+  <div style="margin:10px 0;">
+    <label>Filtrar por:</label>
+    <select id="filtro-rango">
+      <option value="1">Último mes</option>
+      <option value="3">Últimos 3 meses</option>
+      <option value="6">Últimos 6 meses</option>
+      <option value="0" selected>Todo</option>
+    </select>
+  </div>
+
+  <div class="contenido-cantante" style="margin-top:15px;"></div>
 `;
 
 const contCantante = tarjetaCantante.querySelector(".contenido-cantante");
+const filtroSelect = tarjetaCantante.querySelector("#filtro-rango");
 
-tarjetaCantante.querySelector("h2").addEventListener("click", () => {
-  contCantante.style.display =
-    contCantante.style.display === "block" ? "none" : "block";
-});
+cont.appendChild(tarjetaCantante);
 
 const cantantes = ["Milly", "Carolina", "Jason"];
 
-cantantes.forEach(nombre => {
+function renderEstadisticas(rangoMeses) {
 
-  // Ahora guardamos conteo por canción
-  const conteo = {
-    "Excelente": {},
-    "Bien": {},
-    "A mejorar": {}
-  };
+  contCantante.innerHTML = "";
 
-  snapRegistro.forEach(docu => {
-    const data = docu.data();
-    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+  const hoy = new Date();
 
-    fechas.forEach(f => {
+  cantantes.forEach(nombre => {
 
-      const analisis = analisisGuardado[f];
-      if (!analisis) return;
-      if (analisis.cantante !== nombre) return;
+    const conteo = {
+      "Excelente": {},
+      "Bien": {},
+      "A mejorar": {}
+    };
 
-      const evaluacion = analisis.evaluaciones?.[docu.id];
-      if (!evaluacion) return;
+    snapRegistro.forEach(docu => {
+      const data = docu.data();
+      const fechas = Array.isArray(data.fechas) ? data.fechas : [];
 
-      const cancion = cancionesCache.find(c => c.id === docu.id);
-      const titulo = cancion?.titulo || docu.id;
+      fechas.forEach(f => {
 
-      if (!conteo[evaluacion][titulo]) {
-        conteo[evaluacion][titulo] = 0;
-      }
+        const fechaObj = new Date(f);
 
-      conteo[evaluacion][titulo]++;
+        // FILTRO POR RANGO
+        if (rangoMeses > 0) {
+          const limite = new Date();
+          limite.setMonth(hoy.getMonth() - rangoMeses);
+          if (fechaObj < limite) return;
+        }
+
+        const analisis = analisisGuardado[f];
+        if (!analisis) return;
+        if (analisis.cantante !== nombre) return;
+
+        const evaluacion = analisis.evaluaciones?.[docu.id];
+        if (!evaluacion) return;
+
+        const cancion = cancionesCache.find(c => c.id === docu.id);
+        const titulo = cancion?.titulo || docu.id;
+
+        if (!conteo[evaluacion][titulo]) {
+          conteo[evaluacion][titulo] = 0;
+        }
+
+        conteo[evaluacion][titulo]++;
+      });
     });
-  });
 
-  const total =
-    Object.keys(conteo["Excelente"]).length +
-    Object.keys(conteo["Bien"]).length +
-    Object.keys(conteo["A mejorar"]).length;
+    const total =
+      Object.keys(conteo["Excelente"]).length +
+      Object.keys(conteo["Bien"]).length +
+      Object.keys(conteo["A mejorar"]).length;
 
-  const divCantante = document.createElement("div");
-  divCantante.style.marginBottom = "25px";
-  divCantante.innerHTML = `<h3 style="margin-bottom:12px;">${nombre}</h3>`;
+    const divCantante = document.createElement("div");
+    divCantante.style.marginBottom = "25px";
+    divCantante.innerHTML = `<h3 style="margin-bottom:12px;">${nombre}</h3>`;
 
-  Object.entries(conteo).forEach(([tipo, cancionesObj]) => {
+    Object.entries(conteo).forEach(([tipo, cancionesObj]) => {
 
-    const cantidad = Object.keys(cancionesObj).length;
-    const porcentaje = total ? ((cantidad / total) * 100).toFixed(0) : 0;
+      const cantidad = Object.keys(cancionesObj).length;
+      const porcentaje = total ? ((cantidad / total) * 100).toFixed(0) : 0;
 
-    const color =
-      tipo === "Excelente" ? "#4caf50" :
-      tipo === "Bien" ? "#2196f3" :
-      "#f44336";
+      const color =
+        tipo === "Excelente" ? "#4caf50" :
+        tipo === "Bien" ? "#2196f3" :
+        "#f44336";
 
-    const emoji =
-      tipo === "Excelente" ? "🚀" :
-      tipo === "Bien" ? "👍" :
-      "‼️";
+      const emoji =
+        tipo === "Excelente" ? "🚀" :
+        tipo === "Bien" ? "👍" :
+        "‼️";
 
-    const wrapper = document.createElement("div");
-    wrapper.style.marginBottom = "10px";
+      const wrapper = document.createElement("div");
+      wrapper.style.marginBottom = "10px";
 
-    wrapper.innerHTML = `
-      <div class="barra-container"
-           style="
-             background:#e0e0e0;
-             border-radius:6px;
-             overflow:hidden;
-             cursor:pointer;
-           ">
-        <div style="
-              width:${porcentaje}%;
-              background:${color};
-              padding:6px 10px;
-              color:white;
-              font-weight:bold;
-              white-space:nowrap;
-            ">
-          ${emoji} ${tipo} (${cantidad}) | ${porcentaje}%
+      wrapper.innerHTML = `
+        <div class="barra-container"
+             style="
+               background:#9e9e9e;
+               border-radius:6px;
+               overflow:hidden;
+               cursor:pointer;
+             ">
+          <div style="
+                width:${porcentaje}%;
+                background:${color};
+                padding:6px 10px;
+                color:white;
+                font-weight:bold;
+                white-space:nowrap;
+              ">
+            ${emoji} ${tipo} (${cantidad}) | ${porcentaje}%
+          </div>
         </div>
-      </div>
-      <ul style="
-            display:none;
-            margin:8px 0 0 18px;
-          ">
-        ${Object.entries(cancionesObj)
-          .map(([titulo, veces]) => `<li>${titulo} (${veces})</li>`)
-          .join("")}
-      </ul>
-    `;
+        <ul style="
+              display:none;
+              margin:8px 0 0 18px;
+            ">
+          ${Object.entries(cancionesObj)
+            .sort((a,b)=>b[1]-a[1])
+            .map(([titulo, veces]) => `<li>${titulo} (${veces})</li>`)
+            .join("")}
+        </ul>
+      `;
 
-    const barra = wrapper.querySelector(".barra-container");
-    const ul = wrapper.querySelector("ul");
+      const barra = wrapper.querySelector(".barra-container");
+      const ul = wrapper.querySelector("ul");
 
-    barra.addEventListener("click", () => {
-      ul.style.display =
-        ul.style.display === "block" ? "none" : "block";
+      barra.addEventListener("click", () => {
+        ul.style.display =
+          ul.style.display === "block" ? "none" : "block";
+      });
+
+      divCantante.appendChild(wrapper);
     });
 
-    divCantante.appendChild(wrapper);
+    contCantante.appendChild(divCantante);
   });
+}
 
-  contCantante.appendChild(divCantante);
+// Render inicial (Todo)
+renderEstadisticas(0);
+
+// Cambiar filtro
+filtroSelect.addEventListener("change", e => {
+  renderEstadisticas(parseInt(e.target.value));
 });
-
-cont.appendChild(tarjetaCantante);
 
   // ===== FUNCIÓN PARA CREAR CARD DE MES =====
   function crearCardMes(mesKey) {
