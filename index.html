@@ -2071,6 +2071,8 @@ async function cargarAnalisisReal(){
     });
   }
 }
+window.toggleAnalisisReal = toggleAnalisisReal;
+
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
 async function mostrarWorshipPack(tipo) {
@@ -2156,6 +2158,8 @@ window.addEventListener('load', ()=>{
   window.toggleAnalisis = toggleAnalisis;
   window.verHistorialConCantante = verHistorialConCantante;
   window.cacheResultados = {};
+  window.toggleAnalisis = toggleAnalisis;
+  window.toggleHistorial = toggleHistorial;
 });
 </script>
 <div id="modal-metronomo" class="modal">
