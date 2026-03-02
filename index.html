@@ -1929,8 +1929,14 @@ function toggleAnalisisReal(){
 }
 
 async function cargarAnalisisReal(){
+
   const cont = document.getElementById("analisis-real");
-  cont.innerHTML = "<h2>📈 Análisis real por servicio</h2>";
+  cont.innerHTML = "";
+
+  const hoy = new Date();
+  const year = hoy.getFullYear();
+  const month = String(hoy.getMonth()+1).padStart(2,"0");
+  const mesActualKey = `${year}-${month}`;
 
   const snapRegistro = await getDocs(collection(db,"registro"));
   const snapAnalisis = await getDocs(collection(db,"analisis_real"));
@@ -1938,31 +1944,59 @@ async function cargarAnalisisReal(){
   const analisisGuardado = {};
   snapAnalisis.forEach(d => analisisGuardado[d.id] = d.data());
 
-  // Agrupar canciones por fecha real
   const mapaFechas = {};
 
+  // 🔥 Filtrar SOLO domingos del mes actual
   snapRegistro.forEach(docu=>{
     const data = docu.data();
     const fechas = Array.isArray(data.fechas) ? data.fechas : [];
 
     fechas.forEach(f=>{
+
+      if(!f.startsWith(mesActualKey)) return; // solo mes actual
+
+      const fechaObj = new Date(f);
+      if(fechaObj.getDay() !== 0) return; // solo domingos
+
       if(!mapaFechas[f]) mapaFechas[f] = [];
       mapaFechas[f].push(docu.id);
     });
   });
 
-  const fechasOrdenadas = Object.keys(mapaFechas).sort().reverse();
+  const fechasOrdenadas = Object.keys(mapaFechas).sort();
 
   if(!fechasOrdenadas.length){
-    cont.innerHTML += "<p>No hay datos registrados.</p>";
+    cont.innerHTML = "<p>No hay domingos registrados este mes.</p>";
     return;
   }
 
+  // ===== CARD DEL MES =====
+  const cardMes = document.createElement("div");
+  cardMes.className = "card";
+
+  const nombreMes = hoy.toLocaleString("es-ES",{month:"long",year:"numeric"});
+
+  cardMes.innerHTML = `
+    <h2 style="cursor:pointer;">📅 ${nombreMes.toUpperCase()} ▼</h2>
+    <div class="contenido-mes" style="display:none;"></div>
+  `;
+
+  cont.appendChild(cardMes);
+
+  const contenidoMes = cardMes.querySelector(".contenido-mes");
+
+  cardMes.querySelector("h2").addEventListener("click",()=>{
+    contenidoMes.style.display =
+      contenidoMes.style.display === "block" ? "none" : "block";
+  });
+
+  // ===== DOMINGOS =====
   fechasOrdenadas.forEach(fecha=>{
+
     const datosGuardados = analisisGuardado[fecha] || { cantante:"", evaluaciones:{} };
 
-    const card = document.createElement("div");
-    card.className = "card";
+    const domingoDiv = document.createElement("div");
+    domingoDiv.style.marginBottom = "20px";
 
     const cancionesHtml = mapaFechas[fecha].map(id=>{
       const cancion = cancionesCache.find(c=>c.id===id);
@@ -1982,9 +2016,14 @@ async function cargarAnalisisReal(){
           </li>
         `;
       } else {
-        const emoji = val==="Excelente"?"🚀":val==="Bien"?"👍":val==="A mejorar"?"‼️":"";
+        const emoji =
+          val==="Excelente"?"🚀":
+          val==="Bien"?"👍":
+          val==="A mejorar"?"‼️":"";
+
         return `<li>${titulo} ${emoji}</li>`;
       }
+
     }).join("");
 
     const cantanteHtml = modoEdicion
@@ -1996,22 +2035,24 @@ async function cargarAnalisisReal(){
         </select>`
       : `<strong>${datosGuardados.cantante || "-"}</strong>`;
 
-    card.innerHTML = `
-      <h3>📅 ${isoToDisplay(fecha)}</h3>
+    domingoDiv.innerHTML = `
+      <h4>▸ ${isoToDisplay(fecha)}</h4>
       <p>🎤 Cantante: ${cantanteHtml}</p>
       <ul>${cancionesHtml}</ul>
       ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
     `;
 
-    cont.appendChild(card);
+    contenidoMes.appendChild(domingoDiv);
   });
 
+  // ===== GUARDAR =====
   if(modoEdicion){
     document.querySelectorAll(".guardar-real").forEach(btn=>{
       btn.addEventListener("click", async ()=>{
-        const fecha = btn.dataset.fecha;
 
+        const fecha = btn.dataset.fecha;
         const evaluaciones = {};
+
         document.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`).forEach(sel=>{
           evaluaciones[sel.dataset.id] = sel.value;
         });
@@ -2029,6 +2070,7 @@ async function cargarAnalisisReal(){
     });
   }
 }
+
 window.toggleAnalisisReal = toggleAnalisisReal;
 
 
