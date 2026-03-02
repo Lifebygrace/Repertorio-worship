@@ -605,6 +605,24 @@ body.dark .proximo-label {
     <button style="background:var(--accent);" onclick="toggleRegistro()">📊 Registro de canciones</button>
     <button onclick="toggleAnalisis()">📊 Análisis mensual</button>
     <div id="analisis-mensual" class="section" style="display:none;"></div>
+            <section id="vista-evaluacion" style="display:none">
+  <h2>Evaluar Domingo</h2>
+
+  <input type="date" id="fecha-evaluacion">
+  <button onclick="cargarEvaluacion()">Cargar</button>
+
+  <div id="evaluacion-domingo"></div>
+</section>
+
+<section id="vista-analisis" style="display:none">
+  <h2>Análisis</h2>
+
+  <input type="month" id="mes-analisis">
+  <button onclick="verAnalisis()">Analizar</button>
+
+  <div id="resultado-analisis"></div>
+</section>
+    
     <div id="registro-canciones" class="section" style="display:none;">
       <h2>📋 Registro de canciones</h2>
       <table id="tabla-registro">
@@ -1491,6 +1509,123 @@ document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
 
   alert("✅ Análisis mensual guardado");
 }
+
+
+async function cargarEvaluacion(){
+  const fecha = document.getElementById("fecha-evaluacion").value;
+  if(!fecha) return;
+
+  const cont = document.getElementById("evaluacion-domingo");
+  cont.innerHTML = "";
+
+  const snap = await getDocs(collection(db,"registro"));
+
+  snap.forEach(d=>{
+    const fechas = d.data().fechas || [];
+    if(!fechas.includes(fecha)) return;
+
+    const cancion = cancionesCache.find(c=>c.id===d.id);
+    if(!cancion) return;
+
+    cont.innerHTML += `
+      <div class="fila">
+        <strong>${cancion.titulo}</strong>
+        <em>${cancion.cantante}</em>
+        <select class="eval-domingo"
+          data-fecha="${fecha}"
+          data-id="${cancion.id}"
+          data-titulo="${cancion.titulo}"
+          data-cantante="${cancion.cantante}">
+          <option value="">— evaluar —</option>
+          <option value="A mejorar">A mejorar</option>
+          <option value="Bien">Bien</option>
+          <option value="Excelente">Excelente</option>
+        </select>
+      </div>
+    `;
+  });
+}
+
+async function guardarEvaluacionDomingo(sel){
+  await setDoc(
+    doc(db,"evaluaciones_domingo",`${sel.dataset.fecha}__${sel.dataset.id}`),
+    {
+      fecha: sel.dataset.fecha,
+      mes: sel.dataset.fecha.slice(0,7),
+      cancionId: sel.dataset.id,
+      titulo: sel.dataset.titulo,
+      cantante: sel.dataset.cantante,
+      valoracion: sel.value
+    }
+  );
+}
+
+document.addEventListener("change", e=>{
+  if(e.target.classList.contains("eval-domingo")){
+    guardarEvaluacionDomingo(e.target);
+  }
+});
+
+async function analizarMes(mes){
+  const snapReg = await getDocs(collection(db,"registro"));
+  const snapEval = await getDocs(collection(db,"evaluaciones_domingo"));
+
+  const evalMap = {};
+  snapEval.forEach(d => evalMap[d.id] = d.data());
+
+  const canciones = {};
+  const cantantes = {};
+
+  snapReg.forEach(d=>{
+    (d.data().fechas || []).forEach(fecha=>{
+      if(!fecha.startsWith(mes)) return;
+
+      const ev = evalMap[`${fecha}__${d.id}`];
+      if(!ev) return;
+
+      const peso =
+        ev.valoracion === "Excelente" ? 3 :
+        ev.valoracion === "Bien" ? 2 : 1;
+
+      canciones[d.id] ??= { titulo: ev.titulo, score:0, total:0 };
+      canciones[d.id].score += peso;
+      canciones[d.id].total++;
+
+      cantantes[ev.cantante] ??= { score:0, total:0 };
+      cantantes[ev.cantante].score += peso;
+      cantantes[ev.cantante].total++;
+    });
+  });
+
+  return { canciones, cantantes };
+}
+
+function indice(score,total){
+  return total
+    ? ((score / (total * 3)) * 100).toFixed(1)
+    : "—";
+}
+
+async function verAnalisis(){
+  const mes = document.getElementById("mes-analisis").value;
+  const cont = document.getElementById("resultado-analisis");
+  cont.innerHTML = "";
+
+  const data = await analizarMes(mes);
+
+  cont.innerHTML += "<h3>Cantantes</h3><ul>";
+  Object.entries(data.cantantes).forEach(([n,c])=>{
+    cont.innerHTML += `<li>${n}: ${indice(c.score,c.total)}%</li>`;
+  });
+  cont.innerHTML += "</ul>";
+
+  cont.innerHTML += "<h3>Canciones</h3><ul>";
+  Object.values(data.canciones).forEach(c=>{
+    cont.innerHTML += `<li>${c.titulo}: ${indice(c.score,c.total)}%</li>`;
+  });
+  cont.innerHTML += "</ul>";
+}
+
 
 let beatCount = 0; // para acento en el 1 (4/4)
 let audioCtx;
