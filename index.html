@@ -604,6 +604,8 @@ body.dark .proximo-label {
   <div id="registro-canciones-container" style="margin-top:12px;">
     <button style="background:var(--accent);" onclick="toggleRegistro()">📊 Registro de canciones</button>
     <button onclick="toggleAnalisis()">📊 Análisis mensual</button>
+    <button onclick="toggleAnalisisReal()">📈 Análisis real</button>
+    <div id="analisis-real" class="section" style="display:none;"></div>
     <div id="analisis-mensual" class="section" style="display:none;"></div>
     <div id="registro-canciones" class="section" style="display:none;">
       <h2>📋 Registro de canciones</h2>
@@ -1915,6 +1917,118 @@ window.mostrarDetallePeriodo = function(tipo){
 
   cont.innerHTML = html;
 };
+
+/* =========================
+   ANÁLISIS REAL (por fecha exacta)
+========================= */
+
+function toggleAnalisisReal(){
+  const el = document.getElementById("analisis-real");
+  el.style.display = el.style.display === "block" ? "none" : "block";
+  if(el.style.display === "block") cargarAnalisisReal();
+}
+
+async function cargarAnalisisReal(){
+  const cont = document.getElementById("analisis-real");
+  cont.innerHTML = "<h2>📈 Análisis real por servicio</h2>";
+
+  const snapRegistro = await getDocs(collection(db,"registro"));
+  const snapAnalisis = await getDocs(collection(db,"analisis_real"));
+
+  const analisisGuardado = {};
+  snapAnalisis.forEach(d => analisisGuardado[d.id] = d.data());
+
+  // Agrupar canciones por fecha real
+  const mapaFechas = {};
+
+  snapRegistro.forEach(docu=>{
+    const data = docu.data();
+    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+
+    fechas.forEach(f=>{
+      if(!mapaFechas[f]) mapaFechas[f] = [];
+      mapaFechas[f].push(docu.id);
+    });
+  });
+
+  const fechasOrdenadas = Object.keys(mapaFechas).sort().reverse();
+
+  if(!fechasOrdenadas.length){
+    cont.innerHTML += "<p>No hay datos registrados.</p>";
+    return;
+  }
+
+  fechasOrdenadas.forEach(fecha=>{
+    const datosGuardados = analisisGuardado[fecha] || { cantante:"", evaluaciones:{} };
+
+    const card = document.createElement("div");
+    card.className = "card";
+
+    const cancionesHtml = mapaFechas[fecha].map(id=>{
+      const cancion = cancionesCache.find(c=>c.id===id);
+      const titulo = cancion?.titulo || "—";
+      const val = datosGuardados.evaluaciones?.[id] || "";
+
+      if(modoEdicion){
+        return `
+          <li>
+            ${titulo}
+            <select class="eval-real" data-id="${id}" data-fecha="${fecha}">
+              <option value=""></option>
+              <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀</option>
+              <option value="Bien" ${val==="Bien"?"selected":""}>👍</option>
+              <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️</option>
+            </select>
+          </li>
+        `;
+      } else {
+        const emoji = val==="Excelente"?"🚀":val==="Bien"?"👍":val==="A mejorar"?"‼️":"";
+        return `<li>${titulo} ${emoji}</li>`;
+      }
+    }).join("");
+
+    const cantanteHtml = modoEdicion
+      ? `<select class="cantante-real" data-fecha="${fecha}">
+          <option value=""></option>
+          <option value="Milly" ${datosGuardados.cantante==="Milly"?"selected":""}>Milly</option>
+          <option value="Carolina" ${datosGuardados.cantante==="Carolina"?"selected":""}>Carolina</option>
+          <option value="Jason" ${datosGuardados.cantante==="Jason"?"selected":""}>Jason</option>
+        </select>`
+      : `<strong>${datosGuardados.cantante || "-"}</strong>`;
+
+    card.innerHTML = `
+      <h3>📅 ${isoToDisplay(fecha)}</h3>
+      <p>🎤 Cantante: ${cantanteHtml}</p>
+      <ul>${cancionesHtml}</ul>
+      ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
+    `;
+
+    cont.appendChild(card);
+  });
+
+  if(modoEdicion){
+    document.querySelectorAll(".guardar-real").forEach(btn=>{
+      btn.addEventListener("click", async ()=>{
+        const fecha = btn.dataset.fecha;
+
+        const evaluaciones = {};
+        document.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`).forEach(sel=>{
+          evaluaciones[sel.dataset.id] = sel.value;
+        });
+
+        const cantanteSel = document.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
+        const cantante = cantanteSel ? cantanteSel.value : "";
+
+        await setDoc(doc(db,"analisis_real",fecha),{
+          cantante,
+          evaluaciones
+        });
+
+        alert("✅ Análisis real guardado");
+      });
+    });
+  }
+}
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
 async function mostrarWorshipPack(tipo) {
