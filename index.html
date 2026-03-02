@@ -605,24 +605,6 @@ body.dark .proximo-label {
     <button style="background:var(--accent);" onclick="toggleRegistro()">📊 Registro de canciones</button>
     <button onclick="toggleAnalisis()">📊 Análisis mensual</button>
     <div id="analisis-mensual" class="section" style="display:none;"></div>
-            <section id="vista-evaluacion" style="display:none">
-  <h2>Evaluar Domingo</h2>
-
-  <input type="date" id="fecha-evaluacion">
-  <button onclick="cargarEvaluacion()">Cargar</button>
-
-  <div id="evaluacion-domingo"></div>
-</section>
-
-<section id="vista-analisis" style="display:none">
-  <h2>Análisis</h2>
-
-  <input type="month" id="mes-analisis">
-  <button onclick="verAnalisis()">Analizar</button>
-
-  <div id="resultado-analisis"></div>
-</section>
-    
     <div id="registro-canciones" class="section" style="display:none;">
       <h2>📋 Registro de canciones</h2>
       <table id="tabla-registro">
@@ -1510,123 +1492,6 @@ document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
   alert("✅ Análisis mensual guardado");
 }
 
-
-async function cargarEvaluacion(){
-  const fecha = document.getElementById("fecha-evaluacion").value;
-  if(!fecha) return;
-
-  const cont = document.getElementById("evaluacion-domingo");
-  cont.innerHTML = "";
-
-  const snap = await getDocs(collection(db,"registro"));
-
-  snap.forEach(d=>{
-    const fechas = d.data().fechas || [];
-    if(!fechas.includes(fecha)) return;
-
-    const cancion = cancionesCache.find(c=>c.id===d.id);
-    if(!cancion) return;
-
-    cont.innerHTML += `
-      <div class="fila">
-        <strong>${cancion.titulo}</strong>
-        <em>${cancion.cantante}</em>
-        <select class="eval-domingo"
-          data-fecha="${fecha}"
-          data-id="${cancion.id}"
-          data-titulo="${cancion.titulo}"
-          data-cantante="${cancion.cantante}">
-          <option value="">— evaluar —</option>
-          <option value="A mejorar">A mejorar</option>
-          <option value="Bien">Bien</option>
-          <option value="Excelente">Excelente</option>
-        </select>
-      </div>
-    `;
-  });
-}
-
-async function guardarEvaluacionDomingo(sel){
-  await setDoc(
-    doc(db,"evaluaciones_domingo",`${sel.dataset.fecha}__${sel.dataset.id}`),
-    {
-      fecha: sel.dataset.fecha,
-      mes: sel.dataset.fecha.slice(0,7),
-      cancionId: sel.dataset.id,
-      titulo: sel.dataset.titulo,
-      cantante: sel.dataset.cantante,
-      valoracion: sel.value
-    }
-  );
-}
-
-document.addEventListener("change", e=>{
-  if(e.target.classList.contains("eval-domingo")){
-    guardarEvaluacionDomingo(e.target);
-  }
-});
-
-async function analizarMes(mes){
-  const snapReg = await getDocs(collection(db,"registro"));
-  const snapEval = await getDocs(collection(db,"evaluaciones_domingo"));
-
-  const evalMap = {};
-  snapEval.forEach(d => evalMap[d.id] = d.data());
-
-  const canciones = {};
-  const cantantes = {};
-
-  snapReg.forEach(d=>{
-    (d.data().fechas || []).forEach(fecha=>{
-      if(!fecha.startsWith(mes)) return;
-
-      const ev = evalMap[`${fecha}__${d.id}`];
-      if(!ev) return;
-
-      const peso =
-        ev.valoracion === "Excelente" ? 3 :
-        ev.valoracion === "Bien" ? 2 : 1;
-
-      canciones[d.id] ??= { titulo: ev.titulo, score:0, total:0 };
-      canciones[d.id].score += peso;
-      canciones[d.id].total++;
-
-      cantantes[ev.cantante] ??= { score:0, total:0 };
-      cantantes[ev.cantante].score += peso;
-      cantantes[ev.cantante].total++;
-    });
-  });
-
-  return { canciones, cantantes };
-}
-
-function indice(score,total){
-  return total
-    ? ((score / (total * 3)) * 100).toFixed(1)
-    : "—";
-}
-
-async function verAnalisis(){
-  const mes = document.getElementById("mes-analisis").value;
-  const cont = document.getElementById("resultado-analisis");
-  cont.innerHTML = "";
-
-  const data = await analizarMes(mes);
-
-  cont.innerHTML += "<h3>Cantantes</h3><ul>";
-  Object.entries(data.cantantes).forEach(([n,c])=>{
-    cont.innerHTML += `<li>${n}: ${indice(c.score,c.total)}%</li>`;
-  });
-  cont.innerHTML += "</ul>";
-
-  cont.innerHTML += "<h3>Canciones</h3><ul>";
-  Object.values(data.canciones).forEach(c=>{
-    cont.innerHTML += `<li>${c.titulo}: ${indice(c.score,c.total)}%</li>`;
-  });
-  cont.innerHTML += "</ul>";
-}
-
-
 let beatCount = 0; // para acento en el 1 (4/4)
 let audioCtx;
 let metronomeInterval = null;
@@ -1945,79 +1810,110 @@ window.guardarListadoMensual = async function(){
 
 ///////
 ////// ANALIZAR PERIODO
-window.analizarPeriodo = async function(mesesAtras) {
+window.analizarPeriodo = async function(mesesAtras){
 
   const cont = document.getElementById("resultado-periodo");
-  cont.innerHTML = "";
+  cont.innerHTML = "Analizando...";
 
-  // 🔹 Fecha límite
-  const hoy = new Date();
-  const limite = new Date(hoy);
-  if (mesesAtras > 0) {
-    limite.setMonth(hoy.getMonth() - mesesAtras);
-  } else {
-    limite.setFullYear(1970); // "Siempre"
+  const snap = await getDocs(collection(db,"analisis_mensual"));
+
+  let meses = snap.docs.map(d => d.id).sort().reverse();
+
+  if(mesesAtras > 0){
+    meses = meses.slice(0, mesesAtras);
   }
 
-  const limiteISO = limite.toISOString().slice(0,10);
+  const acumulado = {
+    Excelente: {},
+    Bien: {},
+    "A mejorar": {}
+  };
 
-  // 🔹 Agregadores
-  const mapaCanciones = {};
-  let totalVeces = 0;
+  for(const mes of meses){
+    const data = snap.docs.find(d => d.id === mes)?.data();
+    if(!data?.evaluaciones) continue;
 
-  // 🔹 Recorremos SOLO el registro
-  const snap = await getDocs(collection(db, "registro"));
+    for(const [id, valor] of Object.entries(data.evaluaciones)){
+      if(!valor) continue;
 
-  snap.forEach(docu => {
-    const data = docu.data();
-    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+      const cancion = cancionesCache.find(c=>c.id===id);
+      if(!cancion) continue;
 
-    const validas = fechas.filter(f => f >= limiteISO);
-    if (!validas.length) return;
+      if(!acumulado[valor][id]){
+        acumulado[valor][id] = {
+          titulo: cancion.titulo,
+          veces: 0,
+          cantantes: new Set()
+        };
+      }
 
-    totalVeces += validas.length;
+      acumulado[valor][id].veces++;
 
-    mapaCanciones[docu.id] = (mapaCanciones[docu.id] || 0) + validas.length;
-  });
+      if(data.cantantes){
+        Object.values(data.cantantes).forEach(c=>{
+          if(c) acumulado[valor][id].cantantes.add(c);
+        });
+      }
+    }
+  }
 
-  const ranking = Object.entries(mapaCanciones)
-    .map(([id, veces]) => {
-      const c = cancionesCache.find(x => x.id === id);
-      return {
-        id,
-        titulo: c?.titulo || "—",
-        veces
-      };
-    })
-    .sort((a,b) => b.veces - a.veces);
+  const total =
+    Object.keys(acumulado["Excelente"]).length +
+    Object.keys(acumulado["Bien"]).length +
+    Object.keys(acumulado["A mejorar"]).length;
 
-  const mesesUsados = mesesAtras || Math.max(1,
-    (hoy.getFullYear() - limite.getFullYear()) * 12 +
-    (hoy.getMonth() - limite.getMonth())
-  );
+  window.cacheResultados = acumulado;
 
-  // 🔹 Render
   cont.innerHTML = `
-    <div class="notas-card">
-      <h3>📊 Resultado del periodo</h3>
-      <ul>
-        <li>🎵 Veces totales tocadas: <strong>${totalVeces}</strong></li>
-        <li>🎶 Canciones distintas: <strong>${ranking.length}</strong></li>
-        <li>📆 Promedio mensual: <strong>${(totalVeces / mesesUsados).toFixed(1)}</strong></li>
-      </ul>
-    </div>
+    <p>Total evaluadas: <strong>${total}</strong></p>
 
-    <div class="notas-card" style="margin-top:8px">
-      <h3>🔥 Ranking</h3>
-      <ul>
-        ${
-          ranking.slice(0,10).map((c,i) =>
-            `<li>${i+1}. ${c.titulo} — <strong>${c.veces}</strong></li>`
-          ).join("")
-        }
-      </ul>
-    </div>
+    <p onclick="mostrarDetallePeriodo('Excelente')" style="cursor:pointer">
+      🚀 ${Object.keys(acumulado["Excelente"]).length} fueron excelentes
+    </p>
+
+    <p onclick="mostrarDetallePeriodo('Bien')" style="cursor:pointer">
+      👍 ${Object.keys(acumulado["Bien"]).length} fueron buenas
+    </p>
+
+    <p onclick="mostrarDetallePeriodo('A mejorar')" style="cursor:pointer">
+      ‼️ ${Object.keys(acumulado["A mejorar"]).length} necesitan mejorar
+    </p>
+
+    <div id="detalle-periodo"></div>
   `;
+};
+
+window.mostrarDetallePeriodo = function(tipo){
+
+  const datos = window.cacheResultados[tipo];
+  const cont = document.getElementById("detalle-periodo");
+
+  if(!datos || !Object.keys(datos).length){
+    cont.innerHTML = "<p>No hay canciones.</p>";
+    return;
+  }
+
+  const emoji = tipo==="Excelente" ? "🚀"
+              : tipo==="Bien" ? "👍"
+              : "‼️";
+
+  let html = `<h4 style="margin-top:10px">${emoji} Canciones</h4><ul>`;
+
+  Object.values(datos)
+    .sort((a,b)=>b.veces - a.veces)
+    .forEach(c=>{
+      html += `
+        <li>
+          <strong>${c.titulo}</strong> (${c.veces})
+          <br>
+          🎤 ${[...c.cantantes].join(", ") || "-"}
+        </li>
+      `;
+    });
+
+  html += "</ul>";
+
+  cont.innerHTML = html;
 };
 
 /* Mostrar / ocultar Worship Pack (tarjetas de las canciones listadas en la sección) */
