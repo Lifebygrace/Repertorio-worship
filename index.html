@@ -1995,6 +1995,122 @@ cont.appendChild(tarjetaCantante);
 
 const cantantes = ["Milly", "Carolina", "Jason"];
 
+function renderPanelEjecutivo(datosFiltrados){
+
+  const card = document.createElement("div");
+  card.className = "card";
+  card.style.marginBottom = "25px";
+  card.style.background = "#111";
+  card.style.border = "1px solid #333";
+
+  let totalExcelente = 0;
+  let totalBien = 0;
+  let totalMejorar = 0;
+
+  const statsCantantes = {};
+  const statsCanciones = {};
+
+  datosFiltrados.forEach(entry => {
+
+    const cantante = entry.cantante || "Sin asignar";
+
+    if(!statsCantantes[cantante]){
+      statsCantantes[cantante] = { puntos:0, total:0 };
+    }
+
+    Object.entries(entry.evaluaciones || {}).forEach(([id,val]) => {
+
+      if(!statsCanciones[id]){
+        statsCanciones[id] = { excelente:0, mejorar:0 };
+      }
+
+      if(val === "Excelente"){
+        totalExcelente++;
+        statsCantantes[cantante].puntos += 3;
+        statsCanciones[id].excelente++;
+      }
+
+      if(val === "Bien"){
+        totalBien++;
+        statsCantantes[cantante].puntos += 2;
+      }
+
+      if(val === "A mejorar"){
+        totalMejorar++;
+        statsCantantes[cantante].puntos += 1;
+        statsCanciones[id].mejorar++;
+      }
+
+      statsCantantes[cantante].total++;
+    });
+  });
+
+  const totalEvaluaciones = totalExcelente + totalBien + totalMejorar;
+
+  // 🏆 Cantante del período
+  let mejorCantante = "-";
+  let mejorPromedio = 0;
+
+  Object.entries(statsCantantes).forEach(([cantante,data])=>{
+    if(data.total === 0) return;
+    const promedio = data.puntos / data.total;
+    if(promedio > mejorPromedio){
+      mejorPromedio = promedio;
+      mejorCantante = cantante;
+    }
+  });
+
+  // 🎵 Top canción
+  let topCancion = "-";
+  let maxExcelente = 0;
+
+  Object.entries(statsCanciones).forEach(([id,data])=>{
+    if(data.excelente > maxExcelente){
+      maxExcelente = data.excelente;
+      const cancion = cancionesCache.find(c=>c.id===id);
+      topCancion = cancion?.titulo || id;
+    }
+  });
+
+  // ⚠️ Área crítica
+  let peorCancion = "-";
+  let maxMejorar = 0;
+
+  Object.entries(statsCanciones).forEach(([id,data])=>{
+    if(data.mejorar > maxMejorar){
+      maxMejorar = data.mejorar;
+      const cancion = cancionesCache.find(c=>c.id===id);
+      peorCancion = cancion?.titulo || id;
+    }
+  });
+
+  const porcExcelente = totalEvaluaciones ? Math.round(totalExcelente*100/totalEvaluaciones) : 0;
+  const porcMejorar = totalEvaluaciones ? Math.round(totalMejorar*100/totalEvaluaciones) : 0;
+
+  let estado = "🟢 Saludable";
+  if(porcMejorar > 30) estado = "🔴 Crítico";
+  else if(porcMejorar > 20) estado = "🟡 Atención";
+
+  card.innerHTML = `
+    <h2 style="margin-bottom:20px;">📊 Panel Ejecutivo</h2>
+
+    <p><strong>🏆 Cantante del período:</strong> ${mejorCantante} (${mejorPromedio.toFixed(2)}/3)</p>
+
+    <p><strong>🎵 Top canción:</strong> ${topCancion} (${maxExcelente} 🚀)</p>
+
+    <p><strong>⚠️ Área crítica:</strong> ${peorCancion} (${maxMejorar} ‼️)</p>
+
+    <p><strong>📊 Salud general:</strong> 
+      🚀 ${porcExcelente}% | 
+      👍 ${Math.round(totalBien*100/totalEvaluaciones)||0}% | 
+      ‼️ ${porcMejorar}% 
+      → ${estado}
+    </p>
+  `;
+
+  return card;
+}
+
 function renderEstadisticas(rangoMeses) {
 
   contCantante.innerHTML = "";
@@ -2041,6 +2157,9 @@ function renderEstadisticas(rangoMeses) {
         conteo[evaluacion][titulo]++;
       });
     });
+    
+    const panel = renderPanelEjecutivo(datosFiltrados);
+cont.appendChild(panel);
 
     const total =
       Object.keys(conteo["Excelente"]).length +
