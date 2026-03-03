@@ -1967,160 +1967,207 @@ async function cargarAnalisisReal() {
     return;
   }
 
-// ===== CREAR TARJETA ANÁLISIS POR CANTANTE 🎤 =====
-const tarjetaCantante = document.createElement("div");
-tarjetaCantante.className = "card";
-tarjetaCantante.style.marginBottom = "20px";
+// ==============================
+// 🎤 ANÁLISIS POR CANTANTE
+// ==============================
 
-tarjetaCantante.innerHTML = `
-  <h2 style="cursor:pointer; font-size:1.3em;">🎤 Análisis por cantante ▼</h2>
+const cardCantante = document.createElement("div");
+cardCantante.className = "card";
+cardCantante.style.marginBottom = "25px";
 
-  <div style="margin:10px 0;">
-    <label>Filtrar por:</label>
+cardCantante.innerHTML = `<h2>🎤 Análisis por cantante</h2>`;
+
+const contCantante = document.createElement("div");
+cardCantante.appendChild(contCantante);
+cont.appendChild(cardCantante);
+
+
+// ==============================
+// FILTROS
+// ==============================
+
+const panel = document.createElement("div");
+panel.style.marginBottom = "15px";
+panel.style.display = "flex";
+panel.style.gap = "15px";
+panel.style.flexWrap = "wrap";
+
+panel.innerHTML = `
+  <div>
+    📅 Rango:
     <select id="filtro-rango">
+      <option value="0">Todo</option>
       <option value="1">Último mes</option>
       <option value="3">Últimos 3 meses</option>
       <option value="6">Últimos 6 meses</option>
-      <option value="0" selected>Todo</option>
     </select>
   </div>
 
-  <div class="contenido-cantante" style="margin-top:15px;"></div>
+  <div>
+    🎤 Cantante:
+    <select id="filtro-cantante">
+      <option value="Todos">Todos</option>
+      <option value="Milly">Milly</option>
+      <option value="Carolina">Carolina</option>
+      <option value="Jason">Jason</option>
+    </select>
+  </div>
 `;
 
-const contCantante = tarjetaCantante.querySelector(".contenido-cantante");
-const filtroSelect = tarjetaCantante.querySelector("#filtro-rango");
+contCantante.appendChild(panel);
 
-cont.appendChild(tarjetaCantante);
 
-const cantantes = ["Milly", "Carolina", "Jason"];
+// ==============================
+// RENDER ESTADÍSTICAS
+// ==============================
 
-function renderEstadisticas(rangoMeses) {
+function renderEstadisticas(rangoMeses, cantanteFiltro){
 
-  contCantante.innerHTML = "";
+  // limpiar excepto panel
+  contCantante.querySelectorAll(".bloque-cantante").forEach(e=>e.remove());
 
   const hoy = new Date();
 
-  cantantes.forEach(nombre => {
+  const listaCantantes = cantanteFiltro === "Todos"
+    ? ["Milly","Carolina","Jason"]
+    : [cantanteFiltro];
+
+  listaCantantes.forEach(nombre=>{
 
     const conteo = {
-      "Excelente": {},
-      "Bien": {},
+      Excelente: {},
+      Bien: {},
       "A mejorar": {}
     };
 
-    snapRegistro.forEach(docu => {
+    let total = 0;
+
+    snapRegistro.forEach(docu=>{
       const data = docu.data();
       const fechas = Array.isArray(data.fechas) ? data.fechas : [];
 
-      fechas.forEach(f => {
+      fechas.forEach(f=>{
 
         const fechaObj = new Date(f);
 
         // FILTRO POR RANGO
-        if (rangoMeses > 0) {
-          const limite = new Date();
-          limite.setMonth(hoy.getMonth() - rangoMeses);
-          if (fechaObj < limite) return;
+        if(rangoMeses > 0){
+          const limite = new Date(hoy.getFullYear(), hoy.getMonth() - rangoMeses, 1);
+          if(fechaObj < limite) return;
         }
 
         const analisis = analisisGuardado[f];
-        if (!analisis) return;
-        if (analisis.cantante !== nombre) return;
+        if(!analisis) return;
+
+        if(analisis.cantante !== nombre) return;
 
         const evaluacion = analisis.evaluaciones?.[docu.id];
-        if (!evaluacion) return;
+        if(!evaluacion) return;
 
-        const cancion = cancionesCache.find(c => c.id === docu.id);
+        const cancion = cancionesCache.find(c=>c.id===docu.id);
         const titulo = cancion?.titulo || docu.id;
 
-        if (!conteo[evaluacion][titulo]) {
+        if(!conteo[evaluacion][titulo]){
           conteo[evaluacion][titulo] = 0;
         }
 
         conteo[evaluacion][titulo]++;
+        total++;
       });
     });
 
-    const total =
-      Object.keys(conteo["Excelente"]).length +
-      Object.keys(conteo["Bien"]).length +
-      Object.keys(conteo["A mejorar"]).length;
+    // Crear bloque cantante
+    const bloque = document.createElement("div");
+    bloque.className = "bloque-cantante";
+    bloque.style.marginTop = "20px";
 
-    const divCantante = document.createElement("div");
-    divCantante.style.marginBottom = "25px";
-    divCantante.innerHTML = `<h3 style="margin-bottom:12px;">${nombre}</h3>`;
+    bloque.innerHTML += `<h3 style="margin-bottom:10px;">${nombre}</h3>`;
 
-    Object.entries(conteo).forEach(([tipo, cancionesObj]) => {
+    const categorias = [
+      { key:"Excelente", emoji:"🚀" },
+      { key:"Bien", emoji:"👍" },
+      { key:"A mejorar", emoji:"‼️" }
+    ];
 
-      const cantidad = Object.keys(cancionesObj).length;
-      const porcentaje = total ? ((cantidad / total) * 100).toFixed(0) : 0;
+    categorias.forEach(cat=>{
 
-      const color =
-        tipo === "Excelente" ? "#4caf50" :
-        tipo === "Bien" ? "#2196f3" :
-        "#f44336";
+      const canciones = conteo[cat.key];
+      const cantidad = Object.values(canciones).reduce((a,b)=>a+b,0);
+      const porcentaje = total ? Math.round((cantidad/total)*100) : 0;
 
-      const emoji =
-        tipo === "Excelente" ? "🚀" :
-        tipo === "Bien" ? "👍" :
-        "‼️";
+      const fila = document.createElement("div");
+      fila.style.marginBottom = "10px";
 
-      const wrapper = document.createElement("div");
-      wrapper.style.marginBottom = "10px";
-
-      wrapper.innerHTML = `
-        <div class="barra-container"
-             style="
-               background:#9e9e9e;
-               border-radius:6px;
-               overflow:hidden;
-               cursor:pointer;
-             ">
+      fila.innerHTML = `
+        <div style="display:flex; justify-content:space-between; font-size:14px;">
+          <span>${cat.emoji} ${cat.key} (${cantidad})</span>
+          <span>${porcentaje}%</span>
+        </div>
+        <div style="
+          background:#cfcfcf;
+          height:18px;
+          border-radius:10px;
+          overflow:hidden;
+          cursor:pointer;">
           <div style="
-                width:${porcentaje}%;
-                background:${color};
-                padding:6px 10px;
-                color:white;
-                font-weight:bold;
-                white-space:nowrap;
-              ">
-            ${emoji} ${tipo} (${cantidad}) | ${porcentaje}%
+            width:${porcentaje}%;
+            background:#666;
+            height:100%;
+            transition:0.3s;">
           </div>
         </div>
-        <ul style="
-              display:none;
-              margin:8px 0 0 18px;
-            ">
-          ${Object.entries(cancionesObj)
-            .sort((a,b)=>b[1]-a[1])
-            .map(([titulo, veces]) => `<li>${titulo} (${veces})</li>`)
-            .join("")}
-        </ul>
+        <div style="display:none; margin-top:5px; font-size:13px;"></div>
       `;
 
-      const barra = wrapper.querySelector(".barra-container");
-      const ul = wrapper.querySelector("ul");
+      const listaDiv = fila.lastElementChild;
 
-      barra.addEventListener("click", () => {
-        ul.style.display =
-          ul.style.display === "block" ? "none" : "block";
+      fila.querySelector("div:nth-child(2)").addEventListener("click",()=>{
+        listaDiv.style.display =
+          listaDiv.style.display === "block" ? "none" : "block";
       });
 
-      divCantante.appendChild(wrapper);
+      const listaOrdenada = Object.entries(canciones)
+        .sort((a,b)=>b[1]-a[1])
+        .map(([titulo, veces])=>`• ${titulo} (${veces})`)
+        .join("<br>");
+
+      listaDiv.innerHTML = listaOrdenada || "Sin datos";
+
+      bloque.appendChild(fila);
     });
 
-    contCantante.appendChild(divCantante);
+    contCantante.appendChild(bloque);
   });
 }
 
-// Render inicial (Todo)
-renderEstadisticas(0);
 
-// Cambiar filtro
-filtroSelect.addEventListener("change", e => {
-  renderEstadisticas(parseInt(e.target.value));
+// ==============================
+// EVENTOS FILTRO
+// ==============================
+
+const selectRango = document.getElementById("filtro-rango");
+const selectCantante = document.getElementById("filtro-cantante");
+
+selectRango.addEventListener("change",()=>{
+  renderEstadisticas(
+    parseInt(selectRango.value),
+    selectCantante.value
+  );
 });
+
+selectCantante.addEventListener("change",()=>{
+  renderEstadisticas(
+    parseInt(selectRango.value),
+    selectCantante.value
+  );
+});
+
+
+// ==============================
+// RENDER INICIAL
+// ==============================
+
+renderEstadisticas(0,"Todos");
 
   // ===== FUNCIÓN PARA CREAR CARD DE MES =====
   function crearCardMes(mesKey) {
