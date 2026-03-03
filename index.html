@@ -2034,140 +2034,102 @@ contCantante.appendChild(mensajeInicial);
 // FUNCIÓN RENDER
 // ==============================
 
-function renderEstadisticas(rangoMeses, cantanteFiltro){
+async function renderEstadisticas(rangoMeses = 0, cantaFiltro = "-") {
+  const cont = document.getElementById("analisis-real");
+  if (!cont) return;
 
-  contCantante.querySelectorAll(".bloque-cantante").forEach(e=>e.remove());
+  cont.innerHTML = `<h2>📈 Análisis real</h2>
+    <div style="margin-bottom:12px;">
+      <label>Filtrar por meses: </label>
+      <button onclick="renderEstadisticas(3, cantaFiltro)">Últimos 3 meses</button>
+      <button onclick="renderEstadisticas(0, cantaFiltro)">Siempre</button>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label>Filtrar por cantante: </label>
+      <select id="filtro-cantante" onchange="renderEstadisticas(rangoMeses, this.value)">
+        <option value="-">-</option>
+        <option value="Carolina">Carolina</option>
+        <option value="Milly">Milly</option>
+        <option value="Jason">Jason</option>
+        <option value="Todos">Todos</option>
+      </select>
+    </div>
+    <div id="resultado-estadisticas"></div>
+  `;
 
-  const hoy = new Date();
+  const resultadoCont = document.getElementById("resultado-estadisticas");
+  resultadoCont.innerHTML = ""; // limpiar resultados previos
 
-  const listaCantantes = cantanteFiltro === "Todos"
-    ? ["Milly","Carolina","Jason"]
-    : [cantanteFiltro];
+  const snapRegistro = await getDocs(collection(db, "registro"));
+  const analisisSnap = await getDocs(collection(db, "analisis_mensual"));
 
-  listaCantantes.forEach(nombre=>{
+  const analisisGuardado = {};
+  analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
 
-    const conteo = {
-      Excelente: {},
-      Bien: {},
-      "A mejorar": {}
-    };
+  // Agrupar por mes y canción
+  const mapaMeses = {};
+  snapRegistro.forEach(docu => {
+    const data = docu.data();
+    const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+    const cancion = cancionesCache.find(c => c.id === docu.id);
+    if (!cancion) return;
 
-    let total = 0;
-
-    snapRegistro.forEach(docu=>{
-      const data = docu.data();
-      const fechas = Array.isArray(data.fechas) ? data.fechas : [];
-
-      fechas.forEach(f=>{
-
-        const fechaObj = new Date(f);
-
-        // FILTRO RANGO
-        if(rangoMeses > 0){
-          const limite = new Date(hoy.getFullYear(), hoy.getMonth() - rangoMeses, 1);
-          if(fechaObj < limite) return;
-        }
-
-        const analisis = analisisGuardado[f];
-        if(!analisis) return;
-        if(analisis.cantante !== nombre) return;
-
-        const evaluacion = analisis.evaluaciones?.[docu.id];
-        if(!evaluacion) return;
-
-        const cancion = cancionesCache.find(c=>c.id===docu.id);
-        const titulo = cancion?.titulo || docu.id;
-
-        if(!conteo[evaluacion][titulo]){
-          conteo[evaluacion][titulo] = 0;
-        }
-
-        conteo[evaluacion][titulo]++;
-        total++;
-      });
+    fechas.forEach(f => {
+      const mes = f.slice(0, 7);
+      if (!mapaMeses[mes]) mapaMeses[mes] = { canciones: {}, cantantes: {}, evaluaciones: {} };
+      mapaMeses[mes].canciones[docu.id] = (mapaMeses[mes].canciones[docu.id] || 0) + 1;
     });
+  });
 
-    const bloque = document.createElement("div");
-    bloque.className = "bloque-cantante";
-    bloque.style.marginTop = "20px";
-    bloque.style.borderTop = "1px solid #ddd";
-    bloque.style.paddingTop = "10px";
+  let meses = Object.keys(mapaMeses).sort().reverse();
+  if (rangoMeses > 0) meses = meses.slice(0, rangoMeses);
+  if (!meses.length) return;
 
-    bloque.innerHTML = `
-      <h3 style="cursor:pointer; display:flex; justify-content:space-between;">
-        ${nombre}
-        <span>➕</span>
-      </h3>
-      <div class="contenido-cantante" style="display:none;"></div>
-    `;
+  meses.forEach(mes => {
+    const datosMes = analisisGuardado[mes] || { canciones: {}, cantantes: {}, evaluaciones: {} };
+    const cancionesMes = mapaMeses[mes].canciones;
 
-    const header = bloque.querySelector("h3");
-    const contenido = bloque.querySelector(".contenido-cantante");
-    const icono = header.querySelector("span");
+    const listaCanciones = Object.keys(cancionesMes).map(id => {
+      const c = cancionesCache.find(x => x.id === id);
+      return { id, titulo: c?.titulo || "—", veces: cancionesMes[id] };
+    }).sort((a, b) => b.veces - a.veces);
 
-    header.addEventListener("click",()=>{
-      const abierto = contenido.style.display === "block";
-      contenido.style.display = abierto ? "none" : "block";
-      icono.textContent = abierto ? "➕" : "➖";
-    });
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.marginTop = "12px";
 
-    const categorias = [
-      { key:"Excelente", emoji:"🚀", color:"#1976d2" },
-      { key:"Bien", emoji:"👍", color:"#2e7d32" },
-      { key:"A mejorar", emoji:"‼️", color:"#d32f2f" }
-    ];
+    // Obtener domingos del mes
+    const domingos = obtenerDomingosDelMes(mes).map(f => ajustarAServicio(f));
 
-    categorias.forEach(cat=>{
+    let htmlDomingos = "";
 
-      const canciones = conteo[cat.key];
-      const cantidad = Object.values(canciones).reduce((a,b)=>a+b,0);
-      const porcentaje = total ? Math.round((cantidad/total)*100) : 0;
+    domingos.forEach(fecha => {
+      const cantanteEnFecha = datosMes.cantantes?.[fecha] || "-";
 
-      const fila = document.createElement("div");
-      fila.style.marginBottom = "12px";
+      // Abrir solo si coincide con el filtro y no es "-" y no es Todos
+      const openAttr = (cantaFiltro !== "-" && (cantaFiltro === "Todos" || cantaFiltro === cantanteEnFecha)) ? "open" : "";
 
-      fila.innerHTML = `
-        <div style="display:flex; justify-content:space-between; font-size:14px;">
-          <span>${cat.emoji} ${cat.key} (${cantidad})</span>
-          <span>${porcentaje}%</span>
-        </div>
+      // Si el filtro no coincide y no es "Todos", saltamos este domingo
+      if (cantaFiltro !== "-" && cantaFiltro !== "Todos" && cantaFiltro !== cantanteEnFecha) return;
 
-        <div style="
-          background:#b5b5b5;
-          height:18px;
-          border-radius:10px;
-          overflow:hidden;
-          cursor:pointer;">
-          <div style="
-            width:${porcentaje}%;
-            background:${cat.color};
-            height:100%;
-            transition:0.4s;">
-          </div>
-        </div>
+      // Crear barras de evaluaciones
+      const evaluaciones = ["Aprobado", "Regular", "Pendiente"];
+      const colores = { "Aprobado": "#0077cc", "Regular": "#28a745", "Pendiente": "#ff3b30" };
+      const barrasHtml = evaluaciones.map(ev => {
+        const cant = datosMes.evaluaciones?.[ev]?.[fecha] || 0;
+        return `<div style="background:${colores[ev]}; color:#fff; padding:4px 8px; margin:2px 0; width:${cant * 10}px;">${ev}: ${cant}</div>`;
+      }).join("");
 
-        <div style="display:none; margin-top:6px; font-size:13px;"></div>
+      htmlDomingos += `
+        <details class="details-slow" ${openAttr}>
+          <summary>🎤 ${isoToDisplay(fecha)} → ${cantanteEnFecha}</summary>
+          ${barrasHtml}
+        </details>
       `;
-
-      const barra = fila.querySelector("div:nth-child(2)");
-      const listaDiv = fila.lastElementChild;
-
-      barra.addEventListener("click",()=>{
-        listaDiv.style.display =
-          listaDiv.style.display === "block" ? "none" : "block";
-      });
-
-      const listaOrdenada = Object.entries(canciones)
-        .sort((a,b)=>b[1]-a[1])
-        .map(([titulo, veces])=>`• ${titulo} (${veces})`)
-        .join("<br>");
-
-      listaDiv.innerHTML = listaOrdenada || "Sin datos";
-
-      contenido.appendChild(fila);
     });
 
-    contCantante.appendChild(bloque);
+    card.innerHTML = `<h3>${new Date(mes+"-01").toLocaleDateString("es-ES",{month:"long", year:"numeric"})}</h3>${htmlDomingos}`;
+    resultadoCont.appendChild(card);
   });
 }
 
