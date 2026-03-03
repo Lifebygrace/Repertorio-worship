@@ -2028,7 +2028,7 @@ mensajeInicial.style.opacity = "0.7";
 mensajeInicial.textContent = "Selecciona un rango y un cantante para ver el análisis.";
 contCantante.appendChild(mensajeInicial);
 
-
+let filtrosActivados = false;
 // ==============================
 // FUNCIÓN RENDER
 // ==============================
@@ -2174,14 +2174,13 @@ function aplicarFiltros(){
   const rango = parseInt(selectRango.value);
   const cantante = selectCantante.value;
 
-  // Estado inicial → no mostrar nada
-  if(rango === 0 && cantante === "Todos"){
-    contCantante.querySelectorAll(".bloque-cantante").forEach(e=>e.remove());
-    return;
-  }
+  // Primera vez que el usuario interactúa
+  if(!filtrosActivados){
+    filtrosActivados = true;
 
-  const msg = document.getElementById("mensaje-inicial");
-  if(msg) msg.remove();
+    const msg = document.getElementById("mensaje-inicial");
+    if(msg) msg.remove();
+  }
 
   renderEstadisticas(rango, cantante);
 }
