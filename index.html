@@ -2168,17 +2168,29 @@ const contenido = bloque.querySelector(".contenido-cantante");
 
 const selectRango = document.getElementById("filtro-rango");
 const selectCantante = document.getElementById("filtro-cantante");
+// Estado inicial: cantante deshabilitado
+selectCantante.disabled = true;
+selectCantante.style.opacity = "0.5";
 
 function aplicarFiltros(){
 
   const rango = selectRango.value;
   const cantante = selectCantante.value;
 
-  // Si el rango es "-" → no mostrar nada
+  // Si rango es "-" → ocultar todo y deshabilitar cantante
   if(rango === "-"){
+
     contCantante.querySelectorAll(".bloque-cantante").forEach(e=>e.remove());
+
+    selectCantante.disabled = true;
+    selectCantante.style.opacity = "0.5";
+
     return;
   }
+
+  // Si hay rango válido → habilitar cantante
+  selectCantante.disabled = false;
+  selectCantante.style.opacity = "1";
 
   renderEstadisticas(parseInt(rango), cantante);
 }
