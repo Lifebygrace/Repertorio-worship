@@ -1832,88 +1832,37 @@ window.analizarPeriodo = async function(mesesAtras){
   };
 
   for(const mes of meses){
+
     const data = snap.docs.find(d => d.id === mes)?.data();
-    if(!data?.evaluaciones) continue;
+    if(!data || !data.evaluaciones) continue;
 
-    for(const [id, valor] of Object.entries(data.evaluaciones)){
-      if(!valor) continue;
-
-      const cancion = cancionesCache.find(c=>c.id===id);
-      if(!cancion) continue;
-
-      if(!acumulado[valor][id]){
-        acumulado[valor][id] = {
-          titulo: cancion.titulo,
-          veces: 0,
-          cantantes: new Set()
-        };
+    Object.entries(data.evaluaciones).forEach(([id, val]) => {
+      if(!acumulado[val][id]){
+        acumulado[val][id] = 0;
       }
-
-      acumulado[valor][id].veces++;
-
-      if(data.cantantes){
-        Object.values(data.cantantes).forEach(c=>{
-          if(c) acumulado[valor][id].cantantes.add(c);
-        });
-      }
-    }
-  }
-
-  const total =
-    Object.keys(acumulado["Excelente"]).length +
-    Object.keys(acumulado["Bien"]).length +
-    Object.keys(acumulado["A mejorar"]).length;
-
-  window.cacheResultados = acumulado;
-
-  cont.innerHTML = `
-    <p>Total evaluadas: <strong>${total}</strong></p>
-
-    <p onclick="mostrarDetallePeriodo('Excelente')" style="cursor:pointer">
-      🚀 ${Object.keys(acumulado["Excelente"]).length} fueron excelentes
-    </p>
-
-    <p onclick="mostrarDetallePeriodo('Bien')" style="cursor:pointer">
-      👍 ${Object.keys(acumulado["Bien"]).length} fueron buenas
-    </p>
-
-    <p onclick="mostrarDetallePeriodo('A mejorar')" style="cursor:pointer">
-      ‼️ ${Object.keys(acumulado["A mejorar"]).length} necesitan mejorar
-    </p>
-
-    <div id="detalle-periodo"></div>
-  `;
-};
-
-window.mostrarDetallePeriodo = function(tipo){
-
-  const datos = window.cacheResultados[tipo];
-  const cont = document.getElementById("detalle-periodo");
-
-  if(!datos || !Object.keys(datos).length){
-    cont.innerHTML = "<p>No hay canciones.</p>";
-    return;
-  }
-
-  const emoji = tipo==="Excelente" ? "🚀"
-              : tipo==="Bien" ? "👍"
-              : "‼️";
-
-  let html = `<h4 style="margin-top:10px">${emoji} Canciones</h4><ul>`;
-
-  Object.values(datos)
-    .sort((a,b)=>b.veces - a.veces)
-    .forEach(c=>{
-      html += `
-        <li>
-          <strong>${c.titulo}</strong> (${c.veces})
-          <br>
-          🎤 ${[...c.cantantes].join(", ") || "-"}
-        </li>
-      `;
+      acumulado[val][id]++;
     });
+  }
 
-  html += "</ul>";
+  let html = "";
+
+  Object.keys(acumulado).forEach(cat => {
+
+    const canciones = Object.entries(acumulado[cat])
+      .sort((a,b)=>b[1]-a[1])
+      .map(([id, veces]) => {
+        const c = cancionesCache.find(x=>x.id===id);
+        return `<li>${c?.titulo || id} (${veces})</li>`;
+      })
+      .join("");
+
+    html += `
+      <div style="margin-top:10px">
+        <strong>${cat}</strong>
+        <ul>${canciones || "<li>No hay datos</li>"}</ul>
+      </div>
+    `;
+  });
 
   cont.innerHTML = html;
 };
