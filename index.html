@@ -2021,9 +2021,9 @@ contCantante.appendChild(panel);
 // RENDER ESTADÍSTICAS
 // ==============================
 
+
 function renderEstadisticas(rangoMeses, cantanteFiltro){
 
-  // limpiar excepto panel
   contCantante.querySelectorAll(".bloque-cantante").forEach(e=>e.remove());
 
   const hoy = new Date();
@@ -2050,7 +2050,6 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
 
         const fechaObj = new Date(f);
 
-        // FILTRO POR RANGO
         if(rangoMeses > 0){
           const limite = new Date(hoy.getFullYear(), hoy.getMonth() - rangoMeses, 1);
           if(fechaObj < limite) return;
@@ -2058,7 +2057,6 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
 
         const analisis = analisisGuardado[f];
         if(!analisis) return;
-
         if(analisis.cantante !== nombre) return;
 
         const evaluacion = analisis.evaluaciones?.[docu.id];
@@ -2076,17 +2074,42 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
       });
     });
 
-    // Crear bloque cantante
+    // ============================
+    // BLOQUE CANTANTE (COLAPSADO)
+    // ============================
+
     const bloque = document.createElement("div");
     bloque.className = "bloque-cantante";
     bloque.style.marginTop = "20px";
+    bloque.style.borderTop = "1px solid #ddd";
+    bloque.style.paddingTop = "10px";
 
-    bloque.innerHTML += `<h3 style="margin-bottom:10px;">${nombre}</h3>`;
+    bloque.innerHTML = `
+      <h3 style="cursor:pointer; display:flex; justify-content:space-between;">
+        ${nombre}
+        <span>➕</span>
+      </h3>
+      <div class="contenido-cantante" style="display:none;"></div>
+    `;
+
+    const header = bloque.querySelector("h3");
+    const contenido = bloque.querySelector(".contenido-cantante");
+    const icono = header.querySelector("span");
+
+    header.addEventListener("click",()=>{
+      const abierto = contenido.style.display === "block";
+      contenido.style.display = abierto ? "none" : "block";
+      icono.textContent = abierto ? "➕" : "➖";
+    });
+
+    // ============================
+    // BARRAS
+    // ============================
 
     const categorias = [
-      { key:"Excelente", emoji:"🚀" },
-      { key:"Bien", emoji:"👍" },
-      { key:"A mejorar", emoji:"‼️" }
+      { key:"Excelente", emoji:"🚀", color:"#1976d2" }, // azul
+      { key:"Bien", emoji:"👍", color:"#2e7d32" },       // verde
+      { key:"A mejorar", emoji:"‼️", color:"#d32f2f" }  // rojo
     ];
 
     categorias.forEach(cat=>{
@@ -2096,32 +2119,37 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
       const porcentaje = total ? Math.round((cantidad/total)*100) : 0;
 
       const fila = document.createElement("div");
-      fila.style.marginBottom = "10px";
+      fila.style.marginBottom = "12px";
 
       fila.innerHTML = `
         <div style="display:flex; justify-content:space-between; font-size:14px;">
           <span>${cat.emoji} ${cat.key} (${cantidad})</span>
           <span>${porcentaje}%</span>
         </div>
+
         <div style="
-          background:#cfcfcf;
+          background:#b5b5b5;
           height:18px;
           border-radius:10px;
           overflow:hidden;
           cursor:pointer;">
+
           <div style="
             width:${porcentaje}%;
-            background:#666;
+            background:${cat.color};
             height:100%;
-            transition:0.3s;">
+            transition:0.4s;">
           </div>
+
         </div>
-        <div style="display:none; margin-top:5px; font-size:13px;"></div>
+
+        <div style="display:none; margin-top:6px; font-size:13px;"></div>
       `;
 
+      const barra = fila.querySelector("div:nth-child(2)");
       const listaDiv = fila.lastElementChild;
 
-      fila.querySelector("div:nth-child(2)").addEventListener("click",()=>{
+      barra.addEventListener("click",()=>{
         listaDiv.style.display =
           listaDiv.style.display === "block" ? "none" : "block";
       });
@@ -2133,13 +2161,12 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
 
       listaDiv.innerHTML = listaOrdenada || "Sin datos";
 
-      bloque.appendChild(fila);
+      contenido.appendChild(fila);
     });
 
     contCantante.appendChild(bloque);
   });
 }
-
 
 // ==============================
 // EVENTOS FILTRO
