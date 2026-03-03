@@ -1967,19 +1967,17 @@ async function cargarAnalisisReal() {
     return;
   }
 // ==============================
-// 🎤 ANÁLISIS POR CANTANTE
+// 🎤 ANÁLISIS REAL VISUAL + ABC
 // ==============================
 
 const cardCantante = document.createElement("div");
 cardCantante.className = "card";
 cardCantante.style.marginBottom = "25px";
-
 cardCantante.innerHTML = `<h2>🎤 Análisis por cantante</h2>`;
 
 const contCantante = document.createElement("div");
 cardCantante.appendChild(contCantante);
 cont.appendChild(cardCantante);
-
 
 // ==============================
 // FILTROS
@@ -1994,18 +1992,19 @@ panel.style.flexWrap = "wrap";
 panel.innerHTML = `
   <div>
     📅 Rango:
-   <select id="filtro-rango">
-  <option value="-">-</option>
-  <option value="0">Todo</option>
-  <option value="1">Último mes</option>
-  <option value="3">Últimos 3 meses</option>
-  <option value="6">Últimos 6 meses</option>
-</select>
+    <select id="filtro-rango">
+      <option value="-">-</option>
+      <option value="0">Todo</option>
+      <option value="1">Último mes</option>
+      <option value="3">Últimos 3 meses</option>
+      <option value="6">Últimos 6 meses</option>
+    </select>
   </div>
 
   <div>
     🎤 Cantante:
     <select id="filtro-cantante">
+      <option value="-">-</option>
       <option value="Todos">Todos</option>
       <option value="Milly">Milly</option>
       <option value="Carolina">Carolina</option>
@@ -2015,7 +2014,6 @@ panel.innerHTML = `
 `;
 
 contCantante.appendChild(panel);
-
 
 // ==============================
 // MENSAJE INICIAL
@@ -2030,7 +2028,25 @@ mensajeInicial.textContent = "Selecciona un rango y un cantante para ver el aná
 contCantante.appendChild(mensajeInicial);
 
 // ==============================
-// FUNCIÓN RENDER
+// CLASIFICACIÓN ABC
+// ==============================
+
+function clasificarABC(conteoCanciones){
+  const lista = Object.entries(conteoCanciones)
+    .sort((a,b)=>b[1]-a[1]);
+  const totalCanciones = lista.length;
+  const ABC = {};
+  lista.forEach(([titulo], index)=>{
+    const porcentaje = (index+1)/totalCanciones;
+    if(porcentaje <= 0.2) ABC[titulo] = "A";
+    else if(porcentaje <= 0.5) ABC[titulo] = "B";
+    else ABC[titulo] = "C";
+  });
+  return ABC;
+}
+
+// ==============================
+// RENDER ESTADÍSTICAS VISUAL
 // ==============================
 
 function renderEstadisticas(rangoMeses, cantanteFiltro){
@@ -2039,18 +2055,13 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
 
   const hoy = new Date();
 
-  const listaCantantes = cantanteFiltro === "Todos"
-    ? ["Milly","Carolina","Jason"]
-    : [cantanteFiltro];
+  let listaCantantes = [];
+  if(cantanteFiltro === "Todos") listaCantantes = ["Milly","Carolina","Jason"];
+  else if(cantanteFiltro !== "-") listaCantantes = [cantanteFiltro];
+  if(listaCantantes.length === 0) return;
 
   listaCantantes.forEach(nombre=>{
-
-    const conteo = {
-      Excelente: {},
-      Bien: {},
-      "A mejorar": {}
-    };
-
+    const conteo = { Excelente:{}, Bien:{}, "A mejorar":{} };
     let total = 0;
 
     snapRegistro.forEach(docu=>{
@@ -2058,18 +2069,14 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
       const fechas = Array.isArray(data.fechas) ? data.fechas : [];
 
       fechas.forEach(f=>{
-
         const fechaObj = new Date(f);
-
-        // FILTRO RANGO
-        if(rangoMeses > 0){
+        if(rangoMeses !== "-" && rangoMeses > 0){
           const limite = new Date(hoy.getFullYear(), hoy.getMonth() - rangoMeses, 1);
           if(fechaObj < limite) return;
         }
 
         const analisis = analisisGuardado[f];
-        if(!analisis) return;
-        if(analisis.cantante !== nombre) return;
+        if(!analisis || analisis.cantante !== nombre) return;
 
         const evaluacion = analisis.evaluaciones?.[docu.id];
         if(!evaluacion) return;
@@ -2077,10 +2084,7 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
         const cancion = cancionesCache.find(c=>c.id===docu.id);
         const titulo = cancion?.titulo || docu.id;
 
-        if(!conteo[evaluacion][titulo]){
-          conteo[evaluacion][titulo] = 0;
-        }
-
+        if(!conteo[evaluacion][titulo]) conteo[evaluacion][titulo] = 0;
         conteo[evaluacion][titulo]++;
         total++;
       });
@@ -2092,14 +2096,10 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
     bloque.style.borderTop = "1px solid #ddd";
     bloque.style.paddingTop = "10px";
 
-bloque.innerHTML = `
-  <h3 style="margin-bottom:10px;">
-    ${nombre}
-  </h3>
-  <div class="contenido-cantante"></div>
-`;
-
-const contenido = bloque.querySelector(".contenido-cantante");
+    bloque.innerHTML = `<h3>${nombre}</h3>`;
+    const contenido = document.createElement("div");
+    contenido.style.display = "block";
+    bloque.appendChild(contenido);
 
     const categorias = [
       { key:"Excelente", emoji:"🚀", color:"#1976d2" },
@@ -2108,59 +2108,60 @@ const contenido = bloque.querySelector(".contenido-cantante");
     ];
 
     categorias.forEach(cat=>{
-
       const canciones = conteo[cat.key];
       const cantidad = Object.values(canciones).reduce((a,b)=>a+b,0);
       const porcentaje = total ? Math.round((cantidad/total)*100) : 0;
+      const ABC = clasificarABC(canciones);
 
-      const fila = document.createElement("div");
-      fila.style.marginBottom = "12px";
+      // Creamos barra visual con ABC integrado
+      const barraCont = document.createElement("div");
+      barraCont.style.position = "relative";
+      barraCont.style.background = "#e0e0e0";
+      barraCont.style.height = "22px";
+      barraCont.style.borderRadius = "12px";
+      barraCont.style.margin = "8px 0";
 
-      fila.innerHTML = `
-        <div style="display:flex; justify-content:space-between; font-size:14px;">
-          <span>${cat.emoji} ${cat.key} (${cantidad})</span>
-          <span>${porcentaje}%</span>
-        </div>
+      const barraColor = document.createElement("div");
+      barraColor.style.width = porcentaje + "%";
+      barraColor.style.background = cat.color;
+      barraColor.style.height = "100%";
+      barraColor.style.borderRadius = "12px";
+      barraColor.style.transition = "0.4s";
+      barraCont.appendChild(barraColor);
 
-        <div style="
-          background:#b5b5b5;
-          height:18px;
-          border-radius:10px;
-          overflow:hidden;
-          cursor:pointer;">
-          <div style="
-            width:${porcentaje}%;
-            background:${cat.color};
-            height:100%;
-            transition:0.4s;">
-          </div>
-        </div>
-
-        <div style="display:none; margin-top:6px; font-size:13px;"></div>
-      `;
-
-      const barra = fila.querySelector("div:nth-child(2)");
-      const listaDiv = fila.lastElementChild;
-
-      barra.addEventListener("click",()=>{
-        listaDiv.style.display =
-          listaDiv.style.display === "block" ? "none" : "block";
-      });
-
-      const listaOrdenada = Object.entries(canciones)
+      // ABC dentro de la barra
+      const abcTexto = Object.entries(canciones)
         .sort((a,b)=>b[1]-a[1])
-        .map(([titulo, veces])=>`• ${titulo} (${veces})`)
-        .join("<br>");
+        .map(([titulo, veces])=>`${titulo} [${ABC[titulo]}]`).join(" | ");
 
-      listaDiv.innerHTML = listaOrdenada || "Sin datos";
+      const label = document.createElement("div");
+      label.style.position = "absolute";
+      label.style.left = "8px";
+      label.style.top = "0";
+      label.style.fontSize = "12px";
+      label.style.color = "#fff";
+      label.style.fontWeight = "bold";
+      label.style.whiteSpace = "nowrap";
+      label.style.overflow = "hidden";
+      label.style.textOverflow = "ellipsis";
+      label.textContent = abcTexto || "Sin datos";
 
-      contenido.appendChild(fila);
+      barraCont.appendChild(label);
+
+      // Añadimos barra + porcentaje
+      const wrapper = document.createElement("div");
+      wrapper.innerHTML = `<div style="display:flex; justify-content:space-between; font-size:14px;">
+        <span>${cat.emoji} ${cat.key} (${cantidad})</span>
+        <span>${porcentaje}%</span>
+      </div>`;
+      wrapper.appendChild(barraCont);
+
+      contenido.appendChild(wrapper);
     });
 
     contCantante.appendChild(bloque);
   });
 }
-
 
 // ==============================
 // EVENTOS FILTRO
@@ -2168,31 +2169,24 @@ const contenido = bloque.querySelector(".contenido-cantante");
 
 const selectRango = document.getElementById("filtro-rango");
 const selectCantante = document.getElementById("filtro-cantante");
-// Estado inicial: cantante deshabilitado
-selectCantante.disabled = true;
-selectCantante.style.opacity = "0.5";
 
 function aplicarFiltros(){
-
   const rango = selectRango.value;
   const cantante = selectCantante.value;
 
-  // Si rango es "-" → ocultar todo y deshabilitar cantante
-  if(rango === "-"){
-
+  if(rango === "-" && cantante === "-"){
     contCantante.querySelectorAll(".bloque-cantante").forEach(e=>e.remove());
-
-    selectCantante.disabled = true;
-    selectCantante.style.opacity = "0.5";
-
+    if(!document.getElementById("mensaje-inicial")){
+      contCantante.appendChild(mensajeInicial);
+    }
     return;
   }
 
-  // Si hay rango válido → habilitar cantante
-  selectCantante.disabled = false;
-  selectCantante.style.opacity = "1";
+  if(document.getElementById("mensaje-inicial")){
+    mensajeInicial.remove();
+  }
 
-  renderEstadisticas(parseInt(rango), cantante);
+  renderEstadisticas(rango, cantante);
 }
 
 selectRango.addEventListener("change", aplicarFiltros);
