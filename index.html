@@ -2092,23 +2092,14 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
     bloque.style.borderTop = "1px solid #ddd";
     bloque.style.paddingTop = "10px";
 
-    bloque.innerHTML = `
-      <h3 style="cursor:pointer; display:flex; justify-content:space-between;">
-        ${nombre}
-        <span>➕</span>
-      </h3>
-      <div class="contenido-cantante" style="display:none;"></div>
-    `;
+bloque.innerHTML = `
+  <h3 style="margin-bottom:10px;">
+    ${nombre}
+  </h3>
+  <div class="contenido-cantante"></div>
+`;
 
-    const header = bloque.querySelector("h3");
-    const contenido = bloque.querySelector(".contenido-cantante");
-    const icono = header.querySelector("span");
-
-    header.addEventListener("click",()=>{
-      const abierto = contenido.style.display === "block";
-      contenido.style.display = abierto ? "none" : "block";
-      icono.textContent = abierto ? "➕" : "➖";
-    });
+const contenido = bloque.querySelector(".contenido-cantante");
 
     const categorias = [
       { key:"Excelente", emoji:"🚀", color:"#1976d2" },
