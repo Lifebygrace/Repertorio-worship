@@ -1994,12 +1994,13 @@ panel.style.flexWrap = "wrap";
 panel.innerHTML = `
   <div>
     📅 Rango:
-    <select id="filtro-rango">
-      <option value="0">Todo</option>
-      <option value="1">Último mes</option>
-      <option value="3">Últimos 3 meses</option>
-      <option value="6">Últimos 6 meses</option>
-    </select>
+   <select id="filtro-rango">
+  <option value="-">-</option>
+  <option value="0">Todo</option>
+  <option value="1">Último mes</option>
+  <option value="3">Últimos 3 meses</option>
+  <option value="6">Últimos 6 meses</option>
+</select>
   </div>
 
   <div>
@@ -2028,7 +2029,6 @@ mensajeInicial.style.opacity = "0.7";
 mensajeInicial.textContent = "Selecciona un rango y un cantante para ver el análisis.";
 contCantante.appendChild(mensajeInicial);
 
-let filtrosActivados = false;
 // ==============================
 // FUNCIÓN RENDER
 // ==============================
@@ -2171,18 +2171,16 @@ const selectCantante = document.getElementById("filtro-cantante");
 
 function aplicarFiltros(){
 
-  const rango = parseInt(selectRango.value);
+  const rango = selectRango.value;
   const cantante = selectCantante.value;
 
-  // Primera vez que el usuario interactúa
-  if(!filtrosActivados){
-    filtrosActivados = true;
-
-    const msg = document.getElementById("mensaje-inicial");
-    if(msg) msg.remove();
+  // Si el rango es "-" → no mostrar nada
+  if(rango === "-"){
+    contCantante.querySelectorAll(".bloque-cantante").forEach(e=>e.remove());
+    return;
   }
 
-  renderEstadisticas(rango, cantante);
+  renderEstadisticas(parseInt(rango), cantante);
 }
 
 selectRango.addEventListener("change", aplicarFiltros);
