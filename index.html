@@ -78,7 +78,7 @@ button:active{
 /* Hover solo escritorio */
 @media (hover: hover){
   .card:hover{
-    transform: translateY(-2px);
+    transform: translateY(-2px); mi
     box-shadow: 0 6px 20px rgba(0,0,0,.10);
   }
 }
@@ -2243,7 +2243,7 @@ function crearCardMes(mesKey) {
   fechasOrdenadas.forEach(fecha => {
     const datosGuardados = analisisGuardado[fecha] || { cantante: "", evaluaciones: {}, observaciones: "" };
     const domingoDiv = document.createElement("div");
-    domingoDiv.style.marginBottom = "15px";
+    domingoDiv.style.marginBottom = "20px";
 
     // ===== LISTA DE CANCIONES =====
     const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
@@ -2284,12 +2284,12 @@ function crearCardMes(mesKey) {
         </select>`
       : `<strong>${datosGuardados.cantante || "-"}</strong>`;
 
-    // ===== OBSERVACIONES (separadas del bloque canciones) =====
+    // ===== OBSERVACIONES (con card visual como mensual, sin bullet) =====
     const obsHtml = modoEdicion 
       ? `
-        <details class="details-slow" style="margin-top:6px;">
+        <details class="details-slow" style="margin-top:10px;">
           <summary style="cursor:pointer;">📝 Observaciones / Consejos</summary>
-          <div style="margin-top:6px;">
+          <div class="notas-card" style="margin-top:6px;">
             <textarea class="obs-textarea"
                       data-fecha="${fecha}"
                       placeholder="Escribe observaciones o consejos aquí..."
@@ -2298,9 +2298,9 @@ function crearCardMes(mesKey) {
         </details>
       `
       : `
-        <details class="details-slow" style="margin-top:6px;">
+        <details class="details-slow" style="margin-top:10px;">
           <summary style="cursor:pointer;">📝 Observaciones / Consejos</summary>
-          <div style="margin-top:6px;">
+          <div class="notas-card" style="margin-top:6px;">
             ${datosGuardados.observaciones||""}
           </div>
         </details>
@@ -2308,22 +2308,24 @@ function crearCardMes(mesKey) {
 
     // ===== DOMINGO =====
     domingoDiv.innerHTML = `
-      <h4 style="cursor:pointer;">${isoToDisplay(fecha)} 🗓️</h4>
-      <p>🎤 Cantante: ${cantanteHtml}</p>
+      <div style="display:flex; align-items:center; gap:40px; cursor:pointer;" class="header-domingo">
+        <span><strong>${isoToDisplay(fecha)} 🗓️</strong></span>
+        <span>🎤 Cantante: ${cantanteHtml}</span>
+      </div>
 
-      ${obsHtml}
-
-      <div class="canciones-domingo" style="display:none; margin-left:15px;">
+      <div class="canciones-domingo" style="display:none; margin-top:8px; margin-left:15px;">
         <ul>${cancionesHtml}</ul>
         ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
       </div>
+
+      ${obsHtml}
     `;
 
+    const headerDomingo = domingoDiv.querySelector(".header-domingo");
     const contCanciones = domingoDiv.querySelector(".canciones-domingo");
-    const h4 = domingoDiv.querySelector("h4");
 
-    // 🔹 Plegado SOLO canciones
-    h4.addEventListener("click", () => {
+    // 🔹 Toggle SOLO canciones
+    headerDomingo.addEventListener("click", () => {
       contCanciones.style.display = contCanciones.style.display === "block" ? "none" : "block";
     });
 
