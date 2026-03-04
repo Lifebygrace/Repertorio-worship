@@ -2413,24 +2413,50 @@ function crearCardMes(mesKey) {
     });
 
     // Guardar observaciones del mes
-    contenidoMes.querySelectorAll(".guardar-obs-mes").forEach(btn => {
-      btn.addEventListener("click", async () => {
+contenidoMes.querySelectorAll(".guardar-real").forEach(btn => {
+  btn.addEventListener("click", async () => {
 
-        const mes = btn.dataset.mes;
-        const textarea =
-          contenidoMes.querySelector(`.obs-mes-textarea[data-mes="${mes}"]`);
-        const observaciones =
-          textarea ? textarea.value.trimStart() : "";
+    const fecha = btn.dataset.fecha;
 
-        await setDoc(doc(db, "analisis_real", mes), {
-          observaciones
-        }, { merge: true });
+    // =============================
+    // 🔹 GUARDAR DOMINGO
+    // =============================
 
-        alert("✅ Observaciones del mes guardadas");
+    const evaluaciones = {};
+
+    contenidoMes
+      .querySelectorAll(`.eval-real[data-fecha="${fecha}"]`)
+      .forEach(sel => {
+        evaluaciones[sel.dataset.id] = sel.value;
       });
-    });
 
-  }
+    const cantanteSel =
+      contenidoMes.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
+    const cantante = cantanteSel ? cantanteSel.value : "";
+
+    await setDoc(doc(db, "analisis_real", fecha), {
+      cantante,
+      evaluaciones
+    }, { merge: true });
+
+    // =============================
+    // 🔹 GUARDAR OBSERVACIÓN DEL MES
+    // =============================
+
+    const textareaMes =
+      contenidoMes.querySelector(`.obs-mes-textarea[data-mes="${mesKey}"]`);
+
+    if (textareaMes) {
+      const observaciones = textareaMes.value.trimStart();
+
+      await setDoc(doc(db, "analisis_real", mesKey), {
+        observaciones
+      }, { merge: true });
+    }
+
+    alert("✅ Todo guardado correctamente");
+  });
+});
 
   return cardMes;
 }
