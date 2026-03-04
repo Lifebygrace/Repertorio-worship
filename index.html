@@ -2231,7 +2231,14 @@ function crearCardMes(mesKey) {
   cardMes.style.marginBottom = "20px";
 
   cardMes.innerHTML = `
-    <h2 style="cursor:pointer; font-size:1.3em;">📅 ${nombreMes.toUpperCase()} ▼</h2>
+  <h2 style="
+  cursor:pointer; 
+  font-size:1.05em; 
+  font-weight:600; 
+  margin:0;
+">
+  ${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} 🗓️
+</h2>
     <div class="contenido-mes" style="display:none;"></div>
   `;
 
