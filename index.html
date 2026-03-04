@@ -2251,6 +2251,7 @@ function aplicarFiltros(){
 selectRango.addEventListener("change", aplicarFiltros);
 selectCantante.addEventListener("change", aplicarFiltros);
 
+
 // ===== FUNCIÓN PARA CREAR CARD DE MES =====
 function crearCardMes(mesKey) {
   const fechasOrdenadas = Object.keys(mapaMeses[mesKey]).sort();
@@ -2270,6 +2271,7 @@ function crearCardMes(mesKey) {
 
   const contenidoMes = cardMes.querySelector(".contenido-mes");
 
+  // Abrir/cerrar mes
   cardMes.querySelector("h2").addEventListener("click", () => {
     contenidoMes.style.display = contenidoMes.style.display === "block" ? "none" : "block";
   });
@@ -2281,6 +2283,7 @@ function crearCardMes(mesKey) {
     const domingoDiv = document.createElement("div");
     domingoDiv.className = "domingo-item";
 
+    // Canciones del domingo
     const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
       const cancion = cancionesCache.find(c => c.id === id);
       const titulo = cancion?.titulo || "—";
@@ -2316,6 +2319,7 @@ function crearCardMes(mesKey) {
         </select>`
       : `<strong>${datosGuardados.cantante || "-"}</strong>`;
 
+    // Contenedor del domingo
     domingoDiv.innerHTML = `
       <div class="header-domingo" style="display:flex; align-items:center; gap:40px; cursor:pointer;">
         <span style="display:flex; align-items:center; gap:6px;">
@@ -2335,6 +2339,7 @@ function crearCardMes(mesKey) {
     const contCanciones = domingoDiv.querySelector(".canciones-domingo");
     const flecha = domingoDiv.querySelector(".flecha");
 
+    // Toggle domingo
     headerDomingo.addEventListener("click", () => {
       const abierto = contCanciones.style.display === "block";
       contCanciones.style.display = abierto ? "none" : "block";
@@ -2345,7 +2350,6 @@ function crearCardMes(mesKey) {
   });
 
   // ===== OBSERVACIONES MENSUALES =====
-
   const observacionesMes = analisisMensualReal?.[mesKey]?.observaciones || "";
 
   function formatearObservaciones(texto) {
@@ -2359,37 +2363,38 @@ function crearCardMes(mesKey) {
       );
   }
 
-  const obsHtml = modoEdicion
-    ? `
-      <div style="margin-top:25px;">
-        <h3 style="margin-bottom:8px;">📝 Observaciones / Consejos</h3>
-        <div class="notas-card">
-          <textarea class="obs-mes-textarea"
-            data-mes="${mesKey}"
-            style="width:100%;height:120px;"
-            placeholder="Escribe observaciones generales del mes...">${observacionesMes.trimStart()}</textarea>
-        </div>
-        <button class="guardar-obs-mes" data-mes="${mesKey}" style="margin-top:8px;">💾 Guardar observaciones</button>
+  const obsContainer = document.createElement("div");
+  obsContainer.style.marginTop = "25px";
+
+  if (modoEdicion) {
+    obsContainer.innerHTML = `
+      <h3 style="margin-bottom:8px;">📝 Observaciones / Consejos</h3>
+      <div class="notas-card">
+        <textarea class="obs-mes-textarea"
+          data-mes="${mesKey}"
+          style="width:100%;height:120px;"
+          placeholder="Escribe observaciones generales del mes...">${observacionesMes.trimStart()}</textarea>
       </div>
-    `
-    : `
-      <div style="margin-top:25px;">
-        <h3 style="margin-bottom:8px;">📝 Observaciones / Consejos</h3>
-        <div class="notas-card" style="white-space:pre-line;">
-          ${formatearObservaciones(observacionesMes)}
-        </div>
+      <button class="guardar-obs-mes" data-mes="${mesKey}" style="margin-top:8px;">💾 Guardar observaciones</button>
+    `;
+  } else {
+    obsContainer.innerHTML = `
+      <h3 style="margin-bottom:8px;">📝 Observaciones / Consejos</h3>
+      <div class="notas-card" style="white-space:pre-line;">
+        ${formatearObservaciones(observacionesMes)}
       </div>
     `;
+  }
 
-  contenidoMes.innerHTML += obsHtml;
+  contenidoMes.appendChild(obsContainer);
 
-  // ===== GUARDAR OBSERVACIONES MENSUALES =====
+  // Evento guardar observaciones
   if (modoEdicion) {
-    const btnGuardarMes = contenidoMes.querySelector(".guardar-obs-mes");
+    const btnGuardarMes = obsContainer.querySelector(".guardar-obs-mes");
     if (btnGuardarMes) {
       btnGuardarMes.addEventListener("click", async () => {
         const mes = btnGuardarMes.dataset.mes;
-        const textarea = contenidoMes.querySelector(`.obs-mes-textarea[data-mes="${mes}"]`);
+        const textarea = obsContainer.querySelector(`.obs-mes-textarea[data-mes="${mes}"]`);
         const observaciones = textarea.value.trimStart();
 
         await setDoc(doc(db, "analisis_real_mensual", mes), {
