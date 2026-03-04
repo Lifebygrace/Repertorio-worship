@@ -2221,7 +2221,9 @@ selectRango.addEventListener("change", aplicarFiltros);
 selectCantante.addEventListener("change", aplicarFiltros);
 
 // ===== FUNCIÓN PARA CREAR CARD DE MES =====
+
 function crearCardMes(mesKey) {
+
   const fechasOrdenadas = Object.keys(mapaMeses[mesKey]).sort();
   const fechaBase = new Date(mesKey + "-01");
   const nombreMes = fechaBase.toLocaleString("es-ES", { month: "long", year: "numeric" });
@@ -2231,44 +2233,37 @@ function crearCardMes(mesKey) {
   cardMes.style.marginBottom = "20px";
 
   cardMes.innerHTML = `
-  <h2 style="
-  cursor:pointer; 
-  font-size:1.05em; 
-  font-weight:600; 
-  margin:0;
-">
-  ${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} 🗓️
-</h2>
+    <h2 style="cursor:pointer; font-size:1.05em; font-weight:600; margin:0;">
+      ${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} 🗓️
+    </h2>
     <div class="contenido-mes" style="display:none;"></div>
   `;
 
   const contenidoMes = cardMes.querySelector(".contenido-mes");
+
   cardMes.querySelector("h2").addEventListener("click", () => {
-    contenidoMes.style.display = contenidoMes.style.display === "block" ? "none" : "block";
+    contenidoMes.style.display =
+      contenidoMes.style.display === "block" ? "none" : "block";
   });
 
+  // =====================================================
+  // 🔹 DOMINGOS DEL MES
+  // =====================================================
+
   fechasOrdenadas.forEach(fecha => {
-    const datosGuardados = analisisGuardado[fecha] || { cantante: "", evaluaciones: {}, observaciones: "" };
+
+    const datosGuardados = analisisGuardado[fecha] || {
+      cantante: "",
+      evaluaciones: {}
+    };
+
     const domingoDiv = document.createElement("div");
     domingoDiv.style.marginBottom = "20px";
 
-    // ===== FUNCIÓN PARA RESALTAR SEMANAS =====
-    function formatearObservaciones(texto) {
-      if (!texto) return "";
-      return texto
-        .trimStart()
-        .replace(/SEMANA\s?[1-5]/gi, match => 
-          `<span style="
-            color:#e67e22;
-            font-weight:bold;
-            font-size:1.1em;
-            text-decoration:underline;
-          ">${match.toUpperCase()}</span>`
-        );
-    }
-
     // ===== LISTA DE CANCIONES =====
+
     const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
+
       const cancion = cancionesCache.find(c => c.id === id);
       const titulo = cancion?.titulo || "—";
       const val = datosGuardados.evaluaciones?.[id] || "";
@@ -2294,9 +2289,11 @@ function crearCardMes(mesKey) {
           val==="A mejorar"?"‼️":"";
         return `<li>${titulo} ${emoji}</li>`;
       }
+
     }).join("");
 
     // ===== CANTANTE =====
+
     const cantanteHtml = modoEdicion
       ? `<select class="cantante-real" data-fecha="${fecha}">
           <option value=""></option>
@@ -2306,29 +2303,8 @@ function crearCardMes(mesKey) {
         </select>`
       : `<strong>${datosGuardados.cantante || "-"}</strong>`;
 
-    // ===== OBSERVACIONES =====
-    const obsHtml = modoEdicion 
-      ? `
-        <details class="details-slow" style="margin-top:10px;">
-          <summary style="cursor:pointer;">📝 Observaciones / Consejos</summary>
-          <div class="notas-card" style="margin-top:6px;">
-            <textarea class="obs-textarea"
-                      data-fecha="${fecha}"
-                      placeholder="Escribe observaciones o consejos aquí..."
-                      style="width:100%;height:80px;">${datosGuardados.observaciones?.trimStart()||""}</textarea>
-          </div>
-        </details>
-      `
-      : `
-        <details class="details-slow" style="margin-top:10px;">
-          <summary style="cursor:pointer;">📝 Observaciones / Consejos</summary>
-          <div class="notas-card" style="margin-top:6px; white-space:pre-line;">
-            ${formatearObservaciones(datosGuardados.observaciones)}
-          </div>
-        </details>
-      `;
+    // ===== DOMINGO HTML =====
 
-    // ===== DOMINGO =====
     domingoDiv.innerHTML = `
       <div class="header-domingo"
            style="display:flex; align-items:center; gap:40px; cursor:pointer;">
@@ -2344,15 +2320,12 @@ function crearCardMes(mesKey) {
         <ul>${cancionesHtml}</ul>
         ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
       </div>
-
-      ${obsHtml}
     `;
 
     const headerDomingo = domingoDiv.querySelector(".header-domingo");
     const contCanciones = domingoDiv.querySelector(".canciones-domingo");
     const flecha = domingoDiv.querySelector(".flecha");
 
-    // 🔄 Toggle canciones + animación flecha
     headerDomingo.addEventListener("click", () => {
       const abierto = contCanciones.style.display === "block";
       contCanciones.style.display = abierto ? "none" : "block";
@@ -2362,32 +2335,101 @@ function crearCardMes(mesKey) {
     contenidoMes.appendChild(domingoDiv);
   });
 
-  // ===== GUARDAR =====
+  // =====================================================
+  // 🔹 OBSERVACIONES DEL MES (UNA SOLA VEZ)
+  // =====================================================
+
+  const datosMesGuardados = analisisGuardado[mesKey] || { observaciones: "" };
+
+  function formatearObservacionesMes(texto) {
+    if (!texto) return "";
+    return texto
+      .trimStart()
+      .replace(/SEMANA\s?[1-5]/gi, match =>
+        `<span style="
+          color:#e67e22;
+          font-weight:bold;
+          font-size:1.1em;
+          text-decoration:underline;
+        ">${match.toUpperCase()}</span>`
+      );
+  }
+
+  const obsMesHtml = modoEdicion
+    ? `
+      <details class="details-slow" style="margin-top:15px;">
+        <summary style="cursor:pointer;">📝 Observaciones / Consejos del mes</summary>
+        <div class="notas-card" style="margin-top:6px;">
+          <textarea class="obs-mes-textarea"
+                    data-mes="${mesKey}"
+                    placeholder="Escribe observaciones generales del mes..."
+                    style="width:100%;height:100px;">${datosMesGuardados.observaciones?.trimStart() || ""}</textarea>
+          <button class="guardar-obs-mes" data-mes="${mesKey}" style="margin-top:8px;">
+            💾 Guardar observaciones
+          </button>
+        </div>
+      </details>
+    `
+    : `
+      <details class="details-slow" style="margin-top:15px;">
+        <summary style="cursor:pointer;">📝 Observaciones / Consejos del mes</summary>
+        <div class="notas-card" style="margin-top:6px; white-space:pre-line;">
+          ${formatearObservacionesMes(datosMesGuardados.observaciones)}
+        </div>
+      </details>
+    `;
+
+  contenidoMes.insertAdjacentHTML("beforeend", obsMesHtml);
+
+  // =====================================================
+  // 🔹 GUARDAR (DOMINGOS + MES)
+  // =====================================================
+
   if (modoEdicion) {
+
+    // Guardar domingos
     contenidoMes.querySelectorAll(".guardar-real").forEach(btn => {
       btn.addEventListener("click", async () => {
+
         const fecha = btn.dataset.fecha;
 
         const evaluaciones = {};
-        contenidoMes.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`).forEach(sel => {
-          evaluaciones[sel.dataset.id] = sel.value;
-        });
+        contenidoMes.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`)
+          .forEach(sel => {
+            evaluaciones[sel.dataset.id] = sel.value;
+          });
 
-        const cantanteSel = contenidoMes.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
+        const cantanteSel =
+          contenidoMes.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
         const cantante = cantanteSel ? cantanteSel.value : "";
 
-        const obsTextarea = contenidoMes.querySelector(`.obs-textarea[data-fecha="${fecha}"]`);
-        const observaciones = obsTextarea ? obsTextarea.value.trimStart() : "";
+        await setDoc(doc(db, "analisis_real", fecha), {
+          cantante,
+          evaluaciones
+        }, { merge: true });
 
-        await setDoc(doc(db, "analisis_real", fecha), { 
-          cantante, 
-          evaluaciones,
-          observaciones
-        });
-
-        alert("✅ Análisis real guardado");
+        alert("✅ Análisis del domingo guardado");
       });
     });
+
+    // Guardar observaciones del mes
+    contenidoMes.querySelectorAll(".guardar-obs-mes").forEach(btn => {
+      btn.addEventListener("click", async () => {
+
+        const mes = btn.dataset.mes;
+        const textarea =
+          contenidoMes.querySelector(`.obs-mes-textarea[data-mes="${mes}"]`);
+        const observaciones =
+          textarea ? textarea.value.trimStart() : "";
+
+        await setDoc(doc(db, "analisis_real", mes), {
+          observaciones
+        }, { merge: true });
+
+        alert("✅ Observaciones del mes guardadas");
+      });
+    });
+
   }
 
   return cardMes;
