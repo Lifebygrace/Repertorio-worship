@@ -2245,6 +2245,21 @@ function crearCardMes(mesKey) {
     const domingoDiv = document.createElement("div");
     domingoDiv.style.marginBottom = "20px";
 
+    // ===== FUNCIÓN PARA RESALTAR SEMANAS =====
+    function formatearObservaciones(texto) {
+      if (!texto) return "";
+      return texto
+        .trimStart()
+        .replace(/SEMANA\s?[1-5]/gi, match => 
+          `<span style="
+            color:#e67e22;
+            font-weight:bold;
+            font-size:1.1em;
+            text-decoration:underline;
+          ">${match.toUpperCase()}</span>`
+        );
+    }
+
     // ===== LISTA DE CANCIONES =====
     const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
       const cancion = cancionesCache.find(c => c.id === id);
@@ -2284,7 +2299,7 @@ function crearCardMes(mesKey) {
         </select>`
       : `<strong>${datosGuardados.cantante || "-"}</strong>`;
 
-    // ===== OBSERVACIONES (con card visual como mensual, sin bullet) =====
+    // ===== OBSERVACIONES =====
     const obsHtml = modoEdicion 
       ? `
         <details class="details-slow" style="margin-top:10px;">
@@ -2293,27 +2308,32 @@ function crearCardMes(mesKey) {
             <textarea class="obs-textarea"
                       data-fecha="${fecha}"
                       placeholder="Escribe observaciones o consejos aquí..."
-                      style="width:100%;height:60px;">${datosGuardados.observaciones||""}</textarea>
+                      style="width:100%;height:80px;">${datosGuardados.observaciones?.trimStart()||""}</textarea>
           </div>
         </details>
       `
       : `
         <details class="details-slow" style="margin-top:10px;">
           <summary style="cursor:pointer;">📝 Observaciones / Consejos</summary>
-          <div class="notas-card" style="margin-top:6px;">
-            ${datosGuardados.observaciones||""}
+          <div class="notas-card" style="margin-top:6px; white-space:pre-line;">
+            ${formatearObservaciones(datosGuardados.observaciones)}
           </div>
         </details>
       `;
 
     // ===== DOMINGO =====
     domingoDiv.innerHTML = `
-      <div style="display:flex; align-items:center; gap:40px; cursor:pointer;" class="header-domingo">
-        <span><strong>${isoToDisplay(fecha)} 🗓️</strong></span>
+      <div class="header-domingo"
+           style="display:flex; align-items:center; gap:40px; cursor:pointer;">
+        <span style="display:flex; align-items:center; gap:6px;">
+          <span class="flecha" style="display:inline-block; transition:transform 0.25s ease;">▶</span>
+          <strong>${isoToDisplay(fecha)} 🗓️</strong>
+        </span>
         <span>🎤 Cantante: ${cantanteHtml}</span>
       </div>
 
-      <div class="canciones-domingo" style="display:none; margin-top:8px; margin-left:15px;">
+      <div class="canciones-domingo"
+           style="display:none; margin-top:8px; margin-left:25px;">
         <ul>${cancionesHtml}</ul>
         ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
       </div>
@@ -2323,10 +2343,13 @@ function crearCardMes(mesKey) {
 
     const headerDomingo = domingoDiv.querySelector(".header-domingo");
     const contCanciones = domingoDiv.querySelector(".canciones-domingo");
+    const flecha = domingoDiv.querySelector(".flecha");
 
-    // 🔹 Toggle SOLO canciones
+    // 🔄 Toggle canciones + animación flecha
     headerDomingo.addEventListener("click", () => {
-      contCanciones.style.display = contCanciones.style.display === "block" ? "none" : "block";
+      const abierto = contCanciones.style.display === "block";
+      contCanciones.style.display = abierto ? "none" : "block";
+      flecha.style.transform = abierto ? "rotate(0deg)" : "rotate(90deg)";
     });
 
     contenidoMes.appendChild(domingoDiv);
@@ -2347,7 +2370,7 @@ function crearCardMes(mesKey) {
         const cantante = cantanteSel ? cantanteSel.value : "";
 
         const obsTextarea = contenidoMes.querySelector(`.obs-textarea[data-fecha="${fecha}"]`);
-        const observaciones = obsTextarea ? obsTextarea.value : "";
+        const observaciones = obsTextarea ? obsTextarea.value.trimStart() : "";
 
         await setDoc(doc(db, "analisis_real", fecha), { 
           cantante, 
