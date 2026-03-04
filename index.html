@@ -2146,6 +2146,18 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
       setTimeout(() => {
         barra.style.width = porcentaje + "%";
       }, 50);
+      
+      // Animación del número
+let valorActual = 0;
+const incremento = Math.ceil(porcentaje / 20); // ajusta la velocidad del conteo
+const intervalo = setInterval(() => {
+  valorActual += incremento;
+  if (valorActual >= porcentaje) {
+    valorActual = porcentaje;
+    clearInterval(intervalo);
+  }
+  porcentajeSpan.textContent = valorActual + "%";
+}, 25);
 
       const listaDiv = fila.lastElementChild;
 
