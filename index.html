@@ -2220,100 +2220,109 @@ function aplicarFiltros(){
 selectRango.addEventListener("change", aplicarFiltros);
 selectCantante.addEventListener("change", aplicarFiltros);
 
-  // ===== FUNCIÓN PARA CREAR CARD DE MES =====
-  function crearCardMes(mesKey) {
-    const fechasOrdenadas = Object.keys(mapaMeses[mesKey]).sort();
-    const fechaBase = new Date(mesKey + "-01");
-    const nombreMes = fechaBase.toLocaleString("es-ES", { month: "long", year: "numeric" });
+// ===== FUNCIÓN PARA CREAR CARD DE MES =====
+function crearCardMes(mesKey) {
+  const fechasOrdenadas = Object.keys(mapaMeses[mesKey]).sort();
+  const fechaBase = new Date(mesKey + "-01");
+  const nombreMes = fechaBase.toLocaleString("es-ES", { month: "long", year: "numeric" });
 
-    const cardMes = document.createElement("div");
-    cardMes.className = "card";
-    cardMes.style.marginBottom = "20px";
+  const cardMes = document.createElement("div");
+  cardMes.className = "card";
+  cardMes.style.marginBottom = "20px";
 
-    cardMes.innerHTML = `
-      <h2 style="cursor:pointer; font-size:1.3em;">📅 ${nombreMes.toUpperCase()} ▼</h2>
-      <div class="contenido-mes" style="display:none;"></div>
-    `;
+  cardMes.innerHTML = `
+    <h2 style="cursor:pointer; font-size:1.3em;">📅 ${nombreMes.toUpperCase()} ▼</h2>
+    <div class="contenido-mes" style="display:none;"></div>
+  `;
 
-    const contenidoMes = cardMes.querySelector(".contenido-mes");
-    cardMes.querySelector("h2").addEventListener("click", () => {
-      contenidoMes.style.display = contenidoMes.style.display === "block" ? "none" : "block";
-    });
+  const contenidoMes = cardMes.querySelector(".contenido-mes");
+  cardMes.querySelector("h2").addEventListener("click", () => {
+    contenidoMes.style.display = contenidoMes.style.display === "block" ? "none" : "block";
+  });
 
-    fechasOrdenadas.forEach(fecha => {
-      const datosGuardados = analisisGuardado[fecha] || { cantante: "", evaluaciones: {} };
-      const domingoDiv = document.createElement("div");
-      domingoDiv.style.marginBottom = "15px";
+  fechasOrdenadas.forEach(fecha => {
+    const datosGuardados = analisisGuardado[fecha] || { cantante: "", evaluaciones: {} };
+    const domingoDiv = document.createElement("div");
+    domingoDiv.style.marginBottom = "15px";
 
-   const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
+    // Construir la lista de canciones
+    const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
+      const cancion = cancionesCache.find(c => c.id === id);
+      const titulo = cancion?.titulo || "—";
+      const val = datosGuardados.evaluaciones?.[id] || "";
 
-  const cancion = cancionesCache.find(c => c.id === id);
-  const titulo = cancion?.titulo || "—";
-  const val = datosGuardados.evaluaciones?.[id] || "";
+      if (modoEdicion) {
+        return `
+          <li>
+            ${titulo}
+            <select class="eval-real"
+                    data-id="${id}"
+                    data-fecha="${fecha}">
+              <option value=""></option>
+              <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀 Excelente</option>
+              <option value="Bien" ${val==="Bien"?"selected":""}>👍 Bien</option>
+              <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️ A mejorar</option>
+            </select>
+          </li>
+        `;
+      } else {
+        const emoji =
+          val==="Excelente"?"🚀":
+          val==="Bien"?"👍":
+          val==="A mejorar"?"‼️":"";
+        return `<li>${titulo} ${emoji}</li>`;
+      }
+    }).join("");
 
-  if (modoEdicion) {
-    return `
-      <li>
-        ${titulo}
-        <select class="eval-real"
-                data-id="${id}"
-                data-fecha="${fecha}">
+    const cantanteHtml = modoEdicion
+      ? `<select class="cantante-real" data-fecha="${fecha}">
           <option value=""></option>
-          <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀 Excelente</option>
-          <option value="Bien" ${val==="Bien"?"selected":""}>👍 Bien</option>
-          <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️ A mejorar</option>
-        </select>
-      </li>
-    `;
-  } else {
+          <option value="Milly" ${datosGuardados.cantante==="Milly"?"selected":""}>Milly</option>
+          <option value="Carolina" ${datosGuardados.cantante==="Carolina"?"selected":""}>Carolina</option>
+          <option value="Jason" ${datosGuardados.cantante==="Jason"?"selected":""}>Jason</option>
+        </select>`
+      : `<strong>${datosGuardados.cantante || "-"}</strong>`;
 
-    const emoji =
-      val==="Excelente"?"🚀":
-      val==="Bien"?"👍":
-      val==="A mejorar"?"‼️":"";
-
-    return `<li>${titulo} ${emoji}</li>`;
-  }
-
-}).join("");
-
-      const cantanteHtml = modoEdicion
-        ? `<select class="cantante-real" data-fecha="${fecha}">
-            <option value=""></option>
-            <option value="Milly" ${datosGuardados.cantante==="Milly"?"selected":""}>Milly</option>
-            <option value="Carolina" ${datosGuardados.cantante==="Carolina"?"selected":""}>Carolina</option>
-            <option value="Jason" ${datosGuardados.cantante==="Jason"?"selected":""}>Jason</option>
-          </select>`
-        : `<strong>${datosGuardados.cantante || "-"}</strong>`;
-
-      domingoDiv.innerHTML = `
-        <h4>▸ ${isoToDisplay(fecha)}</h4>
-        <p>🎤 Cantante: ${cantanteHtml}</p>
+    // Contenedor de canciones plegadas
+    domingoDiv.innerHTML = `
+      <h4 style="cursor:pointer;">▸ ${isoToDisplay(fecha)}</h4>
+      <p>🎤 Cantante: ${cantanteHtml}</p>
+      <div class="canciones-domingo" style="display:none; margin-left:15px;">
         <ul>${cancionesHtml}</ul>
         ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
-      `;
+      </div>
+    `;
 
-      contenidoMes.appendChild(domingoDiv);
+    const contCanciones = domingoDiv.querySelector(".canciones-domingo");
+    const h4 = domingoDiv.querySelector("h4");
+
+    // Evento plegado/desplegado del domingo
+    h4.addEventListener("click", () => {
+      contCanciones.style.display = contCanciones.style.display === "block" ? "none" : "block";
     });
 
-    if (modoEdicion) {
-      contenidoMes.querySelectorAll(".guardar-real").forEach(btn => {
-        btn.addEventListener("click", async () => {
-          const fecha = btn.dataset.fecha;
-          const evaluaciones = {};
-          contenidoMes.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`).forEach(sel => {
-            evaluaciones[sel.dataset.id] = sel.value;
-          });
-          const cantanteSel = contenidoMes.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
-          const cantante = cantanteSel ? cantanteSel.value : "";
-          await setDoc(doc(db, "analisis_real", fecha), { cantante, evaluaciones });
-          alert("✅ Análisis real guardado");
-        });
-      });
-    }
+    contenidoMes.appendChild(domingoDiv);
+  });
 
-    return cardMes;
+  // Evento para los botones Guardar
+  if (modoEdicion) {
+    contenidoMes.querySelectorAll(".guardar-real").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const fecha = btn.dataset.fecha;
+        const evaluaciones = {};
+        contenidoMes.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`).forEach(sel => {
+          evaluaciones[sel.dataset.id] = sel.value;
+        });
+        const cantanteSel = contenidoMes.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
+        const cantante = cantanteSel ? cantanteSel.value : "";
+        await setDoc(doc(db, "analisis_real", fecha), { cantante, evaluaciones });
+        alert("✅ Análisis real guardado");
+      });
+    });
   }
+
+  return cardMes;
+}
 
   // ===== MOSTRAR MES ACTUAL =====
   if (mapaMeses[mesActualKey]) {
