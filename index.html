@@ -2231,10 +2231,14 @@ function crearCardMes(mesKey) {
   cardMes.style.marginBottom = "20px";
 
   cardMes.innerHTML = `
-    <h2 style="cursor:pointer; font-size:1.05em; font-weight:600; margin:0;">
+    <h2 style="
+      cursor:pointer; 
+      font-size:1.05em; 
+      font-weight:600; 
+      margin:0 0 15px 0;">
       ${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} 🗓️
     </h2>
-    <div class="contenido-mes" style="display:none; margin-top:20px;"></div>
+    <div class="contenido-mes" style="display:none;"></div>
   `;
 
   const contenidoMes = cardMes.querySelector(".contenido-mes");
@@ -2248,7 +2252,7 @@ function crearCardMes(mesKey) {
   fechasOrdenadas.forEach(fecha => {
     const datosGuardados = analisisGuardado[fecha] || { cantante: "", evaluaciones: {} };
     const domingoDiv = document.createElement("div");
-    domingoDiv.style.marginBottom = "20px";
+    domingoDiv.className = "domingo-item";
 
     // Canciones del domingo
     const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
@@ -2287,10 +2291,9 @@ function crearCardMes(mesKey) {
         </select>`
       : `<strong>${datosGuardados.cantante || "-"}</strong>`;
 
-    // Domingo: fecha + cantante y canciones (sin observaciones aquí)
+    // Domingo: fecha + cantante y canciones
     domingoDiv.innerHTML = `
-      <div class="header-domingo"
-           style="display:flex; align-items:center; gap:40px; cursor:pointer;">
+      <div class="header-domingo" style="display:flex; align-items:center; gap:40px; cursor:pointer;">
         <span style="display:flex; align-items:center; gap:6px;">
           <span class="flecha" style="display:inline-block; transition:transform 0.25s ease;">▶</span>
           <strong>${isoToDisplay(fecha)} 🗓️</strong>
@@ -2298,7 +2301,7 @@ function crearCardMes(mesKey) {
         <span>🎤 Cantante: ${cantanteHtml}</span>
       </div>
 
-      <div class="canciones-domingo" style="display:none; margin-top:8px; margin-left:25px;">
+      <div class="canciones-domingo" style="display:none; margin-top:6px; margin-left:25px;">
         <ul>${cancionesHtml}</ul>
         ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
       </div>
@@ -2308,7 +2311,7 @@ function crearCardMes(mesKey) {
     const contCanciones = domingoDiv.querySelector(".canciones-domingo");
     const flecha = domingoDiv.querySelector(".flecha");
 
-    // Toggle canciones
+    // Toggle canciones con rotación de flecha
     headerDomingo.addEventListener("click", () => {
       const abierto = contCanciones.style.display === "block";
       contCanciones.style.display = abierto ? "none" : "block";
@@ -2326,9 +2329,7 @@ function crearCardMes(mesKey) {
     return texto
       .trimStart()
       .replace(/SEMANA\s?[1-5]/gi, match =>
-        `<span style="color:#e67e22;font-weight:bold;font-size:1.1em;text-decoration:underline;">
-          ${match.toUpperCase()}
-        </span>`
+        `<span style="color:#e67e22;font-weight:bold;font-size:1.1em;text-decoration:underline;">${match.toUpperCase()}</span>`
       );
   }
 
@@ -2393,7 +2394,6 @@ function crearCardMes(mesKey) {
 
   return cardMes;
 }
-
   // ===== MOSTRAR MES ACTUAL =====
   if (mapaMeses[mesActualKey]) {
     cont.appendChild(crearCardMes(mesActualKey));
