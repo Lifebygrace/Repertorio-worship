@@ -2053,30 +2053,29 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
 
     let total = 0;
 
-    Object.entries(analisisGuardado).forEach(([fecha, data]) => {
+    snapRegistro.forEach(docu=>{
+      const data = docu.data();
+      const fechas = Array.isArray(data.fechas) ? data.fechas : [];
 
-      // 🔹 Ignorar documentos del mes (no tienen evaluaciones)
-      if (!data.evaluaciones) return;
+      fechas.forEach(f=>{
 
-      const fechaObj = new Date(fecha);
+        const fechaObj = new Date(f);
 
-      if(rangoMeses > 0){
-        const limite = new Date(
-          hoy.getFullYear(),
-          hoy.getMonth() - rangoMeses,
-          1
-        );
-        if(fechaObj < limite) return;
-      }
+        // FILTRO RANGO
+        if(rangoMeses > 0){
+          const limite = new Date(hoy.getFullYear(), hoy.getMonth() - rangoMeses, 1);
+          if(fechaObj < limite) return;
+        }
 
-      if(data.cantante !== nombre) return;
+        const analisis = analisisGuardado[f];
+        if(!analisis) return;
+        if(analisis.cantante !== nombre) return;
 
-      Object.entries(data.evaluaciones).forEach(([idCancion, evaluacion]) => {
-
+        const evaluacion = analisis.evaluaciones?.[docu.id];
         if(!evaluacion) return;
 
-        const cancion = cancionesCache.find(c=>c.id===idCancion);
-        const titulo = cancion?.titulo || idCancion;
+        const cancion = cancionesCache.find(c=>c.id===docu.id);
+        const titulo = cancion?.titulo || docu.id;
 
         if(!conteo[evaluacion][titulo]){
           conteo[evaluacion][titulo] = 0;
@@ -2084,14 +2083,8 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
 
         conteo[evaluacion][titulo]++;
         total++;
-
       });
-
     });
-
-    // ==============================
-    // CREAR BLOQUE VISUAL
-    // ==============================
 
     const bloque = document.createElement("div");
     bloque.className = "bloque-cantante";
@@ -2100,7 +2093,9 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
     bloque.style.paddingTop = "10px";
 
     bloque.innerHTML = `
-      <h3 style="margin-bottom:10px;">${nombre}</h3>
+      <h3 style="margin-bottom:10px;">
+        ${nombre}
+      </h3>
       <div class="contenido-cantante"></div>
     `;
 
@@ -2127,16 +2122,49 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
           <span>${porcentaje}%</span>
         </div>
 
-        <div style="background:#b5b5b5;height:18px;border-radius:10px;overflow:hidden;">
-          <div style="width:${porcentaje}%;background:${cat.color};height:100%;transition: width 0.5s ease-out;"></div>
+        <div style="
+          background:#b5b5b5;
+          height:18px;
+          border-radius:10px;
+          overflow:hidden;
+          cursor:pointer;">
+          <!-- Barra animada: empieza en 0%, luego se llena -->
+          <div style="
+            width:0%;
+            background:${cat.color};
+            height:100%;
+            transition: width 0.5s ease-out;">
+          </div>
         </div>
 
         <div style="display:none; margin-top:6px; font-size:13px;"></div>
       `;
 
+const barra = fila.querySelector("div:nth-child(2) > div");
+const porcentajeSpan = fila.querySelector("div:first-child span:last-child"); // selecciona el <span> del %
+barra.style.width = "0%";
+porcentajeSpan.textContent = "0%";
+
+// Animación de la barra
+setTimeout(() => {
+  barra.style.width = porcentaje + "%";
+}, 50);
+
+// Animación del número
+let valorActual = 0;
+const incremento = Math.ceil(porcentaje / 20); // ajusta la velocidad del conteo
+const intervalo = setInterval(() => {
+  valorActual += incremento;
+  if (valorActual >= porcentaje) {
+    valorActual = porcentaje;
+    clearInterval(intervalo);
+  }
+  porcentajeSpan.textContent = valorActual + "%";
+}, 25);
+
       const listaDiv = fila.lastElementChild;
 
-      fila.querySelector("div:nth-child(2)").addEventListener("click",()=>{
+      barra.parentElement.addEventListener("click",()=>{
         listaDiv.style.display =
           listaDiv.style.display === "block" ? "none" : "block";
       });
@@ -2157,11 +2185,43 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
 
 
 // ==============================
-// FUNCIÓN CREAR CARD MES
+// EVENTOS FILTRO
 // ==============================
 
-function crearCardMes(mesKey) {
+const selectRango = document.getElementById("filtro-rango");
+const selectCantante = document.getElementById("filtro-cantante");
+// Estado inicial: cantante deshabilitado
+selectCantante.disabled = true;
+selectCantante.style.opacity = "0.5";
 
+function aplicarFiltros(){
+
+  const rango = selectRango.value;
+  const cantante = selectCantante.value;
+
+  // Si rango es "-" → ocultar todo y deshabilitar cantante
+  if(rango === "-"){
+
+    contCantante.querySelectorAll(".bloque-cantante").forEach(e=>e.remove());
+
+    selectCantante.disabled = true;
+    selectCantante.style.opacity = "0.5";
+
+    return;
+  }
+
+  // Si hay rango válido → habilitar cantante
+  selectCantante.disabled = false;
+  selectCantante.style.opacity = "1";
+
+  renderEstadisticas(parseInt(rango), cantante);
+}
+
+selectRango.addEventListener("change", aplicarFiltros);
+selectCantante.addEventListener("change", aplicarFiltros);
+
+// ===== FUNCIÓN PARA CREAR CARD DE MES =====
+function crearCardMes(mesKey) {
   const fechasOrdenadas = Object.keys(mapaMeses[mesKey]).sort();
   const fechaBase = new Date(mesKey + "-01");
   const nombreMes = fechaBase.toLocaleString("es-ES", { month: "long", year: "numeric" });
@@ -2171,32 +2231,44 @@ function crearCardMes(mesKey) {
   cardMes.style.marginBottom = "20px";
 
   cardMes.innerHTML = `
-    <h2 style="cursor:pointer; font-size:1.05em; font-weight:600; margin:0;">
-      ${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} 🗓️
-    </h2>
+  <h2 style="
+  cursor:pointer; 
+  font-size:1.05em; 
+  font-weight:600; 
+  margin:0;
+">
+  ${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} 🗓️
+</h2>
     <div class="contenido-mes" style="display:none;"></div>
   `;
 
   const contenidoMes = cardMes.querySelector(".contenido-mes");
-
   cardMes.querySelector("h2").addEventListener("click", () => {
-    contenidoMes.style.display =
-      contenidoMes.style.display === "block" ? "none" : "block";
+    contenidoMes.style.display = contenidoMes.style.display === "block" ? "none" : "block";
   });
 
-  // DOMINGOS
   fechasOrdenadas.forEach(fecha => {
-
-    const datosGuardados = analisisGuardado[fecha] || {
-      cantante: "",
-      evaluaciones: {}
-    };
-
+    const datosGuardados = analisisGuardado[fecha] || { cantante: "", evaluaciones: {}, observaciones: "" };
     const domingoDiv = document.createElement("div");
     domingoDiv.style.marginBottom = "20px";
 
-    const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
+    // ===== FUNCIÓN PARA RESALTAR SEMANAS =====
+    function formatearObservaciones(texto) {
+      if (!texto) return "";
+      return texto
+        .trimStart()
+        .replace(/SEMANA\s?[1-5]/gi, match => 
+          `<span style="
+            color:#e67e22;
+            font-weight:bold;
+            font-size:1.1em;
+            text-decoration:underline;
+          ">${match.toUpperCase()}</span>`
+        );
+    }
 
+    // ===== LISTA DE CANCIONES =====
+    const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
       const cancion = cancionesCache.find(c => c.id === id);
       const titulo = cancion?.titulo || "—";
       const val = datosGuardados.evaluaciones?.[id] || "";
@@ -2205,7 +2277,9 @@ function crearCardMes(mesKey) {
         return `
           <li>
             ${titulo}
-            <select class="eval-real" data-id="${id}" data-fecha="${fecha}">
+            <select class="eval-real"
+                    data-id="${id}"
+                    data-fecha="${fecha}">
               <option value=""></option>
               <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀 Excelente</option>
               <option value="Bien" ${val==="Bien"?"selected":""}>👍 Bien</option>
@@ -2220,9 +2294,9 @@ function crearCardMes(mesKey) {
           val==="A mejorar"?"‼️":"";
         return `<li>${titulo} ${emoji}</li>`;
       }
-
     }).join("");
 
+    // ===== CANTANTE =====
     const cantanteHtml = modoEdicion
       ? `<select class="cantante-real" data-fecha="${fecha}">
           <option value=""></option>
@@ -2232,8 +2306,32 @@ function crearCardMes(mesKey) {
         </select>`
       : `<strong>${datosGuardados.cantante || "-"}</strong>`;
 
+    // ===== OBSERVACIONES =====
+    const obsHtml = modoEdicion 
+      ? `
+        <details class="details-slow" style="margin-top:10px;">
+          <summary style="cursor:pointer;">📝 Observaciones / Consejos</summary>
+          <div class="notas-card" style="margin-top:6px;">
+            <textarea class="obs-textarea"
+                      data-fecha="${fecha}"
+                      placeholder="Escribe observaciones o consejos aquí..."
+                      style="width:100%;height:80px;">${datosGuardados.observaciones?.trimStart()||""}</textarea>
+          </div>
+        </details>
+      `
+      : `
+        <details class="details-slow" style="margin-top:10px;">
+          <summary style="cursor:pointer;">📝 Observaciones / Consejos</summary>
+          <div class="notas-card" style="margin-top:6px; white-space:pre-line;">
+            ${formatearObservaciones(datosGuardados.observaciones)}
+          </div>
+        </details>
+      `;
+
+    // ===== DOMINGO =====
     domingoDiv.innerHTML = `
-      <div class="header-domingo" style="display:flex; align-items:center; gap:40px; cursor:pointer;">
+      <div class="header-domingo"
+           style="display:flex; align-items:center; gap:40px; cursor:pointer;">
         <span style="display:flex; align-items:center; gap:6px;">
           <span class="flecha" style="display:inline-block; transition:transform 0.25s ease;">▶</span>
           <strong>${isoToDisplay(fecha)} 🗓️</strong>
@@ -2241,16 +2339,20 @@ function crearCardMes(mesKey) {
         <span>🎤 Cantante: ${cantanteHtml}</span>
       </div>
 
-      <div class="canciones-domingo" style="display:none; margin-top:8px; margin-left:25px;">
+      <div class="canciones-domingo"
+           style="display:none; margin-top:8px; margin-left:25px;">
         <ul>${cancionesHtml}</ul>
         ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
       </div>
+
+      ${obsHtml}
     `;
 
     const headerDomingo = domingoDiv.querySelector(".header-domingo");
     const contCanciones = domingoDiv.querySelector(".canciones-domingo");
     const flecha = domingoDiv.querySelector(".flecha");
 
+    // 🔄 Toggle canciones + animación flecha
     headerDomingo.addEventListener("click", () => {
       const abierto = contCanciones.style.display === "block";
       contCanciones.style.display = abierto ? "none" : "block";
@@ -2260,87 +2362,32 @@ function crearCardMes(mesKey) {
     contenidoMes.appendChild(domingoDiv);
   });
 
-  // OBSERVACIONES MES (SIN BOTÓN EXTRA)
-
-  const datosMesGuardados = analisisGuardado[mesKey] || { observaciones: "" };
-
-  contenidoMes.insertAdjacentHTML("beforeend", `
-    <details style="margin-top:15px;">
-      <summary style="cursor:pointer;">📝 Observaciones / Consejos del mes</summary>
-      <div style="margin-top:6px;">
-        ${
-          modoEdicion
-          ? `<textarea class="obs-mes-textarea" data-mes="${mesKey}" style="width:100%;height:100px;">${datosMesGuardados.observaciones || ""}</textarea>`
-          : `<div style="white-space:pre-line;">${datosMesGuardados.observaciones || ""}</div>`
-        }
-      </div>
-    </details>
-  `);
-
-  // GUARDAR UNIFICADO
-
+  // ===== GUARDAR =====
   if (modoEdicion) {
-
     contenidoMes.querySelectorAll(".guardar-real").forEach(btn => {
-
       btn.addEventListener("click", async () => {
+        const fecha = btn.dataset.fecha;
 
-        try {
+        const evaluaciones = {};
+        contenidoMes.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`).forEach(sel => {
+          evaluaciones[sel.dataset.id] = sel.value;
+        });
 
-          btn.disabled = true;
-          btn.textContent = "Guardando...";
+        const cantanteSel = contenidoMes.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
+        const cantante = cantanteSel ? cantanteSel.value : "";
 
-          const fecha = btn.dataset.fecha;
+        const obsTextarea = contenidoMes.querySelector(`.obs-textarea[data-fecha="${fecha}"]`);
+        const observaciones = obsTextarea ? obsTextarea.value.trimStart() : "";
 
-          const evaluaciones = {};
-          contenidoMes.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`)
-            .forEach(sel => {
-              evaluaciones[sel.dataset.id] = sel.value;
-            });
+        await setDoc(doc(db, "analisis_real", fecha), { 
+          cantante, 
+          evaluaciones,
+          observaciones
+        });
 
-          const cantanteSel =
-            contenidoMes.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
-          const cantante = cantanteSel ? cantanteSel.value : "";
-
-          const saveDomingo = setDoc(
-            doc(db, "analisis_real", fecha),
-            { cantante, evaluaciones },
-            { merge: true }
-          );
-
-          const textareaMes =
-            contenidoMes.querySelector(`.obs-mes-textarea[data-mes="${mesKey}"]`);
-
-          let saveMes = Promise.resolve();
-
-          if (textareaMes) {
-            saveMes = setDoc(
-              doc(db, "analisis_real", mesKey),
-              { observaciones: textareaMes.value },
-              { merge: true }
-            );
-          }
-
-          await Promise.all([saveDomingo, saveMes]);
-
-          btn.textContent = "✅ Guardado";
-
-          setTimeout(() => {
-            btn.textContent = "💾 Guardar";
-            btn.disabled = false;
-          }, 1200);
-
-        } catch (error) {
-          console.error(error);
-          alert("❌ Error al guardar");
-          btn.textContent = "💾 Guardar";
-          btn.disabled = false;
-        }
-
+        alert("✅ Análisis real guardado");
       });
-
     });
-
   }
 
   return cardMes;
