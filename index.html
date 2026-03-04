@@ -2029,8 +2029,6 @@ mensajeInicial.style.opacity = "0.7";
 mensajeInicial.textContent = "Selecciona un rango y un cantante para ver el análisis.";
 contCantante.appendChild(mensajeInicial);
 
-
-
 // ==============================
 // FUNCIÓN RENDER
 // ==============================
@@ -2143,22 +2141,20 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
       `;
 
       const barra = fila.querySelector("div:nth-child(2) > div");
-      const porcentajeSpan = fila.querySelector("div:first-child span:last-child"); // span del %
+      const porcentajeSpan = fila.querySelector("div:first-child span:last-child");
       const listaDiv = fila.lastElementChild;
 
-      // Animación de la barra y del número
+      // Animación barra
       setTimeout(() => {
         barra.style.width = porcentaje + "%";
       }, 50);
 
+      // Animación número porcentaje
       let valorActual = 0;
-      const incremento = Math.ceil(porcentaje / 20); // ajusta velocidad
-      const intervalo = setInterval(() => {
+      const incremento = Math.ceil(porcentaje/20);
+      const intervalo = setInterval(()=>{
         valorActual += incremento;
-        if (valorActual >= porcentaje) {
-          valorActual = porcentaje;
-          clearInterval(intervalo);
-        }
+        if(valorActual >= porcentaje){ valorActual = porcentaje; clearInterval(intervalo); }
         porcentajeSpan.textContent = valorActual + "%";
       }, 25);
 
@@ -2167,12 +2163,53 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
           listaDiv.style.display === "block" ? "none" : "block";
       });
 
+      // Plegado de canciones de los domingos
       const listaOrdenada = Object.entries(canciones)
         .sort((a,b)=>b[1]-a[1])
-        .map(([titulo, veces])=>`• ${titulo} (${veces})`)
-        .join("<br>");
+        .map(([titulo, veces])=>{
+          return `<div class="domingo" style="cursor:pointer; margin-bottom:4px;">
+                    ▸ ${titulo} (${veces})
+                    <ul style="display:none; margin-left:18px;">
+                      ${modoEdicion ? `
+                      <li>
+                        <select class="eval-real" data-id="${titulo}" data-fecha="">
+                          <option value=""></option>
+                          <option value="Excelente" ${cat.key==="Excelente"?"selected":""}>🚀 Excelente</option>
+                          <option value="Bien" ${cat.key==="Bien"?"selected":""}>👍 Bien</option>
+                          <option value="A mejorar" ${cat.key==="A mejorar"?"selected":""}>‼️ A mejorar</option>
+                        </select>
+                      </li>` : ""}
+                    </ul>
+                    ${modoEdicion ? `<button class="guardar-real" style="margin-left:18px;">💾 Guardar</button>` : ""}
+                  </div>`;
+        }).join("");
 
       listaDiv.innerHTML = listaOrdenada || "Sin datos";
+
+      // Eventos plegado domingos y botón guardar
+      listaDiv.querySelectorAll(".domingo").forEach(d => {
+        const ul = d.querySelector("ul");
+        d.addEventListener("click", e=>{
+          if(e.target.tagName === "BUTTON") return; // botón no colapsa
+          if(ul) ul.style.display = ul.style.display==="block"?"none":"block";
+        });
+
+        if(modoEdicion){
+          const btn = d.querySelector(".guardar-real");
+          if(btn){
+            btn.addEventListener("click", async (ev)=>{
+              ev.stopPropagation();
+              const selectEval = d.querySelector(".eval-real");
+              if(!selectEval) return;
+              const evaluaciones = {};
+              evaluaciones[selectEval.dataset.id] = selectEval.value;
+              const fecha = selectEval.dataset.fecha || "";
+              await setDoc(doc(db,"analisis_real",fecha),{evaluaciones});
+              alert("✅ Análisis real guardado");
+            });
+          }
+        }
+      });
 
       contenido.appendChild(fila);
     });
@@ -2180,6 +2217,7 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
     contCantante.appendChild(bloque);
   });
 }
+
 // ==============================
 // EVENTOS FILTRO
 // ==============================
