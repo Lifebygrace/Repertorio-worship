@@ -2435,10 +2435,10 @@ contenidoMes.insertAdjacentHTML("beforeend", obsMesHtml);
 return cardMes;
 }
 
-  // ===== MOSTRAR MES ACTUAL =====
-  if (mapaMeses[mesActualKey]) {
-    cont.appendChild(crearCardMes(mesActualKey));
-  }
+ // ===== MOSTRAR PRIMER MES DISPONIBLE =====
+if (mesesOrdenados.length) {
+  cont.appendChild(crearCardMes(mesesOrdenados[0]));
+}
 
   // ===== MESES ANTERIORES =====
   const mesesAnteriores = mesesOrdenados.filter(m => m !== mesActualKey);
