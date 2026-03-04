@@ -2053,28 +2053,30 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
 
     let total = 0;
 
-    snapRegistro.forEach(docu=>{
-      const data = docu.data();
-      const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+    Object.entries(analisisGuardado).forEach(([fecha, data]) => {
 
-      fechas.forEach(f=>{
+      // 🔹 Ignorar documentos del mes (no tienen evaluaciones)
+      if (!data.evaluaciones) return;
 
-        const fechaObj = new Date(f);
+      const fechaObj = new Date(fecha);
 
-        if(rangoMeses > 0){
-          const limite = new Date(hoy.getFullYear(), hoy.getMonth() - rangoMeses, 1);
-          if(fechaObj < limite) return;
-        }
+      if(rangoMeses > 0){
+        const limite = new Date(
+          hoy.getFullYear(),
+          hoy.getMonth() - rangoMeses,
+          1
+        );
+        if(fechaObj < limite) return;
+      }
 
-        const analisis = analisisGuardado[f];
-        if(!analisis) return;
-        if(analisis.cantante !== nombre) return;
+      if(data.cantante !== nombre) return;
 
-        const evaluacion = analisis.evaluaciones?.[docu.id];
+      Object.entries(data.evaluaciones).forEach(([idCancion, evaluacion]) => {
+
         if(!evaluacion) return;
 
-        const cancion = cancionesCache.find(c=>c.id===docu.id);
-        const titulo = cancion?.titulo || docu.id;
+        const cancion = cancionesCache.find(c=>c.id===idCancion);
+        const titulo = cancion?.titulo || idCancion;
 
         if(!conteo[evaluacion][titulo]){
           conteo[evaluacion][titulo] = 0;
@@ -2082,8 +2084,14 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
 
         conteo[evaluacion][titulo]++;
         total++;
+
       });
+
     });
+
+    // ==============================
+    // CREAR BLOQUE VISUAL
+    // ==============================
 
     const bloque = document.createElement("div");
     bloque.className = "bloque-cantante";
@@ -2119,38 +2127,16 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
           <span>${porcentaje}%</span>
         </div>
 
-        <div style="background:#b5b5b5;height:18px;border-radius:10px;overflow:hidden;cursor:pointer;">
-          <div style="width:0%;background:${cat.color};height:100%;transition: width 0.5s ease-out;"></div>
+        <div style="background:#b5b5b5;height:18px;border-radius:10px;overflow:hidden;">
+          <div style="width:${porcentaje}%;background:${cat.color};height:100%;transition: width 0.5s ease-out;"></div>
         </div>
 
         <div style="display:none; margin-top:6px; font-size:13px;"></div>
       `;
 
-      const barra = fila.querySelector("div:nth-child(2) > div");
-      const porcentajeSpan = fila.querySelector("div:first-child span:last-child");
-
-      barra.style.width = "0%";
-      porcentajeSpan.textContent = "0%";
-
-      setTimeout(() => {
-        barra.style.width = porcentaje + "%";
-      }, 50);
-
-      let valorActual = 0;
-      const incremento = porcentaje > 0 ? Math.ceil(porcentaje / 20) : 1;
-
-      const intervalo = setInterval(() => {
-        valorActual += incremento;
-        if (valorActual >= porcentaje) {
-          valorActual = porcentaje;
-          clearInterval(intervalo);
-        }
-        porcentajeSpan.textContent = valorActual + "%";
-      }, 25);
-
       const listaDiv = fila.lastElementChild;
 
-      barra.parentElement.addEventListener("click",()=>{
+      fila.querySelector("div:nth-child(2)").addEventListener("click",()=>{
         listaDiv.style.display =
           listaDiv.style.display === "block" ? "none" : "block";
       });
