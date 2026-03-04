@@ -2092,14 +2092,14 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
     bloque.style.borderTop = "1px solid #ddd";
     bloque.style.paddingTop = "10px";
 
-bloque.innerHTML = `
-  <h3 style="margin-bottom:10px;">
-    ${nombre}
-  </h3>
-  <div class="contenido-cantante"></div>
-`;
+    bloque.innerHTML = `
+      <h3 style="margin-bottom:10px;">
+        ${nombre}
+      </h3>
+      <div class="contenido-cantante"></div>
+    `;
 
-const contenido = bloque.querySelector(".contenido-cantante");
+    const contenido = bloque.querySelector(".contenido-cantante");
 
     const categorias = [
       { key:"Excelente", emoji:"🚀", color:"#1976d2" },
@@ -2128,21 +2128,28 @@ const contenido = bloque.querySelector(".contenido-cantante");
           border-radius:10px;
           overflow:hidden;
           cursor:pointer;">
+          <!-- Barra animada: empieza en 0%, luego se llena -->
           <div style="
-            width:${porcentaje}%;
+            width:0%;
             background:${cat.color};
             height:100%;
-            transition:0.4s;">
+            transition: width 0.5s ease-out;">
           </div>
         </div>
 
         <div style="display:none; margin-top:6px; font-size:13px;"></div>
       `;
 
-      const barra = fila.querySelector("div:nth-child(2)");
+      const barra = fila.querySelector("div:nth-child(2) > div");
+
+      // Animación: llenar la barra después de agregarla al DOM
+      setTimeout(() => {
+        barra.style.width = porcentaje + "%";
+      }, 50);
+
       const listaDiv = fila.lastElementChild;
 
-      barra.addEventListener("click",()=>{
+      barra.parentElement.addEventListener("click",()=>{
         listaDiv.style.display =
           listaDiv.style.display === "block" ? "none" : "block";
       });
