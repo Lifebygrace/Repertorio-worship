@@ -2128,7 +2128,6 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
           border-radius:10px;
           overflow:hidden;
           cursor:pointer;">
-          <!-- Barra animada: empieza en 0%, luego se llena -->
           <div style="
             width:0%;
             background:${cat.color};
@@ -2137,7 +2136,7 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
           </div>
         </div>
 
-        <div style="display:none; margin-top:6px; font-size:13px;"></div>
+        <div style="margin-top:6px; font-size:13px;"></div>
       `;
 
       const barra = fila.querySelector("div:nth-child(2) > div");
@@ -2163,52 +2162,60 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
           listaDiv.style.display === "block" ? "none" : "block";
       });
 
-      // Plegado de canciones de los domingos
-      const listaOrdenada = Object.entries(canciones)
-        .sort((a,b)=>b[1]-a[1])
-        .map(([titulo, veces])=>{
-          return `<div class="domingo" style="cursor:pointer; margin-bottom:4px;">
-                    ▸ ${titulo} (${veces})
-                    <ul style="display:none; margin-left:18px;">
-                      ${modoEdicion ? `
-                      <li>
-                        <select class="eval-real" data-id="${titulo}" data-fecha="">
-                          <option value=""></option>
-                          <option value="Excelente" ${cat.key==="Excelente"?"selected":""}>🚀 Excelente</option>
-                          <option value="Bien" ${cat.key==="Bien"?"selected":""}>👍 Bien</option>
-                          <option value="A mejorar" ${cat.key==="A mejorar"?"selected":""}>‼️ A mejorar</option>
-                        </select>
-                      </li>` : ""}
-                    </ul>
-                    ${modoEdicion ? `<button class="guardar-real" style="margin-left:18px;">💾 Guardar</button>` : ""}
-                  </div>`;
-        }).join("");
+      // Plegado de canciones de los domingos con botón Guardar separado
+      listaDiv.innerHTML = "";
+      Object.entries(canciones).sort((a,b)=>b[1]-a[1]).forEach(([titulo, veces])=>{
+        const divDomingo = document.createElement("div");
+        divDomingo.className = "domingo";
+        divDomingo.style.marginBottom = "6px";
+        divDomingo.style.cursor = "pointer";
 
-      listaDiv.innerHTML = listaOrdenada || "Sin datos";
-
-      // Eventos plegado domingos y botón guardar
-      listaDiv.querySelectorAll(".domingo").forEach(d => {
-        const ul = d.querySelector("ul");
-        d.addEventListener("click", e=>{
-          if(e.target.tagName === "BUTTON") return; // botón no colapsa
-          if(ul) ul.style.display = ul.style.display==="block"?"none":"block";
-        });
+        const ulCanciones = document.createElement("ul");
+        ulCanciones.style.display = "none";
+        ulCanciones.style.marginLeft = "18px";
 
         if(modoEdicion){
-          const btn = d.querySelector(".guardar-real");
-          if(btn){
-            btn.addEventListener("click", async (ev)=>{
-              ev.stopPropagation();
-              const selectEval = d.querySelector(".eval-real");
-              if(!selectEval) return;
-              const evaluaciones = {};
-              evaluaciones[selectEval.dataset.id] = selectEval.value;
-              const fecha = selectEval.dataset.fecha || "";
-              await setDoc(doc(db,"analisis_real",fecha),{evaluaciones});
-              alert("✅ Análisis real guardado");
-            });
-          }
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <select class="eval-real" data-id="${titulo}" data-fecha="">
+              <option value=""></option>
+              <option value="Excelente" ${cat.key==="Excelente"?"selected":""}>🚀 Excelente</option>
+              <option value="Bien" ${cat.key==="Bien"?"selected":""}>👍 Bien</option>
+              <option value="A mejorar" ${cat.key==="A mejorar"?"selected":""}>‼️ A mejorar</option>
+            </select>
+          `;
+          ulCanciones.appendChild(li);
         }
+
+        const btnGuardar = document.createElement("button");
+        btnGuardar.textContent = "💾 Guardar";
+        btnGuardar.style.marginLeft = "18px";
+        btnGuardar.style.display = modoEdicion ? "inline-block" : "none";
+
+        // Evento plegado
+        divDomingo.addEventListener("click", e=>{
+          if(e.target === btnGuardar) return; // no colapsa al pulsar guardar
+          ulCanciones.style.display = ulCanciones.style.display==="block"?"none":"block";
+        });
+
+        // Evento guardar
+        if(modoEdicion){
+          btnGuardar.addEventListener("click", async (ev)=>{
+            ev.stopPropagation();
+            const selectEval = ulCanciones.querySelector(".eval-real");
+            if(!selectEval) return;
+            const evaluaciones = {};
+            evaluaciones[selectEval.dataset.id] = selectEval.value;
+            const fecha = selectEval.dataset.fecha || "";
+            await setDoc(doc(db,"analisis_real",fecha),{evaluaciones});
+            alert("✅ Análisis real guardado");
+          });
+        }
+
+        divDomingo.innerHTML = `▸ ${titulo} (${veces})`;
+        divDomingo.appendChild(ulCanciones);
+        divDomingo.appendChild(btnGuardar);
+        listaDiv.appendChild(divDomingo);
       });
 
       contenido.appendChild(fila);
