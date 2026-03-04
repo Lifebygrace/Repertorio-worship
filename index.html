@@ -493,6 +493,37 @@ body:not(.dark) .proximo-label {
 body.dark .proximo-label {
   color: #bbbbbb; /* gris claro elegante */
 }
+
+/* Espacio entre título del mes y contenido */
+.contenido-mes {
+  margin-top: 20px;
+}
+
+/* Separación entre domingos */
+.domingo-item {
+  padding-bottom: 18px;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+  margin-bottom: 18px;
+}
+
+/* Más aire bajo header fecha + cantante */
+.header-domingo {
+  margin-bottom: 10px;
+}
+
+/* Canciones un poco más respiradas */
+.canciones-domingo {
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+
+/* Card de observaciones más elegante */
+.notas-card {
+  padding: 10px 12px;
+  border-radius: 8px;
+}
+
+
   </style>
 </head>
 <body>
@@ -2250,7 +2281,7 @@ function crearCardMes(mesKey) {
   fechasOrdenadas.forEach(fecha => {
     const datosGuardados = analisisGuardado[fecha] || { cantante: "", evaluaciones: {}, observaciones: "" };
     const domingoDiv = document.createElement("div");
-    domingoDiv.style.marginBottom = "20px";
+    domingoDiv.className = "domingo-item";
 
     // ===== FUNCIÓN PARA RESALTAR SEMANAS =====
     function formatearObservaciones(texto) {
