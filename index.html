@@ -2119,7 +2119,7 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
       fila.innerHTML = `
         <div style="display:flex; justify-content:space-between; font-size:14px;">
           <span>${cat.emoji} ${cat.key} (${cantidad})</span>
-          <span>0%</span>
+          <span>${porcentaje}%</span>
         </div>
 
         <div style="
@@ -2128,6 +2128,7 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
           border-radius:10px;
           overflow:hidden;
           cursor:pointer;">
+          <!-- Barra animada: empieza en 0%, luego se llena -->
           <div style="
             width:0%;
             background:${cat.color};
@@ -2136,87 +2137,29 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
           </div>
         </div>
 
-        <div style="margin-top:6px; font-size:13px;"></div>
+        <div style="display:none; margin-top:6px; font-size:13px;"></div>
       `;
 
       const barra = fila.querySelector("div:nth-child(2) > div");
-      const porcentajeSpan = fila.querySelector("div:first-child span:last-child");
-      const listaDiv = fila.lastElementChild;
 
-      // Animación barra
+      // Animación: llenar la barra después de agregarla al DOM
       setTimeout(() => {
         barra.style.width = porcentaje + "%";
       }, 50);
 
-      // Animación número porcentaje
-      let valorActual = 0;
-      const incremento = Math.ceil(porcentaje/20);
-      const intervalo = setInterval(()=>{
-        valorActual += incremento;
-        if(valorActual >= porcentaje){ valorActual = porcentaje; clearInterval(intervalo); }
-        porcentajeSpan.textContent = valorActual + "%";
-      }, 25);
+      const listaDiv = fila.lastElementChild;
 
       barra.parentElement.addEventListener("click",()=>{
         listaDiv.style.display =
           listaDiv.style.display === "block" ? "none" : "block";
       });
 
-      // Plegado de canciones de los domingos con botón Guardar separado
-      listaDiv.innerHTML = "";
-      Object.entries(canciones).sort((a,b)=>b[1]-a[1]).forEach(([titulo, veces])=>{
-        const divDomingo = document.createElement("div");
-        divDomingo.className = "domingo";
-        divDomingo.style.marginBottom = "6px";
-        divDomingo.style.cursor = "pointer";
+      const listaOrdenada = Object.entries(canciones)
+        .sort((a,b)=>b[1]-a[1])
+        .map(([titulo, veces])=>`• ${titulo} (${veces})`)
+        .join("<br>");
 
-        const ulCanciones = document.createElement("ul");
-        ulCanciones.style.display = "none";
-        ulCanciones.style.marginLeft = "18px";
-
-        if(modoEdicion){
-          const li = document.createElement("li");
-          li.innerHTML = `
-            <select class="eval-real" data-id="${titulo}" data-fecha="">
-              <option value=""></option>
-              <option value="Excelente" ${cat.key==="Excelente"?"selected":""}>🚀 Excelente</option>
-              <option value="Bien" ${cat.key==="Bien"?"selected":""}>👍 Bien</option>
-              <option value="A mejorar" ${cat.key==="A mejorar"?"selected":""}>‼️ A mejorar</option>
-            </select>
-          `;
-          ulCanciones.appendChild(li);
-        }
-
-        const btnGuardar = document.createElement("button");
-        btnGuardar.textContent = "💾 Guardar";
-        btnGuardar.style.marginLeft = "18px";
-        btnGuardar.style.display = modoEdicion ? "inline-block" : "none";
-
-        // Evento plegado
-        divDomingo.addEventListener("click", e=>{
-          if(e.target === btnGuardar) return; // no colapsa al pulsar guardar
-          ulCanciones.style.display = ulCanciones.style.display==="block"?"none":"block";
-        });
-
-        // Evento guardar
-        if(modoEdicion){
-          btnGuardar.addEventListener("click", async (ev)=>{
-            ev.stopPropagation();
-            const selectEval = ulCanciones.querySelector(".eval-real");
-            if(!selectEval) return;
-            const evaluaciones = {};
-            evaluaciones[selectEval.dataset.id] = selectEval.value;
-            const fecha = selectEval.dataset.fecha || "";
-            await setDoc(doc(db,"analisis_real",fecha),{evaluaciones});
-            alert("✅ Análisis real guardado");
-          });
-        }
-
-        divDomingo.innerHTML = `▸ ${titulo} (${veces})`;
-        divDomingo.appendChild(ulCanciones);
-        divDomingo.appendChild(btnGuardar);
-        listaDiv.appendChild(divDomingo);
-      });
+      listaDiv.innerHTML = listaOrdenada || "Sin datos";
 
       contenido.appendChild(fila);
     });
@@ -2225,26 +2168,34 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
   });
 }
 
+
 // ==============================
 // EVENTOS FILTRO
 // ==============================
+
 const selectRango = document.getElementById("filtro-rango");
 const selectCantante = document.getElementById("filtro-cantante");
+// Estado inicial: cantante deshabilitado
 selectCantante.disabled = true;
 selectCantante.style.opacity = "0.5";
 
-function aplicarFiltros() {
+function aplicarFiltros(){
 
   const rango = selectRango.value;
   const cantante = selectCantante.value;
 
-  if (rango === "-") {
-    contCantante.querySelectorAll(".bloque-cantante").forEach(e => e.remove());
+  // Si rango es "-" → ocultar todo y deshabilitar cantante
+  if(rango === "-"){
+
+    contCantante.querySelectorAll(".bloque-cantante").forEach(e=>e.remove());
+
     selectCantante.disabled = true;
     selectCantante.style.opacity = "0.5";
+
     return;
   }
 
+  // Si hay rango válido → habilitar cantante
   selectCantante.disabled = false;
   selectCantante.style.opacity = "1";
 
@@ -2254,117 +2205,100 @@ function aplicarFiltros() {
 selectRango.addEventListener("change", aplicarFiltros);
 selectCantante.addEventListener("change", aplicarFiltros);
 
+  // ===== FUNCIÓN PARA CREAR CARD DE MES =====
+  function crearCardMes(mesKey) {
+    const fechasOrdenadas = Object.keys(mapaMeses[mesKey]).sort();
+    const fechaBase = new Date(mesKey + "-01");
+    const nombreMes = fechaBase.toLocaleString("es-ES", { month: "long", year: "numeric" });
 
-// ==============================
-// FUNCIÓN CREAR CARD MES CON PLEGADO DE DOMINGOS
-// ==============================
-function crearCardMes(mesKey) {
-  const fechasOrdenadas = Object.keys(mapaMeses[mesKey]).sort();
-  const fechaBase = new Date(mesKey + "-01");
-  const nombreMes = fechaBase.toLocaleString("es-ES", { month: "long", year: "numeric" });
+    const cardMes = document.createElement("div");
+    cardMes.className = "card";
+    cardMes.style.marginBottom = "20px";
 
-  const cardMes = document.createElement("div");
-  cardMes.className = "card";
-  cardMes.style.marginBottom = "20px";
+    cardMes.innerHTML = `
+      <h2 style="cursor:pointer; font-size:1.3em;">📅 ${nombreMes.toUpperCase()} ▼</h2>
+      <div class="contenido-mes" style="display:none;"></div>
+    `;
 
-  cardMes.innerHTML = `
-    <h2 style="cursor:pointer; font-size:1.3em;">📅 ${nombreMes.toUpperCase()} ▼</h2>
-    <div class="contenido-mes" style="display:none;"></div>
-  `;
-
-  const contenidoMes = cardMes.querySelector(".contenido-mes");
-  const headerMes = cardMes.querySelector("h2");
-  headerMes.addEventListener("click", () => {
-    contenidoMes.style.display = contenidoMes.style.display === "block" ? "none" : "block";
-  });
-
-  fechasOrdenadas.forEach(fecha => {
-    const datosGuardados = analisisGuardado[fecha] || { cantante: "", evaluaciones: {} };
-    const domingoDiv = document.createElement("div");
-    domingoDiv.style.marginBottom = "15px";
-
-    // Encabezado plegable
-    const headerDomingo = document.createElement("h4");
-    headerDomingo.style.cursor = "pointer";
-    headerDomingo.textContent = "▸ " + isoToDisplay(fecha);
-
-    const contenidoDomingo = document.createElement("div");
-    contenidoDomingo.style.display = "none";
-
-    // Canciones
-    const ul = document.createElement("ul");
-    mapaMeses[mesKey][fecha].forEach(id => {
-      const cancion = cancionesCache.find(c => c.id === id);
-      const titulo = cancion?.titulo || "—";
-      const val = datosGuardados.evaluaciones?.[id] || "";
-
-      const li = document.createElement("li");
-
-      if (modoEdicion) {
-        li.innerHTML = `
-          ${titulo}
-          <select class="eval-real" data-id="${id}" data-fecha="${fecha}">
-            <option value=""></option>
-            <option value="Excelente" ${val === "Excelente" ? "selected" : ""}>🚀 Excelente</option>
-            <option value="Bien" ${val === "Bien" ? "selected" : ""}>👍 Bien</option>
-            <option value="A mejorar" ${val === "A mejorar" ? "selected" : ""}>‼️ A mejorar</option>
-          </select>
-        `;
-      } else {
-        const emoji = val === "Excelente" ? "🚀" : val === "Bien" ? "👍" : val === "A mejorar" ? "‼️" : "";
-        li.textContent = `${titulo} ${emoji}`;
-      }
-
-      ul.appendChild(li);
-    });
-    contenidoDomingo.appendChild(ul);
-
-    // Selector cantante en modo edición
-    if (modoEdicion) {
-      const selectCant = document.createElement("select");
-      selectCant.className = "cantante-real";
-      selectCant.dataset.fecha = fecha;
-      ["", "Milly", "Carolina", "Jason"].forEach(c => {
-        const opt = document.createElement("option");
-        opt.value = c;
-        opt.textContent = c;
-        if (datosGuardados.cantante === c) opt.selected = true;
-        selectCant.appendChild(opt);
-      });
-      const pCantante = document.createElement("p");
-      pCantante.innerHTML = "🎤 Cantante: ";
-      pCantante.appendChild(selectCant);
-      contenidoDomingo.insertBefore(pCantante, contenidoDomingo.firstChild);
-    }
-
-    headerDomingo.addEventListener("click", () => {
-      contenidoDomingo.style.display = contenidoDomingo.style.display === "block" ? "none" : "block";
+    const contenidoMes = cardMes.querySelector(".contenido-mes");
+    cardMes.querySelector("h2").addEventListener("click", () => {
+      contenidoMes.style.display = contenidoMes.style.display === "block" ? "none" : "block";
     });
 
-    domingoDiv.appendChild(headerDomingo);
-    domingoDiv.appendChild(contenidoDomingo);
-    contenidoMes.appendChild(domingoDiv);
-  });
+    fechasOrdenadas.forEach(fecha => {
+      const datosGuardados = analisisGuardado[fecha] || { cantante: "", evaluaciones: {} };
+      const domingoDiv = document.createElement("div");
+      domingoDiv.style.marginBottom = "15px";
 
-  // Botón guardar en modo edición
+   const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
+
+  const cancion = cancionesCache.find(c => c.id === id);
+  const titulo = cancion?.titulo || "—";
+  const val = datosGuardados.evaluaciones?.[id] || "";
+
   if (modoEdicion) {
-    contenidoMes.querySelectorAll(".guardar-real").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const fecha = btn.dataset.fecha;
-        const evaluaciones = {};
-        contenidoMes.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`).forEach(sel => {
-          evaluaciones[sel.dataset.id] = sel.value;
-        });
-        const cantanteSel = contenidoMes.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
-        const cantante = cantanteSel ? cantanteSel.value : "";
-        await setDoc(doc(db, "analisis_real", fecha), { cantante, evaluaciones });
-        alert("✅ Análisis real guardado");
-      });
-    });
+    return `
+      <li>
+        ${titulo}
+        <select class="eval-real"
+                data-id="${id}"
+                data-fecha="${fecha}">
+          <option value=""></option>
+          <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀 Excelente</option>
+          <option value="Bien" ${val==="Bien"?"selected":""}>👍 Bien</option>
+          <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️ A mejorar</option>
+        </select>
+      </li>
+    `;
+  } else {
+
+    const emoji =
+      val==="Excelente"?"🚀":
+      val==="Bien"?"👍":
+      val==="A mejorar"?"‼️":"";
+
+    return `<li>${titulo} ${emoji}</li>`;
   }
 
-  return cardMes;
-}
+}).join("");
+
+      const cantanteHtml = modoEdicion
+        ? `<select class="cantante-real" data-fecha="${fecha}">
+            <option value=""></option>
+            <option value="Milly" ${datosGuardados.cantante==="Milly"?"selected":""}>Milly</option>
+            <option value="Carolina" ${datosGuardados.cantante==="Carolina"?"selected":""}>Carolina</option>
+            <option value="Jason" ${datosGuardados.cantante==="Jason"?"selected":""}>Jason</option>
+          </select>`
+        : `<strong>${datosGuardados.cantante || "-"}</strong>`;
+
+      domingoDiv.innerHTML = `
+        <h4>▸ ${isoToDisplay(fecha)}</h4>
+        <p>🎤 Cantante: ${cantanteHtml}</p>
+        <ul>${cancionesHtml}</ul>
+        ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
+      `;
+
+      contenidoMes.appendChild(domingoDiv);
+    });
+
+    if (modoEdicion) {
+      contenidoMes.querySelectorAll(".guardar-real").forEach(btn => {
+        btn.addEventListener("click", async () => {
+          const fecha = btn.dataset.fecha;
+          const evaluaciones = {};
+          contenidoMes.querySelectorAll(`.eval-real[data-fecha="${fecha}"]`).forEach(sel => {
+            evaluaciones[sel.dataset.id] = sel.value;
+          });
+          const cantanteSel = contenidoMes.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
+          const cantante = cantanteSel ? cantanteSel.value : "";
+          await setDoc(doc(db, "analisis_real", fecha), { cantante, evaluaciones });
+          alert("✅ Análisis real guardado");
+        });
+      });
+    }
+
+    return cardMes;
+  }
 
   // ===== MOSTRAR MES ACTUAL =====
   if (mapaMeses[mesActualKey]) {
