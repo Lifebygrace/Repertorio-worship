@@ -2140,14 +2140,17 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
         <div style="display:none; margin-top:6px; font-size:13px;"></div>
       `;
 
-      const barra = fila.querySelector("div:nth-child(2) > div");
+const barra = fila.querySelector("div:nth-child(2) > div");
+const porcentajeSpan = fila.querySelector("div:first-child span:last-child"); // selecciona el <span> del %
+barra.style.width = "0%";
+porcentajeSpan.textContent = "0%";
 
-      // Animación: llenar la barra después de agregarla al DOM
-      setTimeout(() => {
-        barra.style.width = porcentaje + "%";
-      }, 50);
-      
-      // Animación del número
+// Animación de la barra
+setTimeout(() => {
+  barra.style.width = porcentaje + "%";
+}, 50);
+
+// Animación del número
 let valorActual = 0;
 const incremento = Math.ceil(porcentaje / 20); // ajusta la velocidad del conteo
 const intervalo = setInterval(() => {
