@@ -2435,14 +2435,18 @@ contenidoMes.insertAdjacentHTML("beforeend", obsMesHtml);
 return cardMes;
 }
 
- // ===== MOSTRAR PRIMER MES DISPONIBLE =====
+
+// ===== MOSTRAR PRIMER MES DISPONIBLE =====
+let primerMesMostrado = null;
+
 if (mesesOrdenados.length) {
-  cont.appendChild(crearCardMes(mesesOrdenados[0]));
+  primerMesMostrado = mesesOrdenados[0];
+  cont.appendChild(crearCardMes(primerMesMostrado));
 }
 
-  // ===== MESES ANTERIORES =====
-  const mesesAnteriores = mesesOrdenados.filter(m => m !== mesActualKey);
-  if (mesesAnteriores.length) {
+// ===== MESES ANTERIORES =====
+const mesesAnteriores = mesesOrdenados.filter(m => m !== primerMesMostrado);
+    if (mesesAnteriores.length) {
     const btn = document.createElement("button");
     btn.textContent = "📂 Ver meses anteriores";
     btn.style.margin = "15px 0";
