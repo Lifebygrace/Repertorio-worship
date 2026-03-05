@@ -2308,24 +2308,22 @@ function crearCardMes(mesKey) {
       
 
     // ===== DOMINGO =====
-    domingoDiv.innerHTML = `
-      <div class="header-domingo"
-           style="display:flex; align-items:center; gap:40px; cursor:pointer;">
-        <span style="display:flex; align-items:center; gap:6px;">
-          <span class="flecha" style="display:inline-block; transition:transform 0.25s ease;">▶</span>
-          <strong>${isoToDisplay(fecha)} 🗓️</strong>
-        </span>
-        <span>🎤 Cantante: ${cantanteHtml}</span>
-      </div>
+domingoDiv.innerHTML = `
+  <div class="header-domingo"
+       style="display:flex; align-items:center; gap:40px; cursor:pointer;">
+    <span style="display:flex; align-items:center; gap:6px;">
+      <span class="flecha" style="display:inline-block; transition:transform 0.25s ease;">▶</span>
+      <strong>${isoToDisplay(fecha)} 🗓️</strong>
+    </span>
+    <span>🎤 Cantante: ${cantanteHtml}</span>
+  </div>
 
-      <div class="canciones-domingo"
-           style="display:none; margin-top:8px; margin-left:25px;">
-        <ul>${cancionesHtml}</ul>
-        ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
-      </div>
-
-      ${obsHtml}
-    `;
+  <div class="canciones-domingo"
+       style="display:none; margin-top:8px; margin-left:25px;">
+    <ul>${cancionesHtml}</ul>
+    ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
+  </div>
+`;
 
     const headerDomingo = domingoDiv.querySelector(".header-domingo");
     const contCanciones = domingoDiv.querySelector(".canciones-domingo");
