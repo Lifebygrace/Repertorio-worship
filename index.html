@@ -2239,7 +2239,7 @@ function crearCardMes(mesKey) {
 ">
   ${nombreMes.charAt(0).toUpperCase() + nombreMes.slice(1)} 🗓️
 </h2>
-    <div class="contenido-mes" style="display:none;"></div>
+<div class="contenido-mes" style="display:none; margin-top:18px;"></div>
   `;
 
   const contenidoMes = cardMes.querySelector(".contenido-mes");
@@ -2321,7 +2321,6 @@ domingoDiv.innerHTML = `
   <div class="canciones-domingo"
        style="display:none; margin-top:8px; margin-left:25px;">
     <ul>${cancionesHtml}</ul>
-    ${modoEdicion ? `<button class="guardar-real" data-fecha="${fecha}">💾 Guardar</button>` : ""}
   </div>
 `;
 
@@ -2336,7 +2335,13 @@ domingoDiv.innerHTML = `
       flecha.style.transform = abierto ? "rotate(0deg)" : "rotate(90deg)";
     });
 
-    contenidoMes.appendChild(domingoDiv);
+contenidoMes.appendChild(domingoDiv);
+
+const separador = document.createElement("div");
+separador.style.borderBottom = "1px solid #ddd";
+separador.style.margin = "12px 0";
+
+contenidoMes.appendChild(separador);
   });
 
 
@@ -2415,7 +2420,7 @@ const obsMesHtml = modoEdicion
         <textarea class="obs-mes-textarea"
                   data-mes="${mesKey}"
                   placeholder="Escribe observaciones o consejos del mes..."
-                  style="width:100%;height:100px;">${datosMes.observaciones?.trimStart()||""}</textarea>
+                  style="width:100%;height:100px;">${(datosMes.observaciones || "").trim()}</textarea>
       </div>
     </details>
   `
@@ -2429,6 +2434,57 @@ const obsMesHtml = modoEdicion
   `;
 
 contenidoMes.insertAdjacentHTML("beforeend", obsMesHtml);
+
+if (modoEdicion) {
+
+  const btnGuardarMes = document.createElement("button");
+  btnGuardarMes.textContent = "💾 Guardar todo el mes";
+  btnGuardarMes.style.marginTop = "12px";
+
+  contenidoMes.appendChild(btnGuardarMes);
+
+  btnGuardarMes.addEventListener("click", async () => {
+
+    const domingos = Object.keys(mapaMeses[mesKey]);
+
+    for (const fecha of domingos) {
+
+      const evaluaciones = {};
+
+      contenidoMes
+        .querySelectorAll(`.eval-real[data-fecha="${fecha}"]`)
+        .forEach(sel => {
+          evaluaciones[sel.dataset.id] = sel.value;
+        });
+
+      const cantanteSel =
+        contenidoMes.querySelector(`.cantante-real[data-fecha="${fecha}"]`);
+
+      const cantante = cantanteSel ? cantanteSel.value : "";
+
+      await setDoc(doc(db, "analisis_real", fecha), {
+        cantante,
+        evaluaciones
+      }, { merge: true });
+
+    }
+
+    const obsMesTextarea =
+      contenidoMes.querySelector(`.obs-mes-textarea[data-mes="${mesKey}"]`);
+
+    if (obsMesTextarea) {
+
+      await setDoc(doc(db, "analisis_real", mesKey), {
+        observaciones: obsMesTextarea.value.trimStart()
+      }, { merge: true });
+
+    }
+
+    alert("✅ Mes guardado correctamente");
+
+  });
+
+}
 
 return cardMes;
 }
