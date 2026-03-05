@@ -2427,7 +2427,7 @@ const obsMesHtml = modoEdicion
     </details>
   `
   : `
-    <details class="details-slow" style="margin-top:10px;">
+    <details class="details-slow" style="margin-top:15px;">
       <summary style="cursor:pointer;">📝 Observaciones / Consejos del mes</summary>
       <div class="notas-card" style="margin-top:6px; white-space:pre-line;">
         ${formatearObservaciones(datosMes.observaciones)}
@@ -2440,7 +2440,7 @@ contenidoMes.insertAdjacentHTML("beforeend", obsMesHtml);
 if (modoEdicion) {
 
   const btnGuardarMes = document.createElement("button");
-  btnGuardarMes.textContent = "💾 Guardar todo el mes";
+  btnGuardarMes.textContent = "💾 Guardar mes";
   btnGuardarMes.style.marginTop = "12px";
 
   contenidoMes.appendChild(btnGuardarMes);
