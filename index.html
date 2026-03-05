@@ -2253,19 +2253,21 @@ function crearCardMes(mesKey) {
     domingoDiv.style.marginBottom = "20px";
 
     // ===== FUNCIÓN PARA RESALTAR SEMANAS =====
-    function formatearObservaciones(texto) {
-      if (!texto) return "";
-      return texto
-        .trimStart()
-        .replace(/SEMANA\s?[1-5]/gi, match => 
-          `<span style="
-            color:#e67e22;
-            font-weight:bold;
-            font-size:1.1em;
-            text-decoration:underline;
-          ">${match.toUpperCase()}</span>`
-        );
-    }
+ function formatearObservaciones(texto) {
+  if (!texto) return "";
+
+  // eliminar saltos de línea y espacios al inicio
+  texto = texto.replace(/^\s*\n+/g, "").trimStart();
+
+  return texto.replace(/SEMANA\s?[1-5]/gi, match =>
+    `<span style="
+      color:#e67e22;
+      font-weight:bold;
+      font-size:1.1em;
+      text-decoration:underline;
+    ">${match.toUpperCase()}</span>`
+  );
+}
 
     // ===== LISTA DE CANCIONES =====
     const cancionesHtml = mapaMeses[mesKey][fecha].map(id => {
