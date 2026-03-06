@@ -1565,137 +1565,147 @@ let metronomeInterval = null;
 let isRunning = false;
 let currentBpm = Number(localStorage.getItem("metroBpm")) || 80;
 
-// TAP TEMPO
+///////////////// TAP TEMPO //////////////////
 let tapTimes = [];
-const MAX_TAPS = 20; 
-const RESET_INTERVAL = 3000; 
+const MAX_TAPS = 20;          // almacenar muchos taps rápidos
+const RESET_INTERVAL = 3000;  // si pasan 3s sin tap, reinicia
 let lastTap = 0;
 
-document.addEventListener("DOMContentLoaded", () => {
+const bpmSlider = () => document.getElementById("bpmSlider");
+const bpmValue  = () => document.getElementById("bpmValue");
+const metroBtn  = () => document.getElementById("metroToggle");
+const tapBtn   = () => document.getElementById("tapButton");
 
-  const bpmSlider = document.getElementById("bpmSlider");
-  const bpmValue  = document.getElementById("bpmValue");
-  const metroBtn  = document.getElementById("metroToggle");
-  const tapBtn    = document.getElementById("tapButton");
+///////////////// INICIALIZACION AUDIO //////////////////
+function initMetronome(){
+  if(!audioCtx){
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  }
+  if(audioCtx.state === "suspended"){
+    audioCtx.resume();
+  }
+}
 
-  function initMetronome(){
-    if(!audioCtx){
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    }
-    if(audioCtx.state === "suspended"){
-      audioCtx.resume();
-    }
+///////////////// CLICK DEL METRONOMO //////////////////
+function playClick(){
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+
+  const isAccent = beatCount === 0;
+
+  // 🌲 Sonido tipo madera
+  osc.type = "triangle";
+  osc.frequency.value = isAccent ? 1200 : 800;
+
+  const now = audioCtx.currentTime;
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(isAccent ? 0.6 : 0.38, now + 0.005);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
+
+  osc.connect(gain);
+  gain.connect(audioCtx.destination);
+
+  osc.start(now);
+  osc.stop(now + 0.05);
+
+  beatCount = (beatCount + 1) % 4; // 4/4
+}
+
+///////////////// INICIO / PARO METRONOMO //////////////////
+function startMetronome(){
+  initMetronome();
+  const interval = 60000 / currentBpm;
+  
+  beatCount = 0;
+  playClick();
+  metronomeInterval = setInterval(playClick, interval);
+  isRunning = true;
+  metroBtn().textContent = "⏸ Stop";
+}
+
+function stopMetronome(){
+  clearInterval(metronomeInterval);
+  metronomeInterval = null;
+  isRunning = false;
+  metroBtn().textContent = "▶️ Start";
+}
+
+///////////////// TAP TEMPO //////////////////
+function tapTempo(){
+  initMetronome();
+  const now = performance.now();
+
+  // Si han pasado más de RESET_INTERVAL desde el último tap, reinicia
+  if(now - lastTap > RESET_INTERVAL){
+    tapTimes = [];
   }
 
-  function playClick(){
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    const isAccent = beatCount === 0;
+  lastTap = now;
+  tapTimes.push(now);
 
-    osc.type = "triangle";
-    osc.frequency.value = isAccent ? 1200 : 800;
-
-    const now = audioCtx.currentTime;
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(isAccent ? 0.6 : 0.38, now + 0.005);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.04);
-
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start(now);
-    osc.stop(now + 0.05);
-
-    beatCount = (beatCount + 1) % 4; 
+  // Limitar a MAX_TAPS últimos taps
+  if(tapTimes.length > MAX_TAPS){
+    tapTimes.shift();
   }
 
-  function startMetronome(){
-    initMetronome();
-    const interval = 60000 / currentBpm;
-    beatCount = 0;
-    playClick();
-    metronomeInterval = setInterval(playClick, interval);
-    isRunning = true;
-    metroBtn.textContent = "⏸ Stop";
-  }
-
-  function stopMetronome(){
-    clearInterval(metronomeInterval);
-    metronomeInterval = null;
-    isRunning = false;
-    metroBtn.textContent = "▶️ Start";
-  }
-
-  function tapTempo(){
-    initMetronome();
-    const now = performance.now();
-
-    if(now - lastTap > RESET_INTERVAL){
-      tapTimes = [];
+  if(tapTimes.length >= 2){
+    let intervals = [];
+    for(let i = 1; i < tapTimes.length; i++){
+      intervals.push(tapTimes[i] - tapTimes[i-1]);
     }
 
-    lastTap = now;
-    tapTimes.push(now);
+    const avg = intervals.reduce((a,b)=>a+b, 0) / intervals.length;
+    const bpm = Math.round(60000 / avg);
 
-    if(tapTimes.length > MAX_TAPS){
-      tapTimes.shift();
-    }
+    // Limites razonables para BPM (ultra rápido soportado)
+    if(bpm >= 30 && bpm <= 400){
+      currentBpm = bpm;
+      bpmSlider().value = bpm;
+      bpmValue().textContent = bpm;
 
-    if(tapTimes.length >= 2){
-      const intervals = [];
-      for(let i = 1; i < tapTimes.length; i++){
-        intervals.push(tapTimes[i] - tapTimes[i-1]);
+      if(isRunning){
+        stopMetronome();
+        startMetronome();
       }
-
-      const avg = intervals.reduce((a,b)=>a+b,0)/intervals.length;
-      const bpm = Math.round(60000 / avg);
-
-      if(bpm >= 30 && bpm <= 400){
-        currentBpm = bpm;
-        bpmSlider.value = bpm;
-        bpmValue.textContent = bpm;
-
-        if(isRunning){
-          stopMetronome();
-          startMetronome();
-        }
-      }
     }
   }
+}
 
-  // EVENTOS
-  metroBtn.addEventListener("pointerdown", () => {
-    if(isRunning){
-      stopMetronome();
-    } else {
-      startMetronome();
-    }
-  });
-
-  tapBtn.addEventListener("pointerdown", tapTempo);
-
-  bpmSlider.addEventListener("input", e => {
-    currentBpm = Number(e.target.value);
-    bpmValue.textContent = currentBpm;
-    if(isRunning){
-      stopMetronome();
-      startMetronome();
-    }
-  });
-
-  // 🔊 Reactivar audio al volver a la app (iOS / PWA)
-  document.addEventListener("visibilitychange", ()=>{
-    if(document.visibilityState === "visible" && audioCtx){
-      audioCtx.resume();
-    }
-  });
-
-  window.addEventListener("pageshow", ()=>{
-    if (audioCtx) audioCtx.resume();
-  });
-
+///////////////// EVENTOS //////////////////
+// Toggle metronomo
+metroBtn().addEventListener("pointerdown", () => {
+  if(isRunning){
+    stopMetronome();
+  } else {
+    startMetronome();
+  }
 });
 
+// Tap tempo
+tapBtn().addEventListener("pointerdown", tapTempo);
+
+// Actualizar BPM desde slider
+bpmSlider().addEventListener("input", (e) => {
+  currentBpm = Number(e.target.value);
+  bpmValue().textContent = currentBpm;
+  if(isRunning){
+    stopMetronome();
+    startMetronome();
+  }
+});
+
+///////////////// REACTIVAR AUDIO (iOS / PWA) //////////////////
+document.addEventListener("visibilitychange", ()=>{
+  if(document.visibilityState === "visible" && audioCtx){
+    audioCtx.resume();
+  }
+});
+
+window.addEventListener("pageshow", ()=>{
+  if(audioCtx){
+    audioCtx.resume();
+  }
+});
 
 /* =========================
    LISTADO MENSUAL DE CANCIONES
