@@ -1564,16 +1564,13 @@ let metronomeInterval = null;
 let isRunning = false;
 let currentBpm = Number(localStorage.getItem("metroBpm")) || 80;
 
-///////////////////////////////
 // TAP TEMPO
-///////////////////////////////
-
 let tapTimes = [];
 let lastTap = 0;
 
-const MAX_TAPS = 16;     // más taps para mayor precisión
-const RESET_TIME = 2000; // reinicia si pasan 2s sin taps
-const MIN_INTERVAL = 80; // ignora taps demasiado rápidos (doble click)
+const MAX_TAPS = 20;      // más taps para mayor precisión
+const RESET_TIME = 2000;  // reset si pasan 2s sin taps
+const MIN_INTERVAL = 30;  // permite taps muy rápidos (para BPM altos)
 
 const bpmSlider = () => document.getElementById("bpmSlider");
 const bpmValue  = () => document.getElementById("bpmValue");
@@ -1602,12 +1599,10 @@ function playClick(){
   const now = audioCtx.currentTime;
 
   gain.gain.setValueAtTime(0.0001, now);
-
   gain.gain.exponentialRampToValueAtTime(
     isAccent ? 0.6 : 0.38,
     now + 0.005
   );
-
   gain.gain.exponentialRampToValueAtTime(
     0.0001,
     now + 0.04
@@ -1619,7 +1614,7 @@ function playClick(){
   osc.start(now);
   osc.stop(now + 0.05);
 
-  beatCount = (beatCount + 1) % 4;
+  beatCount = (beatCount + 1) % 4; // 4/4
 }
 
 function startMetronome(){
@@ -1648,22 +1643,18 @@ function stopMetronome(){
   metroBtn().textContent = "▶️ Start";
 }
 
-///////////////////////////////
-// TAP TEMPO
-///////////////////////////////
-
 function tapTempo(){
 
   initMetronome();
 
   const now = performance.now();
 
-  // reset si pasa mucho tiempo
+  // reset si pasa mucho tiempo entre taps
   if(now - lastTap > RESET_TIME){
     tapTimes = [];
   }
 
-  // ignorar taps demasiado rápidos
+  // ignorar taps absurdamente rápidos (ruido)
   if(lastTap && (now - lastTap) < MIN_INTERVAL){
     return;
   }
@@ -1688,12 +1679,11 @@ function tapTempo(){
 
   const bpm = Math.round(60000 / avg);
 
-  if(bpm >= 40 && bpm <= 300){
+  if(bpm >= 40 && bpm <= 320){
 
     currentBpm = bpm;
 
     bpmSlider().value = bpm;
-
     bpmValue().textContent = bpm;
 
     localStorage.setItem("metroBpm", bpm);
