@@ -313,11 +313,44 @@ details > *{
 }
 
 #tapTempo{
+  width: 120px;                  /* tamaño grande */
+  height: 120px;                 /* igual que el ancho para ser redondo */
+  border-radius: 50%;            /* círculo perfecto */
+  background: linear-gradient(145deg, #ff7f50, #ff6347); /* degradado atractivo */
+  color: white;                   /* texto legible */
+  font-size: 1.6rem;             /* tamaño del texto */
+  font-weight: 700;
+  border: none;                  /* quitar borde predeterminado */
+  cursor: pointer;               /* indica que se puede tocar */
+  box-shadow: 0 6px 15px rgba(0,0,0,0.25); /* profundidad */
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.3s ease; /* animación al tocar */
   touch-action: manipulation;      /* evita doble-tap zoom */
   -webkit-user-select: none;       /* evita selección */
   user-select: none;
+  animation: pulse 1.2s infinite ease-in-out; /* efecto latido */
 }
 
+#tapTempo:active {
+  transform: scale(0.95);       /* efecto de “presionar” */
+  box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+}
+
+#tapTempo:hover {
+  transform: scale(1.05);       /* efecto sugerente al pasar el mouse */
+  background: linear-gradient(145deg, #ff6347, #ff4500); /* realce al pasar mouse */
+}
+
+/* Animación de latido */
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.25);
+  }
+  50% {
+    transform: scale(1.08);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+  }
+}
 /* ================================
    DOMINGO RESALTADO (BASE)
 ================================ */
