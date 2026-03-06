@@ -632,10 +632,8 @@ body.dark .proximo-label {
 
   <div id="registro-canciones-container" style="margin-top:12px;">
     <button style="background:var(--accent);" onclick="toggleRegistro()">📊 Registro de canciones</button>
-    <button onclick="toggleAnalisis()">📊 Análisis mensual</button>
     <button onclick="toggleAnalisisReal()">📈 Análisis real</button>
     <div id="analisis-real" class="section" style="display:none;"></div>
-    <div id="analisis-mensual" class="section" style="display:none;"></div>
     <div id="registro-canciones" class="section" style="display:none;">
       <h2>📋 Registro de canciones</h2>
       <table id="tabla-registro">
@@ -1176,60 +1174,6 @@ function toggleRegistro(){ const el = document.getElementById("registro-cancione
 /* =========================
    ANÁLISIS MENSUAL
 ========================= */
-
-/* Mostrar / ocultar análisis mensual */
-function toggleAnalisis() {
-  const el = document.getElementById("analisis-mensual");
-  if(!el) return;
-
-  // Alterna visibilidad
-  el.style.display = el.style.display === "block" ? "none" : "block";
-
-  // Solo cargar datos si se muestra
-  if(el.style.display === "block") cargarAnalisisMensual();
-}
-
-/* Carga y renderiza el análisis mensual */
-async function cargarAnalisisMensual() {
-  const cont = document.getElementById("analisis-mensual");
-  cont.innerHTML = "<h2>📊 Análisis mensual</h2>";
-  // 🔥 BLOQUE NUEVO – Análisis por periodo
-cont.innerHTML += `
-  <div id="analisis-periodo" class="card" style="margin-top:12px;">
-    <h3>📈 Análisis por periodo</h3>
-
-    <div style="margin-bottom:10px;">
-      <button onclick="analizarPeriodo(3)">Últimos 3 meses</button>
-      <button onclick="analizarPeriodo(0)">Siempre</button>
-    </div>
-
-    <div id="resultado-periodo"></div>
-  </div>
-`;
-  const toggleBtn = document.createElement("button");
-  toggleBtn.textContent = "📂 Ver meses anteriores";
-  toggleBtn.style.margin = "8px 0";
-  toggleBtn.style.display = "block";
-  
-  const mesesAnterioresCont = document.createElement("div");
-  mesesAnterioresCont.style.display = "none";
-  
-  toggleBtn.addEventListener("click", () => {
-  const visible = mesesAnterioresCont.style.display === "block";
-  mesesAnterioresCont.style.display = visible ? "none" : "block";
-  toggleBtn.textContent = visible
-    ? "📂 Ver meses anteriores"
-    : "📂 Ocultar meses anteriores";
-});
-
-
-
-  const snapRegistro = await getDocs(collection(db,"registro"));
-  const analisisSnap = await getDocs(collection(db,"analisis_mensual"));
-
-  const analisisGuardado = {};
-  analisisSnap.forEach(d => analisisGuardado[d.id] = d.data());
-
   // Agrupar por mes
   const mapaMeses = {}; 
   snapRegistro.forEach(docu => {
@@ -1264,124 +1208,6 @@ meses.forEach((mes, index) => {
       return { id, titulo: c?.titulo || "—", veces: cancionesMes[id] };
     });
 
-// Ordenar TODAS las canciones por popularidad 🔥
-const resumen = [...listaCanciones].sort((a,b)=>b.veces - a.veces);
-
-    const card = document.createElement("div");
-    card.className = "card";
-    card.style.marginTop = "12px";
-
-// Cantantes
-const domingos = obtenerDomingosDelMes(mes).map(f => ajustarAServicio(f));
-
-const cantanteHtml = `
-  <details class="details-slow" style="margin-top:6px;">
-    <summary>🎤 Cantantes del mes</summary>
-
-    ${domingos.map(fechaOriginal => {
-      const fecha = ajustarAServicio(fechaOriginal);
-
-      return `
-        <div style="margin-top:6px">
-          ${isoToDisplay(fecha)} →
-          ${
-            modoEdicion
-              ? `<select class="cantante-select"
-                    data-mes="${mes}"
-                    data-fecha="${fecha}">
-                  <option value=""></option>
-                  <option value="Milly" ${datosMes.cantantes?.[fecha]==="Milly"?"selected":""}>Milly</option>
-                  <option value="Carolina" ${datosMes.cantantes?.[fecha]==="Carolina"?"selected":""}>Carolina</option>
-                  <option value="Jason" ${datosMes.cantantes?.[fecha]==="Jason"?"selected":""}>Jason</option>
-                </select>`
-              : `<strong>${datosMes.cantantes?.[fecha] || "-"}</strong>`
-          }
-        </div>
-      `;
-    }).join("")}
-
-  </details>
-`;
-  
-    // Top 3 canciones con veces tocadas y emoji de valoración
-    const resumenHtml = resumen.map(c=>{
-      const val = datosMes.evaluaciones?.[c.id] || "";
-      const emoji = val === "A mejorar" ? "‼️" : val === "Bien" ? "👍" : val === "Excelente" ? "🚀" : "";
-      if(modoEdicion){
-        return `<li>${c.titulo} (${c.veces}) - 
-          <select class="eval-select" data-id="${c.id}" data-mes="${mes}">
-            <option value="" ${val===""?"selected":""}></option>
-            <option value="A mejorar" ${val==="A mejorar"?"selected":""}>‼️</option>
-            <option value="Bien" ${val==="Bien"?"selected":""}>👍</option>
-            <option value="Excelente" ${val==="Excelente"?"selected":""}>🚀</option>
-          </select>
-        </li>`;
-      } else {
-        return `<li>${c.titulo} (${c.veces}) ${emoji}</li>`;
-      }
-    }).join("");
-
-    // Observaciones con mismo estilo de top 3
-    const obsHtml = modoEdicion 
-      ? `<ul><li><textarea class="obs-textarea" data-mes="${mes}" placeholder="Escribe observaciones o consejos aquí..." style="width:100%;height:60px;margin-top:4px;">${datosMes.observaciones||""}</textarea></li></ul>`
-      : `<ul><li>${datosMes.observaciones||""}</li></ul>`;
-
-    const abierto = mes === ultimoMes ? "open" : "";
-
-    card.innerHTML = `
-      <details ${abierto}>
-        <summary>📅 ${nombreMes}</summary>
-        <div style="margin-top:8px;">${cantanteHtml}</div>
-        <details class="details-slow" style="margin-top:6px;">
-        <summary>📌 resumen musical 🔥</summary>
-          <div class="notas-card" style="margin-top:4px;"><ul>${resumenHtml}</ul></div>
-        </details>
-        <details class="details-slow" style="margin-top:6px;">
-        <summary>📝 Observaciones / Consejos</summary>
-          <div class="notas-card" style="margin-top:4px;">${obsHtml}</div>
-        </details>
-        ${modoEdicion ? `<button class="guardar-analisis-btn" data-mes="${mes}" style="margin-top:8px;">💾 Guardar análisis</button>` : ""}
-      </details>
-    `;
-
-if (index === 0) {
-  // 🟢 Mes más reciente
-  cont.appendChild(card);
-
-  // ⬇️ Botón JUSTO debajo del contenido del mes actual
-  cont.appendChild(toggleBtn);
-  cont.appendChild(mesesAnterioresCont);
-} else {
-  // 📂 Meses anteriores (orden correcto)
-  mesesAnterioresCont.appendChild(card);
-}
-  });
-
-  if(modoEdicion){
-    document.querySelectorAll(".guardar-analisis-btn").forEach(btn=>{
-      btn.addEventListener("click", async ()=>{
-        const mes = btn.dataset.mes;
-        const evaluaciones = {};
-        document.querySelectorAll(`.eval-select[data-mes="${mes}"]`).forEach(sel=>{
-          const id = sel.dataset.id;
-          evaluaciones[id] = sel.value;
-        });
-        const cantantes = {};
-document.querySelectorAll(`.cantante-select[data-mes="${mes}"]`).forEach(sel => {
-  cantantes[sel.dataset.fecha] = sel.value;
-});
-        const observaciones = document.querySelector(`.obs-textarea[data-mes="${mes}"]`).value;
-        await setDoc(doc(db,"analisis_mensual",mes),{
-  canciones: mapaMeses[mes].canciones,
-  evaluaciones,
-  cantantes,
-  observaciones
-});
-        alert("✅ Análisis mensual guardado");
-      });
-    });
-  }
-}
 
 /* Registro (cargar/ordenar/editar fechas) */
 async function cargarRegistro(){
@@ -1495,63 +1321,6 @@ async function modificarFecha(id, idx, val){
   nuevas[idx] = val;
   await setDoc(ref, { veces: nuevas.length, fechas: nuevas });
   cargarRegistro();
-}
-
-function setOrden(campo){
-  if(ordenActual.campo === campo) ordenActual.sentido = ordenActual.sentido === "asc" ? "desc" : "asc";
-  else { ordenActual.campo = campo; ordenActual.sentido = "desc"; }
-  cargarRegistro();
-}
-function generarResumenMes(mes, mapaMeses, datosMes){
-  const canciones = Object.entries(mapaMeses[mes] || {});
-  if(!canciones.length) return "";
-
-  const total = canciones.length;
-  const top = canciones.sort((a,b)=>b[1]-a[1])[0];
-  const topSong = cancionesCache.find(c=>c.id===top[0])?.titulo || "—";
-
-  const evals = { excelente:0, bien:0, mejorar:0 };
-  Object.values(datosMes.canciones || {}).forEach(c=>{
-    if(c.eval) evals[c.eval]++;
-  });
-
-  return `
-    <div class="notas-card">
-      <h3>📈 Resumen del mes</h3>
-      <ul>
-        <li>🎵 Canciones distintas: <strong>${total}</strong></li>
-        <li>🔥 Más tocada: <strong>${topSong}</strong> (${top[1]} veces)</li>
-        <li>⭐ Excelente: ${evals.excelente} | 👍 Bien: ${evals.bien} | ⚠️ A mejorar: ${evals.mejorar}</li>
-      </ul>
-    </div>
-  `;
-}
-async function guardarAnalisisMes(mes){
-  const canciones = {};
-  document.querySelectorAll(`.cantante-input[data-mes="${mes}"]`).forEach(i=>{
-    const id = i.dataset.id;
-    canciones[id] = canciones[id] || {};
-    canciones[id].cantante = i.value.trim();
-  });
-
-  document.querySelectorAll(`.nota-input[data-mes="${mes}"]`).forEach(i=>{
-    const id = i.dataset.id;
-    canciones[id] = canciones[id] || {};
-    canciones[id].notas = i.value.trim();
-  });
-
-  const notasGenerales = document.querySelector(`.notas-generales[data-mes="${mes}"]`).value.trim();
-document.querySelectorAll(`.eval-input[data-mes="${mes}"]`).forEach(i=>{
-  const id = i.dataset.id;
-  canciones[id] = canciones[id] || {};
-  canciones[id].eval = i.value;
-});
-  await setDoc(doc(db,"analisis_mensual",mes),{
-    canciones,
-    notasGenerales
-  });
-
-  alert("✅ Análisis mensual guardado");
 }
 
 /* =========================
@@ -1876,118 +1645,6 @@ window.guardarListadoMensual = async function(){
 
   alert("✅ Listado mensual guardado");
   renderListadoMensual();
-};
-
-///////
-////// ANALIZAR PERIODO
-/* =========================
-   LISTADO MENSUAL DE CANCIONES
-========================= */
-
-window.analizarPeriodo = async function(mesesAtras){
-
-  const cont = document.getElementById("resultado-periodo");
-  cont.innerHTML = "Analizando...";
-
-  const snap = await getDocs(collection(db,"analisis_mensual"));
-
-  let meses = snap.docs.map(d => d.id).sort().reverse();
-
-  if(mesesAtras > 0){
-    meses = meses.slice(0, mesesAtras);
-  }
-
-  const acumulado = {
-    Excelente: {},
-    Bien: {},
-    "A mejorar": {}
-  };
-
-  for(const mes of meses){
-    const data = snap.docs.find(d => d.id === mes)?.data();
-    if(!data?.evaluaciones) continue;
-
-    for(const [id, valor] of Object.entries(data.evaluaciones)){
-      if(!valor) continue;
-
-      const cancion = cancionesCache.find(c=>c.id===id);
-      if(!cancion) continue;
-
-      if(!acumulado[valor][id]){
-        acumulado[valor][id] = {
-          titulo: cancion.titulo,
-          veces: 0,
-          cantantes: new Set()
-        };
-      }
-
-      acumulado[valor][id].veces++;
-
-      if(data.cantantes){
-        Object.values(data.cantantes).forEach(c=>{
-          if(c) acumulado[valor][id].cantantes.add(c);
-        });
-      }
-    }
-  }
-
-  const total =
-    Object.keys(acumulado["Excelente"]).length +
-    Object.keys(acumulado["Bien"]).length +
-    Object.keys(acumulado["A mejorar"]).length;
-
-  window.cacheResultados = acumulado;
-
-  cont.innerHTML = `
-    <p>Total evaluadas: <strong>${total}</strong></p>
-
-    <p onclick="mostrarDetallePeriodo('Excelente')" style="cursor:pointer">
-      🚀 ${Object.keys(acumulado["Excelente"]).length} fueron excelentes
-    </p>
-
-    <p onclick="mostrarDetallePeriodo('Bien')" style="cursor:pointer">
-      👍 ${Object.keys(acumulado["Bien"]).length} fueron buenas
-    </p>
-
-    <p onclick="mostrarDetallePeriodo('A mejorar')" style="cursor:pointer">
-      ‼️ ${Object.keys(acumulado["A mejorar"]).length} necesitan mejorar
-    </p>
-
-    <div id="detalle-periodo"></div>
-  `;
-};
-
-window.mostrarDetallePeriodo = function(tipo){
-
-  const datos = window.cacheResultados[tipo];
-  const cont = document.getElementById("detalle-periodo");
-
-  if(!datos || !Object.keys(datos).length){
-    cont.innerHTML = "<p>No hay canciones.</p>";
-    return;
-  }
-
-  const emoji = tipo==="Excelente" ? "🚀"
-              : tipo==="Bien" ? "👍"
-              : "‼️";
-
-  let html = `<h4 style="margin-top:10px">${emoji} Canciones</h4><ul>`;
-
-  Object.values(datos)
-    .sort((a,b)=>b.veces - a.veces)
-    .forEach(c=>{
-      html += `
-        <li>
-          <strong>${c.titulo}</strong> (${c.veces})
-          <br>
-          🎤 ${[...c.cantantes].join(", ") || "-"}
-        </li>
-      `;
-    });
-
-  html += "</ul>";
-
-  cont.innerHTML = html;
 };
 
 /* =========================
@@ -2668,7 +2325,6 @@ window.addEventListener('load', ()=>{
   window.borrarFecha = borrarFecha;
   window.modificarFecha = modificarFecha;
   window.setOrden = setOrden;
-  window.guardarAnalisisMes = guardarAnalisisMes;
   window.marcarTocada = marcarTocada;
   window.actualizarRegistroCard = actualizarRegistroCard;
   window.mostrarWorshipPack = mostrarWorshipPack;
@@ -2680,7 +2336,6 @@ window.addEventListener('load', ()=>{
   escucharSeccion("semana");
   escucharSeccion("mes");
   initMetronome();
-  window.toggleAnalisis = toggleAnalisis;
   window.verHistorialConCantante = verHistorialConCantante;
   window.cacheResultados = {};
   window.toggleAnalisis = toggleAnalisis;
