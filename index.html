@@ -1570,7 +1570,6 @@ let lastTap = 0;
 
 const MAX_TAPS = 20;      // más taps para mayor precisión
 const RESET_TIME = 2000;  // reset si pasan 2s sin taps
-const MIN_INTERVAL = 30;  // permite taps muy rápidos (para BPM altos)
 
 const bpmSlider = () => document.getElementById("bpmSlider");
 const bpmValue  = () => document.getElementById("bpmValue");
@@ -1614,7 +1613,7 @@ function playClick(){
   osc.start(now);
   osc.stop(now + 0.05);
 
-  beatCount = (beatCount + 1) % 4; // 4/4
+  beatCount = (beatCount + 1) % 4;
 }
 
 function startMetronome(){
@@ -1654,11 +1653,6 @@ function tapTempo(){
     tapTimes = [];
   }
 
-  // ignorar taps absurdamente rápidos (ruido)
-  if(lastTap && (now - lastTap) < MIN_INTERVAL){
-    return;
-  }
-
   lastTap = now;
 
   tapTimes.push(now);
@@ -1679,7 +1673,7 @@ function tapTempo(){
 
   const bpm = Math.round(60000 / avg);
 
-  if(bpm >= 40 && bpm <= 320){
+  if(bpm >= 30 && bpm <= 400){
 
     currentBpm = bpm;
 
