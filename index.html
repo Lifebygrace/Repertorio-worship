@@ -540,6 +540,17 @@ body:not(.dark) .proximo-label {
 body.dark .proximo-label {
   color: #bbbbbb; /* gris claro elegante */
 }
+
+.highlight {
+  font-weight: bold;
+  font-size: 1.2em;
+  color: #00bcd4; /* puedes cambiarlo */
+}
+
+.underline {
+  text-decoration: underline;
+}
+
   </style>
 </head>
 
@@ -1058,16 +1069,37 @@ async function borrarCancion(id){
 
 
 // Función para renderizar notas en lista con emojis
+function escaparHTML(str) {
+  return str.replace(/[&<>"']/g, tag => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[tag]));
+}
+
 function renderNotas(texto){
   if(!texto) return "(No hay notas para esta sección)";
 
-  // Agregar emojis según palabras clave
+  // Seguridad
+  texto = escaparHTML(texto);
+
+  // ✨ FORMATO NUEVO
+  texto = texto
+    // **texto** → destacado fuerte
+    .replace(/\*\*(.*?)\*\*/g, '<span class="highlight">$1</span>')
+    
+    // _texto_ → subrayado
+    .replace(/_(.*?)_/g, '<span class="underline">$1</span>');
+
+  // 🎵 Emojis automáticos
   texto = texto.replace(/importante/gi, "⚠️ importante")
                .replace(/ensayar/gi, "🎵 ensayar")
                .replace(/recordar/gi, "🔔 recordar")
                .replace(/audio/gi, "🎧 audio");
 
-  // Separar en líneas y convertir en <ul>
+  // Lista
   const lineas = texto.split("\n").filter(l => l.trim());
   return `<ul>${lineas.map(l => `<li>${l}</li>`).join("")}</ul>`;
 }
