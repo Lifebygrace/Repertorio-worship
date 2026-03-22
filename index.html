@@ -141,11 +141,11 @@ button:active{
   color: var(--primary); /* modo claro */
 }
 .notas-card ul {
+  margin: 2px 0 0 0; /* top right bottom left */
   padding-left: 16px;
-  margin: 0;
 }
 .notas-card li {
-  margin-bottom: 8px;
+  margin-bottom: 3px;
 }
 body.dark .notas-card {
   background: #2a2a2a;
@@ -1081,26 +1081,35 @@ function escaparHTML(str) {
 function renderNotas(texto){
   if(!texto) return "(No hay notas para esta sección)";
 
-  // Seguridad
+  // 🔐 Seguridad
   texto = escaparHTML(texto);
 
-  // ✨ FORMATO NUEVO
-  texto = texto
-    // **texto** → destacado fuerte
-    .replace(/\*\*(.*?)\*\*/g, '<span class="highlight">$1</span>')
-    
-    // _texto_ → subrayado
-    .replace(/_(.*?)_/g, '<span class="underline">$1</span>');
+  // 🔥 LIMPIEZA REAL (clave para quitar espacios raros)
+  const lineas = texto
+    .replace(/\r/g, "")              // limpia saltos tipo Windows
+    .split("\n")
+    .map(l => l.trim())             // quita espacios al inicio/final
+    .filter(l => l.length > 0);     // elimina líneas vacías reales
 
-  // 🎵 Emojis automáticos
-  texto = texto.replace(/importante/gi, "⚠️ importante")
-               .replace(/ensayar/gi, "🎵 ensayar")
-               .replace(/recordar/gi, "🔔 recordar")
-               .replace(/audio/gi, "🎧 audio");
+  // ✨ PROCESAR CADA LÍNEA
+  const procesadas = lineas.map(linea => {
 
-  // Lista
-  const lineas = texto.split("\n").filter(l => l.trim());
-  return `<ul>${lineas.map(l => `<li>${l}</li>`).join("")}</ul>`;
+    return linea
+      // **texto** → destacado
+      .replace(/\*\*(.*?)\*\*/g, '<span class="highlight">$1</span>')
+      
+      // _texto_ → subrayado
+      .replace(/_(.*?)_/g, '<span class="underline">$1</span>')
+
+      // 🎵 Emojis
+      .replace(/importante/gi, "⚠️ importante")
+      .replace(/ensayar/gi, "🎵 ensayar")
+      .replace(/recordar/gi, "🔔 recordar")
+      .replace(/audio/gi, "🎧 audio");
+  });
+
+  // 🧱 Render limpio
+  return `<ul>${procesadas.map(l => `<li>${l}</li>`).join("")}</ul>`;
 }
 
 // Función principal
