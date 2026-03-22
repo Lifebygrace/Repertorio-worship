@@ -540,25 +540,6 @@ body:not(.dark) .proximo-label {
 body.dark .proximo-label {
   color: #bbbbbb; /* gris claro elegante */
 }
-
-
-.super-titulo {
-  font-size: 1.4em;
-  font-weight: bold;
-  color: #00bcd4;
-  margin: 10px 0;
-}
-
-.titulo-nota {
-  font-weight: bold;
-  font-size: 1.2em;
-  color: #ff4081;
-}
-
-.subrayado {
-  text-decoration: underline;
-  }
-
   </style>
 </head>
 
@@ -1076,81 +1057,19 @@ async function borrarCancion(id){
 ===================================================== */
 
 
-function escaparHTML(str) {
-  return str.replace(/[&<>"']/g, tag => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  }[tag]));
-}
+// Función para renderizar notas en lista con emojis
+function renderNotas(texto){
+  if(!texto) return "(No hay notas para esta sección)";
 
-function aplicarFormatoLinea(linea){
-
-  // **texto** → súper título
-  linea = linea.replace(/\*\*(.*?)\*\*/g, '<div class="super-titulo">$1</div>');
-
-  // *texto* → título
-  linea = linea.replace(/\*(.*?)\*/g, '<span class="titulo-nota">$1</span>');
-
-  // _texto_ → subrayado
-  linea = linea.replace(/_(.*?)_/g, '<span class="subrayado">$1</span>');
-
-  // Emojis
-  linea = linea.replace(/importante/gi, "⚠️ importante")
+  // Agregar emojis según palabras clave
+  texto = texto.replace(/importante/gi, "⚠️ importante")
                .replace(/ensayar/gi, "🎵 ensayar")
                .replace(/recordar/gi, "🔔 recordar")
                .replace(/audio/gi, "🎧 audio");
 
-  return linea;
-}
-
-function renderNotas(texto){
-  if(!texto) return "(No hay notas para esta sección)";
-
-  texto = escaparHTML(texto);
-
+  // Separar en líneas y convertir en <ul>
   const lineas = texto.split("\n").filter(l => l.trim());
-
-  let html = "";
-  let enLista = false;
-
-  lineas.forEach(linea => {
-
-    // # título
-    if(linea.startsWith("# ")){
-      if(enLista){
-        html += "</ul>";
-        enLista = false;
-      }
-      html += `<h3>${aplicarFormatoLinea(linea.slice(2))}</h3>`;
-      return;
-    }
-
-    // - lista
-    if(linea.startsWith("- ")){
-      if(!enLista){
-        html += "<ul>";
-        enLista = true;
-      }
-      html += `<li>${aplicarFormatoLinea(linea.slice(2))}</li>`;
-      return;
-    }
-
-    // cerrar lista si venimos de una
-    if(enLista){
-      html += "</ul>";
-      enLista = false;
-    }
-
-    // línea normal
-    html += `<p>${aplicarFormatoLinea(linea)}</p>`;
-  });
-
-  if(enLista) html += "</ul>";
-
-  return html;
+  return `<ul>${lineas.map(l => `<li>${l}</li>`).join("")}</ul>`;
 }
 
 // Función principal
