@@ -1047,25 +1047,22 @@ async function guardarEdicion(id, btn){
 }
 
 /* Borrar canción (y su registro) */
-async function borrarCancion(id){
+window.borrarCancion = async function(id){
   if(!confirm("¿Seguro que quieres borrar esta canción?")) return;
 
   try{
-    // 🔥 BORRADO OPTIMISTA (UI inmediata)
     cancionesCache = cancionesCache.filter(c => c.id !== id);
     cargarCanciones();
 
-    // 🔥 BORRADO REAL EN FIREBASE
     await deleteDoc(doc(db,"canciones",id));
 
-    // borrar registro también
     try{ await deleteDoc(doc(db,"registro",id)); } catch(e){}
 
   } catch(e){
     console.error("Error borrarCancion:", e);
     alert("Error al borrar (ver consola).");
   }
-}
+}}
 
 /* SECCIONES (semana / mes) */
 /* =====================================================
