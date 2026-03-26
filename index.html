@@ -2122,10 +2122,16 @@ async function cargarAnalisisReal() {
   const snapRegistro = await getDocs(collection(db, "registro"));
   const snapAnalisis = await getDocs(collection(db, "analisis_real"));
 
+  // Guardar análisis en un mapa
   const analisisGuardado = {};
-  snapAnalisis.forEach(d => analisisGuardado[d.id] = d.data());
+  snapAnalisis.forEach(d => {
+    analisisGuardado[d.id] = d.data();
+  });
 
   const mapaMeses = {};
+
+  // 🔥 IDs válidos de canciones (las que NO están borradas)
+  const cancionesIds = cancionesCache.map(c => c.id);
 
   // ===== AGRUPAR POR MES Y SOLO DOMINGOS =====
   snapRegistro.forEach(docu => {
@@ -2134,11 +2140,15 @@ async function cargarAnalisisReal() {
 
     fechas.forEach(f => {
       const fechaObj = new Date(f);
-      if (fechaObj.getDay() !== 0) return; // solo domingos
-      const mesKey = f.substring(0, 7); // YYYY-MM
+
+      // Solo domingos
+      if (fechaObj.getDay() !== 0) return;
+
+      const mesKey = f.substring(0, 7);
 
       if (!mapaMeses[mesKey]) mapaMeses[mesKey] = {};
       if (!mapaMeses[mesKey][f]) mapaMeses[mesKey][f] = [];
+
       mapaMeses[mesKey][f].push(docu.id);
     });
   });
@@ -2149,6 +2159,53 @@ async function cargarAnalisisReal() {
     cont.innerHTML = "<p>No hay datos registrados.</p>";
     return;
   }
+
+  // ===== RENDER =====
+  mesesOrdenados.forEach(mes => {
+    const detalles = document.createElement("details");
+    detalles.open = mes === mesActualKey;
+
+    const summary = document.createElement("summary");
+    summary.textContent = `📅 ${mes}`;
+    detalles.appendChild(summary);
+
+    const fechas = Object.keys(mapaMeses[mes]).sort().reverse();
+
+    fechas.forEach(fecha => {
+      const contFecha = document.createElement("div");
+      contFecha.style.marginLeft = "15px";
+
+      const sub = document.createElement("h4");
+      sub.textContent = `🗓️ ${fecha}`;
+      contFecha.appendChild(sub);
+
+      mapaMeses[mes][fecha].forEach(cancionId => {
+
+        // 🔥 Buscar la canción en cache
+        const cancion = cancionesCache.find(c => c.id === cancionId);
+
+        // 🔴 SI LA CANCIÓN YA NO EXISTE → NO SE MUESTRA
+        if (!cancion) return;
+
+        const datosAnalisis = analisisGuardado[cancionId] || {};
+
+        const div = document.createElement("div");
+        div.className = "card";
+
+        div.innerHTML = `
+          <h3>${cancion.titulo}</h3>
+          <p>⭐ Valoración: ${datosAnalisis.valoracion || "-"}</p>
+        `;
+
+        contFecha.appendChild(div);
+      });
+
+      detalles.appendChild(contFecha);
+    });
+
+    cont.appendChild(detalles);
+  });
+}
 // ==============================
 // 🎤 ANÁLISIS POR CANTANTE
 // ==============================
