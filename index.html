@@ -2250,53 +2250,22 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
       const data = docu.data();
       const fechas = Array.isArray(data.fechas) ? data.fechas : [];
 
-     fechas.forEach(f => {
-  const fechaObj = new Date(f);
-  if (fechaObj.getDay() !== 0) return; // solo domingos
-
-  const mesKey = f.substring(0, 7); // YYYY-MM
-
-  if (!mapaMeses[mesKey]) mapaMeses[mesKey] = {};
-  if (!mapaMeses[mesKey][f]) mapaMeses[mesKey][f] = [];
-
-  mapaMeses[mesKey][f].push(docu.id);
-});
-
-// ==============================
-// RENDER ANÁLISIS POR CANTANTE
-// ==============================
-
-function renderEstadisticas(rangoMeses, cantanteFiltro) {
-
-  contCantante.querySelectorAll(".bloque-cantante").forEach(e => e.remove());
-
-  const hoy = new Date();
-
-  const listaCantantes = cantanteFiltro === "Todos"
-    ? ["Milly", "Carolina", "Jason"]
-    : [cantanteFiltro];
-
-  listaCantantes.forEach(nombre => {
-
-    const conteo = {
-      Excelente: {},
-      Bien: {},
-      "A mejorar": {}
-    };
-
-    let total = 0;
-
-    snapRegistro.forEach(docu => {
-      const data = docu.data();
-      const fechas = Array.isArray(data.fechas) ? data.fechas : [];
-
       fechas.forEach(f => {
 
         const fechaObj = new Date(f);
+        if (isNaN(fechaObj)) return;
 
-        // FILTRO RANGO
+        // Solo domingos
+        if (fechaObj.getDay() !== 0) return;
+
+        // Filtro rango
         if (rangoMeses > 0) {
-          const limite = new Date(hoy.getFullYear(), hoy.getMonth() - rangoMeses, 1);
+          const limite = new Date(
+            hoy.getFullYear(),
+            hoy.getMonth() - rangoMeses,
+            1
+          );
+
           if (fechaObj < limite) return;
         }
 
@@ -2309,7 +2278,9 @@ function renderEstadisticas(rangoMeses, cantanteFiltro) {
 
         // 🔥 FILTRO CLAVE: ignorar canciones borradas
         const cancion = cancionesCache.find(c => c.id === docu.id);
-        if (!cancion) return;
+
+        // 👉 SI NO EXISTE, SE IGNORA (evita "-")
+        if (!cancion || !cancion.titulo) return;
 
         const titulo = cancion.titulo;
 
@@ -2322,6 +2293,10 @@ function renderEstadisticas(rangoMeses, cantanteFiltro) {
       });
     });
 
+    // ==============================
+    // UI
+    // ==============================
+
     const bloque = document.createElement("div");
     bloque.className = "bloque-cantante";
     bloque.style.marginTop = "20px";
@@ -2329,9 +2304,7 @@ function renderEstadisticas(rangoMeses, cantanteFiltro) {
     bloque.style.paddingTop = "10px";
 
     bloque.innerHTML = `
-      <h3 style="margin-bottom:10px;">
-        ${nombre}
-      </h3>
+      <h3 style="margin-bottom:10px;">${nombre}</h3>
       <div class="contenido-cantante"></div>
     `;
 
@@ -2364,7 +2337,6 @@ function renderEstadisticas(rangoMeses, cantanteFiltro) {
           border-radius:10px;
           overflow:hidden;
           cursor:pointer;">
-          <!-- Barra animada: empieza en 0%, luego se llena -->
           <div style="
             width:0%;
             background:${cat.color};
@@ -2376,27 +2348,26 @@ function renderEstadisticas(rangoMeses, cantanteFiltro) {
         <div style="display:none; margin-top:6px; font-size:13px;"></div>
       `;
 
-const barra = fila.querySelector("div:nth-child(2) > div");
-const porcentajeSpan = fila.querySelector("div:first-child span:last-child"); // selecciona el <span> del %
-barra.style.width = "0%";
-porcentajeSpan.textContent = "0%";
+      const barra = fila.querySelector("div:nth-child(2) > div");
+      const porcentajeSpan = fila.querySelector("span:last-child");
 
-// Animación de la barra
-setTimeout(() => {
-  barra.style.width = porcentaje + "%";
-}, 50);
+      setTimeout(() => {
+        barra.style.width = porcentaje + "%";
+      }, 50);
 
-// Animación del número
-let valorActual = 0;
-const incremento = Math.ceil(porcentaje / 20); // ajusta la velocidad del conteo
-const intervalo = setInterval(() => {
-  valorActual += incremento;
-  if (valorActual >= porcentaje) {
-    valorActual = porcentaje;
-    clearInterval(intervalo);
-  }
-  porcentajeSpan.textContent = valorActual + "%";
-}, 25);
+      let valorActual = 0;
+      const incremento = Math.ceil(porcentaje / 20);
+
+      const intervalo = setInterval(() => {
+        valorActual += incremento;
+
+        if (valorActual >= porcentaje) {
+          valorActual = porcentaje;
+          clearInterval(intervalo);
+        }
+
+        porcentajeSpan.textContent = valorActual + "%";
+      }, 25);
 
       const listaDiv = fila.lastElementChild;
 
@@ -2418,7 +2389,6 @@ const intervalo = setInterval(() => {
     contCantante.appendChild(bloque);
   });
 }
-
 
 // ==============================
 // EVENTOS FILTRO
