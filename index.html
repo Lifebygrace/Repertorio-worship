@@ -1048,16 +1048,52 @@ async function guardarEdicion(id, btn){
 
 /* Borrar canción (y su registro) */
 async function borrarCancion(id){
-  if(!confirm("¿Seguro que quieres borrar esta canción?")) return;
-  try{
-    await deleteDoc(doc(db,"canciones",id));
-    // borrar registro histórico también si existe
-    try{ await deleteDoc(doc(db,"registro",id)); } catch(e){ /* ignore if missing */ }
-    // onSnapshot actualizará lista/contador automáticamente
-    if(document.getElementById("registro-canciones").style.display==="block") cargarRegistro();
-  } catch(e){
-    console.error("Error borrarCancion:", e);
-    alert("Error al borrar (ver consola).");
+
+  if(!confirm("¿Seguro que quieres borrar esta canción y todo su historial?")) return;
+
+  try {
+
+    // 1. borrar canción
+    await deleteDoc(doc(db, "canciones", id));
+
+    // 2. borrar registro
+    await deleteDoc(doc(db, "registro", id));
+
+    // 3. limpiar análisis mensual
+    const snapMensual = await getDocs(collection(db, "analisis_mensual"));
+
+    for (const d of snapMensual.docs) {
+      const data = d.data();
+
+      if(data.evaluaciones?.[id]){
+        delete data.evaluaciones[id];
+
+        await setDoc(doc(db,"analisis_mensual", d.id), data);
+      }
+    }
+
+    // 4. limpiar análisis real
+    const snapReal = await getDocs(collection(db, "analisis_real"));
+
+    for (const d of snapReal.docs) {
+      const data = d.data();
+
+      if(data.evaluaciones?.[id]){
+        delete data.evaluaciones[id];
+
+        await setDoc(doc(db,"analisis_real", d.id), data, { merge:true });
+      }
+    }
+
+    alert("✅ Canción eliminada completamente");
+
+    // refrescar UI
+    cargarCanciones();
+    cargarRegistro();
+
+  } catch(err){
+    console.error(err);
+    alert("❌ Error al borrar");
   }
 }
 
