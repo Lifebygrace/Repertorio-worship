@@ -1045,6 +1045,21 @@ async function guardarEdicion(id, btn){
     alert("Error al guardar cambios (ver consola).");
   }
 }
+async function borrarCancion(id){
+  if(!confirm("🗑️ ¿Eliminar canción definitivamente?")) return;
+
+  try {
+    await deleteDoc(doc(db, "canciones", id));
+
+    alert("✅ Canción eliminada");
+  } catch (error) {
+    alert("❌ Error al eliminar");
+    console.error(error);
+  }
+}
+
+window.borrarCancion = borrarCancion;
+
 
 /* Borrar canción (y su registro) */
 async function borrarCancion(id){
