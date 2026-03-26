@@ -1049,12 +1049,18 @@ async function guardarEdicion(id, btn){
 /* Borrar canción (y su registro) */
 async function borrarCancion(id){
   if(!confirm("¿Seguro que quieres borrar esta canción?")) return;
+
   try{
+    // 🔥 BORRADO OPTIMISTA (UI inmediata)
+    cancionesCache = cancionesCache.filter(c => c.id !== id);
+    cargarCanciones();
+
+    // 🔥 BORRADO REAL EN FIREBASE
     await deleteDoc(doc(db,"canciones",id));
-    // borrar registro histórico también si existe
-    try{ await deleteDoc(doc(db,"registro",id)); } catch(e){ /* ignore if missing */ }
-    // onSnapshot actualizará lista/contador automáticamente
-    if(document.getElementById("registro-canciones").style.display==="block") cargarRegistro();
+
+    // borrar registro también
+    try{ await deleteDoc(doc(db,"registro",id)); } catch(e){}
+
   } catch(e){
     console.error("Error borrarCancion:", e);
     alert("Error al borrar (ver consola).");
