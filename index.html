@@ -2250,27 +2250,70 @@ function renderEstadisticas(rangoMeses, cantanteFiltro){
       const data = docu.data();
       const fechas = Array.isArray(data.fechas) ? data.fechas : [];
 
-      fechas.forEach(f=>{
+     fechas.forEach(f => {
+  const fechaObj = new Date(f);
+  if (fechaObj.getDay() !== 0) return; // solo domingos
+
+  const mesKey = f.substring(0, 7); // YYYY-MM
+
+  if (!mapaMeses[mesKey]) mapaMeses[mesKey] = {};
+  if (!mapaMeses[mesKey][f]) mapaMeses[mesKey][f] = [];
+
+  mapaMeses[mesKey][f].push(docu.id);
+});
+
+// ==============================
+// RENDER ANÁLISIS POR CANTANTE
+// ==============================
+
+function renderEstadisticas(rangoMeses, cantanteFiltro) {
+
+  contCantante.querySelectorAll(".bloque-cantante").forEach(e => e.remove());
+
+  const hoy = new Date();
+
+  const listaCantantes = cantanteFiltro === "Todos"
+    ? ["Milly", "Carolina", "Jason"]
+    : [cantanteFiltro];
+
+  listaCantantes.forEach(nombre => {
+
+    const conteo = {
+      Excelente: {},
+      Bien: {},
+      "A mejorar": {}
+    };
+
+    let total = 0;
+
+    snapRegistro.forEach(docu => {
+      const data = docu.data();
+      const fechas = Array.isArray(data.fechas) ? data.fechas : [];
+
+      fechas.forEach(f => {
 
         const fechaObj = new Date(f);
 
         // FILTRO RANGO
-        if(rangoMeses > 0){
+        if (rangoMeses > 0) {
           const limite = new Date(hoy.getFullYear(), hoy.getMonth() - rangoMeses, 1);
-          if(fechaObj < limite) return;
+          if (fechaObj < limite) return;
         }
 
         const analisis = analisisGuardado[f];
-        if(!analisis) return;
-        if(analisis.cantante !== nombre) return;
+        if (!analisis) return;
+        if (analisis.cantante !== nombre) return;
 
         const evaluacion = analisis.evaluaciones?.[docu.id];
-        if(!evaluacion) return;
+        if (!evaluacion) return;
 
-        const cancion = cancionesCache.find(c=>c.id===docu.id);
-        const titulo = cancion?.titulo || docu.id;
+        // 🔥 FILTRO CLAVE: ignorar canciones borradas
+        const cancion = cancionesCache.find(c => c.id === docu.id);
+        if (!cancion) return;
 
-        if(!conteo[evaluacion][titulo]){
+        const titulo = cancion.titulo;
+
+        if (!conteo[evaluacion][titulo]) {
           conteo[evaluacion][titulo] = 0;
         }
 
