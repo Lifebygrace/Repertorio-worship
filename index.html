@@ -1060,58 +1060,6 @@ async function borrarCancion(id){
 
 window.borrarCancion = borrarCancion;
 
-
-/* Borrar canción (y su registro) */
-async function borrarCancion(id){
-
-  if(!confirm("¿Seguro que quieres borrar esta canción y todo su historial?")) return;
-
-  try {
-
-    // 1. borrar canción
-    await deleteDoc(doc(db, "canciones", id));
-
-    // 2. borrar registro
-    await deleteDoc(doc(db, "registro", id));
-
-    // 3. limpiar análisis mensual
-    const snapMensual = await getDocs(collection(db, "analisis_mensual"));
-
-    for (const d of snapMensual.docs) {
-      const data = d.data();
-
-      if(data.evaluaciones?.[id]){
-        delete data.evaluaciones[id];
-
-        await setDoc(doc(db,"analisis_mensual", d.id), data);
-      }
-    }
-
-    // 4. limpiar análisis real
-    const snapReal = await getDocs(collection(db, "analisis_real"));
-
-    for (const d of snapReal.docs) {
-      const data = d.data();
-
-      if(data.evaluaciones?.[id]){
-        delete data.evaluaciones[id];
-
-        await setDoc(doc(db,"analisis_real", d.id), data, { merge:true });
-      }
-    }
-
-    alert("✅ Canción eliminada completamente");
-
-    // refrescar UI
-    cargarCanciones();
-    cargarRegistro();
-
-  } catch(err){
-    console.error(err);
-    alert("❌ Error al borrar");
-  }
-}
-
 /* SECCIONES (semana / mes) */
 /* =====================================================
    📅 SECCIONES (SEMANA / MES)
@@ -2848,7 +2796,6 @@ window.addEventListener('load', ()=>{
   window.cacheResultados = {};
   window.toggleAnalisis = toggleAnalisis;
   window.toggleHistorial = toggleHistorial;
-  window.borrarCancion = borrarCancion;
 });
 </script>
 <div id="modal-metronomo" class="modal">
