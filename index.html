@@ -543,7 +543,7 @@ body.dark .proximo-label {
 .highlight {
   font-weight: bold;
   font-size: 1.2em;
-  color:  #ff8c42; /* puedes cambiarlo */
+  color:#e67e22; /* puedes cambiarlo */
 }
 
 .underline {
@@ -1047,22 +1047,19 @@ async function guardarEdicion(id, btn){
 }
 
 /* Borrar canción (y su registro) */
-window.borrarCancion = async function(id){
+async function borrarCancion(id){
   if(!confirm("¿Seguro que quieres borrar esta canción?")) return;
-
   try{
-    cancionesCache = cancionesCache.filter(c => c.id !== id);
-    cargarCanciones();
-
     await deleteDoc(doc(db,"canciones",id));
-
-    try{ await deleteDoc(doc(db,"registro",id)); } catch(e){}
-
+    // borrar registro histórico también si existe
+    try{ await deleteDoc(doc(db,"registro",id)); } catch(e){ /* ignore if missing */ }
+    // onSnapshot actualizará lista/contador automáticamente
+    if(document.getElementById("registro-canciones").style.display==="block") cargarRegistro();
   } catch(e){
     console.error("Error borrarCancion:", e);
     alert("Error al borrar (ver consola).");
   }
-}}
+}
 
 /* SECCIONES (semana / mes) */
 /* =====================================================
