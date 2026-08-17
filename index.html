@@ -800,6 +800,13 @@ body.dark #herramientas-panel {
     <button onclick="abrirMetronomo()">🕒 Metrónomo</button>
     <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵Mostrar lista</button>
     <button onclick="toggleListadoMensual()">📅 Listado mensual</button>
+    <button style="background:var(--accent);" onclick="toggleRegistro()">📊 Registro de canciones</button>
+    <button onclick="toggleAnalisisReal()">📈 Análisis real</button>
+    <button onclick="window.open('https://drive.google.com/drive/folders/1RxOwnOCtt7Oa_J6rUzG1jC242md5MT1-', '_blank')">
+  🎧 Recursos </button>
+  <button onclick="toggleAusencias()">
+  📅 Ausencias
+</button>
   </div>
 </header>
 
@@ -902,14 +909,7 @@ body.dark #herramientas-panel {
 ===================================================== -->
 
   <div id="registro-canciones-container" style="margin-top:12px;">
-    <button style="background:var(--accent);" onclick="toggleRegistro()">📊 Registro de canciones</button>
-    <button onclick="toggleAnalisisReal()">📈 Análisis real</button>
-    <button onclick="window.open('https://drive.google.com/drive/folders/1RxOwnOCtt7Oa_J6rUzG1jC242md5MT1-', '_blank')">
-  🎧 Recursos </button>
-<button onclick="toggleAusencias()">
 
-  📅 Ausencias
-</button>
 <div
   id="ausencias"
   class="section"
