@@ -1873,8 +1873,6 @@ function toggleHerramientas() {
 
 }
 
-window.toggleHerramientas =
-  toggleHerramientas;
 /* =====================================================
    CERRAR AL PULSAR FUERA
 ===================================================== */
@@ -1944,6 +1942,12 @@ document.addEventListener(
 
   }
 );
+
+
+window.toggleHerramientas =
+  toggleHerramientas;
+  
+
 
 
 function normalizar(t){ return (t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
