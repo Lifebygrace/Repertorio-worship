@@ -974,10 +974,7 @@ function formatearFechaAusencia(
 function cambiarMesAusencias(delta) {
 
   const input =
-    document.getElementById(
-      "ausencias-mes"
-    );
-
+    document.getElementById("ausencias-mes");
 
   if (!input) return;
 
@@ -996,50 +993,79 @@ function cambiarMesAusencias(delta) {
     );
 
 
-  input.value =
+  const nuevoMes =
     obtenerClaveMesAusencias(
       nuevaFecha
     );
 
 
-  cargarAusencias();
+  cargarAusencias(nuevoMes);
 
 }
-
 
 /* =====================================================
    CARGAR AUSENCIAS
 ===================================================== */
-
-async function cargarAusencias() {
+async function cargarAusencias(mesSolicitado = null) {
 
   const cont =
-    document.getElementById(
-      "ausencias"
-    );
-
+    document.getElementById("ausencias");
 
   if (!cont) return;
 
 
-  const hoy =
-    new Date();
+  /* =================================================
+     DETERMINAR QUÉ MES MOSTRAR
+
+     Si recibimos un mes desde los botones
+     ◀️ / ▶️, utilizamos ese mes.
+
+     Si no, intentamos conservar el mes
+     que ya estaba seleccionado.
+
+     Si tampoco existe, usamos el mes actual.
+  ================================================= */
+
+  let mesKey = mesSolicitado;
 
 
-  const mesActual =
-    obtenerClaveMesAusencias(
-      hoy
-    );
+  if (!mesKey) {
+
+    const inputExistente =
+      document.getElementById(
+        "ausencias-mes"
+      );
 
 
-  /*
-     Detectamos si estamos en
-     Modo edición.
+    if (
+      inputExistente &&
+      inputExistente.value
+    ) {
 
-     Se utiliza la variable
-     modoEdicion que ya existe
-     en tu aplicación.
-  */
+      mesKey =
+        inputExistente.value;
+
+    }
+
+  }
+
+
+  if (!mesKey) {
+
+    const hoy =
+      new Date();
+
+    mesKey =
+      obtenerClaveMesAusencias(
+        hoy
+      );
+
+  }
+
+
+  /* =================================================
+     SABER SI ESTAMOS EN MODO EDICIÓN
+  ================================================= */
 
   const edicion =
     typeof modoEdicion !== "undefined"
@@ -1048,7 +1074,10 @@ async function cargarAusencias() {
 
 
   /* =================================================
-     CABECERA
+     CREAR CABECERA
+
+     IMPORTANTE:
+     Ahora utilizamos mesKey y NO el mes actual.
   ================================================= */
 
   cont.innerHTML = `
@@ -1084,8 +1113,8 @@ async function cargarAusencias() {
         <input
           type="month"
           id="ausencias-mes"
-          value="${mesActual}"
-          onchange="cargarAusencias()"
+          value="${mesKey}"
+          onchange="cargarAusencias(this.value)"
           class="edit-input"
           style="
             width:auto;
@@ -1112,16 +1141,6 @@ async function cargarAusencias() {
   `;
 
 
-  const inputMes =
-    document.getElementById(
-      "ausencias-mes"
-    );
-
-
-  const mesKey =
-    inputMes.value;
-
-
   const contenido =
     document.getElementById(
       "ausencias-contenido"
@@ -1130,9 +1149,9 @@ async function cargarAusencias() {
 
   try {
 
-    /* ===============================================
-       BUSCAR EL DOCUMENTO DEL MES
-    =============================================== */
+    /* =================================================
+       OBTENER DATOS DEL MES DESDE FIRESTORE
+    ================================================= */
 
     const snap =
       await getDoc(
@@ -1154,6 +1173,10 @@ async function cargarAusencias() {
       datos.fechas || {};
 
 
+    /* =================================================
+       OBTENER DOMINGOS DEL MES
+    ================================================= */
+
     const domingos =
       obtenerDomingosDelMesAusencias(
         mesKey
@@ -1162,21 +1185,20 @@ async function cargarAusencias() {
 
     if (!domingos.length) {
 
-      contenido.innerHTML =
-        `
-          <p>
-            No hay domingos en este mes.
-          </p>
-        `;
+      contenido.innerHTML = `
+        <p>
+          No hay domingos en este mes.
+        </p>
+      `;
 
       return;
 
     }
 
 
-    /* ===============================================
-       CREAR CONTENIDO DE CADA DOMINGO
-    =============================================== */
+    /* =================================================
+       CREAR CADA DOMINGO
+    ================================================= */
 
     contenido.innerHTML = domingos
       .map(fecha => {
@@ -1189,10 +1211,9 @@ async function cargarAusencias() {
             : [];
 
 
-        /* ===========================================
+        /* =============================================
            MODO NORMAL
-           Solo mostramos los nombres.
-        =========================================== */
+        ============================================= */
 
         if (!edicion) {
 
@@ -1268,10 +1289,9 @@ async function cargarAusencias() {
         }
 
 
-        /* ===========================================
+        /* =============================================
            MODO EDICIÓN
-           Mostramos los checkboxes.
-        =========================================== */
+        ============================================= */
 
         return `
 
@@ -1359,10 +1379,9 @@ async function cargarAusencias() {
       .join("");
 
 
-    /* ===============================================
-       BOTÓN GUARDAR
-       SOLO MODO EDICIÓN
-    =============================================== */
+    /* =================================================
+       BOTÓN GUARDAR — SOLO EDICIÓN
+    ================================================= */
 
     if (edicion) {
 
