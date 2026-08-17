@@ -681,6 +681,8 @@ body.dark .proximo-label {
     <button onclick="toggleAnalisisReal()">📈 Análisis real</button>
     <button onclick="window.open('https://drive.google.com/drive/folders/1RxOwnOCtt7Oa_J6rUzG1jC242md5MT1-', '_blank')">
   🎧 Recursos </button>
+  <button onclick="toggleAusencias()">📅 Ausencias</button>
+  <div id="ausencias" class="section" style="display:none;"></div>
     <div id="analisis-real" class="section" style="display:none;"></div>
     <div id="analisis-mensual" class="section" style="display:none;"></div>
     <div id="registro-canciones" class="section" style="display:none;">
@@ -792,6 +794,521 @@ let ordenActual = { campo: 'titulo', sentido: 'desc' };
 /* =====================================================
    🛠️ UTILIDADES
 ===================================================== */
+
+/* =====================================================
+   📅 REGISTRO DE AUSENCIAS
+   Guarda las ausencias por mes y por domingo
+   Firestore -> colección "ausencias"
+===================================================== */
+
+const INTEGRANTES_AUSENCIAS = ["Milly", "Carolina", "Jason"];
+
+function toggleAusencias() {
+  const el = document.getElementById("ausencias");
+
+  if (!el) return;
+
+  el.style.display = el.style.display === "block" ? "none" : "block";
+
+  if (el.style.display === "block") {
+    cargarAusencias();
+  }
+}
+
+
+/* =====================================================
+   OBTENER CLAVE DEL MES
+   Ejemplo: 2026-08
+===================================================== */
+
+function obtenerClaveMesAusencias(date) {
+
+  return `${date.getFullYear()}-${String(
+    date.getMonth() + 1
+  ).padStart(2, "0")}`;
+
+}
+
+
+/* =====================================================
+   OBTENER TODOS LOS DOMINGOS DEL MES
+===================================================== */
+
+function obtenerDomingosDelMesAusencias(mesKey) {
+
+  const [year, month] = mesKey.split("-").map(Number);
+
+  const domingos = [];
+
+  const fecha = new Date(year, month - 1, 1);
+
+  while (fecha.getMonth() === month - 1) {
+
+    if (fecha.getDay() === 0) {
+
+      domingos.push(
+        `${fecha.getFullYear()}-${String(
+          fecha.getMonth() + 1
+        ).padStart(2, "0")}-${String(
+          fecha.getDate()
+        ).padStart(2, "0")}`
+      );
+
+    }
+
+    fecha.setDate(fecha.getDate() + 1);
+
+  }
+
+  return domingos;
+}
+
+
+/* =====================================================
+   FORMATEAR MES
+===================================================== */
+
+function formatearMesAusencias(mesKey) {
+
+  const [year, month] = mesKey.split("-").map(Number);
+
+  return new Intl.DateTimeFormat("es-ES", {
+    month: "long",
+    year: "numeric"
+  }).format(new Date(year, month - 1, 1));
+
+}
+
+
+/* =====================================================
+   FORMATEAR FECHA
+===================================================== */
+
+function formatearFechaAusencia(fechaISO) {
+
+  const [year, month, day] = fechaISO.split("-").map(Number);
+
+  return new Intl.DateTimeFormat("es-ES", {
+    weekday: "long",
+    day: "numeric",
+    month: "long"
+  }).format(new Date(year, month - 1, day));
+
+}
+
+
+/* =====================================================
+   CAMBIAR MES
+===================================================== */
+
+function cambiarMesAusencias(delta) {
+
+  const input = document.getElementById("ausencias-mes");
+
+  if (!input) return;
+
+  const [year, month] = input.value.split("-").map(Number);
+
+  const nuevaFecha = new Date(
+    year,
+    month - 1 + delta,
+    1
+  );
+
+  input.value = obtenerClaveMesAusencias(nuevaFecha);
+
+  cargarAusencias();
+
+}
+
+
+/* =====================================================
+   CARGAR AUSENCIAS DESDE FIRESTORE
+===================================================== */
+
+async function cargarAusencias() {
+
+  const cont = document.getElementById("ausencias");
+
+  if (!cont) return;
+
+
+  const hoy = new Date();
+
+  const mesActual = obtenerClaveMesAusencias(hoy);
+
+
+  cont.innerHTML = `
+
+    <div class="card" style="margin-top:12px;">
+
+      <h2>📅 Ausencias de integrantes</h2>
+
+
+      <div
+        style="
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          gap:8px;
+          margin:12px 0;
+          flex-wrap:wrap;
+        "
+      >
+
+        <button onclick="cambiarMesAusencias(-1)">
+          ◀️
+        </button>
+
+
+        <input
+          type="month"
+          id="ausencias-mes"
+          value="${mesActual}"
+          onchange="cargarAusencias()"
+          class="edit-input"
+          style="width:auto;margin:0;"
+        />
+
+
+        <button onclick="cambiarMesAusencias(1)">
+          ▶️
+        </button>
+
+      </div>
+
+
+      <div id="ausencias-contenido"></div>
+
+    </div>
+
+  `;
+
+
+  const mesKey =
+    document.getElementById("ausencias-mes").value;
+
+
+  const contenido =
+    document.getElementById("ausencias-contenido");
+
+
+  try {
+
+    /*
+      Cada mes es un documento independiente.
+
+      Ejemplo:
+
+      ausencias
+        └── 2026-08
+    */
+
+    const snap = await getDoc(
+      doc(db, "ausencias", mesKey)
+    );
+
+
+    const datos = snap.exists()
+      ? snap.data()
+      : {};
+
+
+    const fechasGuardadas =
+      datos.fechas || {};
+
+
+    const domingos =
+      obtenerDomingosDelMesAusencias(mesKey);
+
+
+    if (!domingos.length) {
+
+      contenido.innerHTML =
+        "<p>No hay domingos en este mes.</p>";
+
+      return;
+
+    }
+
+
+    contenido.innerHTML = `
+
+      <p style="margin-bottom:14px;">
+
+        Marca a los integrantes que
+        <strong>no estarán disponibles</strong>
+        cada domingo.
+
+      </p>
+
+
+      ${domingos.map(fecha => `
+
+        <div
+          class="card"
+          style="
+            margin:12px 0;
+            padding:14px;
+          "
+        >
+
+          <h3
+            style="
+              margin-top:0;
+              text-transform:capitalize;
+            "
+          >
+
+            ${formatearFechaAusencia(fecha)}
+
+          </h3>
+
+
+          <div
+            style="
+              display:flex;
+              flex-direction:column;
+              gap:10px;
+            "
+          >
+
+            ${INTEGRANTES_AUSENCIAS.map(integrante => `
+
+              <label
+                style="
+                  display:flex;
+                  align-items:center;
+                  gap:10px;
+                  cursor:pointer;
+                "
+              >
+
+                <input
+                  type="checkbox"
+                  class="ausencia-checkbox"
+                  data-fecha="${fecha}"
+                  data-integrante="${integrante}"
+
+                  ${
+                    Array.isArray(
+                      fechasGuardadas[fecha]
+                    ) &&
+                    fechasGuardadas[fecha]
+                      .includes(integrante)
+                      ? "checked"
+                      : ""
+                  }
+
+                  style="
+                    width:20px;
+                    height:20px;
+                  "
+                >
+
+                <span>
+                  ${integrante}
+                </span>
+
+              </label>
+
+            `).join("")}
+
+          </div>
+
+        </div>
+
+      `).join("")}
+
+
+      <button
+        id="guardar-ausencias-btn"
+        style="
+          background:var(--accent);
+          margin-top:8px;
+        "
+        onclick="guardarAusencias()"
+      >
+
+        💾 Guardar ausencias
+
+      </button>
+
+    `;
+
+
+  } catch (error) {
+
+    console.error(
+      "Error cargando ausencias:",
+      error
+    );
+
+
+    contenido.innerHTML =
+      "<p>❌ No se pudieron cargar las ausencias.</p>";
+
+  }
+
+}
+
+
+/* =====================================================
+   GUARDAR AUSENCIAS EN FIRESTORE
+===================================================== */
+
+async function guardarAusencias() {
+
+  /*
+    Si no estamos en modo edición,
+    solicitamos el mismo PIN que utilizas
+    actualmente.
+  */
+
+  if (!modoEdicion) {
+
+    const pin = prompt(
+      "Introduce el PIN para guardar las ausencias:"
+    );
+
+
+    if (pin !== "2025") {
+
+      if (pin) {
+        alert("❌ PIN incorrecto");
+      }
+
+      return;
+
+    }
+
+  }
+
+
+  const inputMes =
+    document.getElementById("ausencias-mes");
+
+
+  if (!inputMes) return;
+
+
+  const mesKey =
+    inputMes.value;
+
+
+  const fechas = {};
+
+
+  /*
+    Recogemos todos los checkboxes
+    seleccionados.
+  */
+
+  document
+    .querySelectorAll(".ausencia-checkbox")
+    .forEach(checkbox => {
+
+      const fecha =
+        checkbox.dataset.fecha;
+
+      const integrante =
+        checkbox.dataset.integrante;
+
+
+      if (!fechas[fecha]) {
+        fechas[fecha] = [];
+      }
+
+
+      if (checkbox.checked) {
+
+        fechas[fecha].push(
+          integrante
+        );
+
+      }
+
+    });
+
+
+  try {
+
+    /*
+      Guardamos todo el mes en un único
+      documento de Firestore.
+    */
+
+    await setDoc(
+      doc(
+        db,
+        "ausencias",
+        mesKey
+      ),
+      {
+
+        mes: mesKey,
+
+        fechas: fechas,
+
+        actualizado:
+          new Date().toISOString()
+
+      },
+      {
+        merge: true
+      }
+    );
+
+
+    alert(
+      `✅ Ausencias de ${
+        formatearMesAusencias(mesKey)
+      } guardadas`
+    );
+
+
+    /*
+      Volvemos a cargar los datos desde
+      Firestore para comprobar que todo
+      quedó guardado correctamente.
+    */
+
+    await cargarAusencias();
+
+
+  } catch (error) {
+
+    console.error(
+      "Error guardando ausencias:",
+      error
+    );
+
+
+    alert(
+      "❌ No se pudieron guardar las ausencias"
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   DISPONER LAS FUNCIONES GLOBALMENTE
+   Para que funcionen los onclick del HTML
+===================================================== */
+
+window.toggleAusencias =
+  toggleAusencias;
+
+window.cargarAusencias =
+  cargarAusencias;
+
+window.guardarAusencias =
+  guardarAusencias;
+
+window.cambiarMesAusencias =
+  cambiarMesAusencias;
 
 function normalizar(t){ return (t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
 function resaltar(t,q){ if(!q) return t; try{ const r=new RegExp(`(${q})`,"gi"); return t.replace(r,"<mark>$1</mark>"); }catch(e){return t;} }
