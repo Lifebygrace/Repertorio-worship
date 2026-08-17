@@ -550,6 +550,204 @@ body.dark .proximo-label {
   text-decoration: underline;
 }
 
+
+/* =====================================================
+   🛠️ HERRAMIENTAS
+===================================================== */
+
+#herramientas-wrapper {
+  width: 100%;
+  margin: 12px auto;
+  text-align: center;
+}
+
+
+/* =========================
+   BOTÓN PRINCIPAL
+========================= */
+
+#herramientas-toggle {
+
+  width: 100%;
+  max-width: 900px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+
+  margin: 0 auto;
+
+  cursor: pointer;
+
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.2s ease;
+
+}
+
+
+/* Efecto al pulsar */
+
+#herramientas-toggle:active {
+
+  transform:
+    scale(0.97);
+
+}
+
+
+/* Flecha */
+
+#herramientas-flecha {
+
+  display: inline-block;
+
+  transition:
+    transform 0.25s ease;
+
+}
+
+
+/* Girar flecha */
+
+#herramientas-toggle.abierto
+#herramientas-flecha {
+
+  transform:
+    rotate(180deg);
+
+}
+
+
+/* =========================
+   PANEL
+========================= */
+
+#herramientas-panel {
+
+  width: 100%;
+
+  max-width: 900px;
+
+  margin: 0 auto;
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(
+      2,
+      minmax(0, 1fr)
+    );
+
+  gap: 10px;
+
+  padding: 0;
+
+  max-height: 0;
+
+  overflow: hidden;
+
+  opacity: 0;
+
+  transform:
+    translateY(-8px);
+
+  transition:
+
+    max-height 0.3s ease,
+
+    opacity 0.2s ease,
+
+    padding 0.3s ease,
+
+    transform 0.3s ease;
+
+}
+
+
+/* =========================
+   PANEL ABIERTO
+========================= */
+
+#herramientas-panel.abierto {
+
+  max-height: 1000px;
+
+  opacity: 1;
+
+  padding:
+    12px 0 6px;
+
+  transform:
+    translateY(0);
+
+}
+
+
+/* =========================
+   BOTONES DENTRO
+========================= */
+
+#herramientas-panel button {
+
+  width: 100%;
+
+  margin: 0;
+
+  min-height: 44px;
+
+}
+
+
+/* =========================
+   TABLET / ESCRITORIO
+========================= */
+
+@media (min-width: 700px) {
+
+  #herramientas-panel {
+
+    grid-template-columns:
+      repeat(
+        3,
+        minmax(0, 1fr)
+      );
+
+  }
+
+}
+
+
+/* =========================
+   MÓVIL PEQUEÑO
+========================= */
+
+@media (max-width: 380px) {
+
+  #herramientas-panel {
+
+    grid-template-columns:
+      1fr;
+
+  }
+
+}
+
+
+/* =========================
+   MODO OSCURO
+========================= */
+
+body.dark #herramientas-panel {
+
+  /* Los botones conservan
+     automáticamente tus estilos
+     actuales */
+
+}
   </style>
 </head>
 
@@ -569,8 +767,35 @@ body.dark .proximo-label {
     <img src="https://raw.githubusercontent.com/Lifebygrace/Repertorio-worship/main/logo.jpeg" alt="Logo" />
     <h1 style="margin:0">Repertorio ✟</h1>
   </div>
-  <div class="controls">
-    <button onclick="toggleDark()">🌙 / ☀️</button>
+  
+  <!-- =========================
+     🛠️ HERRAMIENTAS
+========================= -->
+
+<div id="herramientas-wrapper">
+
+  <button
+    id="herramientas-toggle"
+    type="button"
+    onclick="toggleHerramientas()"
+    aria-expanded="false"
+    aria-controls="herramientas-panel"
+  >
+    🛠️ Herramientas
+    <span id="herramientas-flecha">▼</span>
+  </button>
+
+  <div
+    id="herramientas-panel"
+    aria-hidden="true"
+  >
+
+    <!-- =================================
+         PEGA AQUÍ TUS 9 BOTONES ACTUALES
+         SIN MODIFICARLOS
+    ================================== -->
+
+  <button onclick="toggleDark()">🌙 / ☀️</button>
     <button onclick="activarEdicion()">✏️ Editar</button>
     <button onclick="abrirMetronomo()">🕒 Metrónomo</button>
     <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵Mostrar lista</button>
@@ -1590,6 +1815,134 @@ window.cambiarMesAusencias =
   cambiarMesAusencias;
 ////////////////////
 
+
+
+/* =====================================================
+   🛠️ HERRAMIENTAS
+   ABRIR / CERRAR
+===================================================== */
+
+function toggleHerramientas() {
+
+  const panel =
+    document.getElementById(
+      "herramientas-panel"
+    );
+
+  const button =
+    document.getElementById(
+      "herramientas-toggle"
+    );
+
+  if (
+    !panel ||
+    !button
+  ) {
+
+    return;
+
+  }
+
+
+  const abierto =
+    panel.classList.toggle(
+      "abierto"
+    );
+
+
+  button.classList.toggle(
+    "abierto",
+    abierto
+  );
+
+
+  button.setAttribute(
+    "aria-expanded",
+    abierto
+      ? "true"
+      : "false"
+  );
+
+
+  panel.setAttribute(
+    "aria-hidden",
+    abierto
+      ? "false"
+      : "true"
+  );
+
+}
+
+
+/* =====================================================
+   CERRAR AL PULSAR FUERA
+===================================================== */
+
+document.addEventListener(
+  "click",
+  function(event) {
+
+    const wrapper =
+      document.getElementById(
+        "herramientas-wrapper"
+      );
+
+    const panel =
+      document.getElementById(
+        "herramientas-panel"
+      );
+
+    const button =
+      document.getElementById(
+        "herramientas-toggle"
+      );
+
+
+    if (
+      !wrapper ||
+      !panel ||
+      !button
+    ) {
+
+      return;
+
+    }
+
+
+    /* Si el menú está abierto
+       y pulsamos fuera */
+
+    if (
+      panel.classList.contains(
+        "abierto"
+      ) &&
+      !wrapper.contains(
+        event.target
+      )
+    ) {
+
+      panel.classList.remove(
+        "abierto"
+      );
+
+      button.classList.remove(
+        "abierto"
+      );
+
+      button.setAttribute(
+        "aria-expanded",
+        "false"
+      );
+
+      panel.setAttribute(
+        "aria-hidden",
+        "true"
+      );
+
+    }
+
+  }
+);
 
 
 function normalizar(t){ return (t||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase(); }
