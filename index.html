@@ -800,11 +800,22 @@ body.dark #herramientas-panel {
     <button onclick="abrirMetronomo()">🕒 Metrónomo</button>
     <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵Mostrar lista</button>
     <button onclick="toggleListadoMensual()">📅 Listado mensual</button>
-    <button style="background:var(--accent);" onclick="herramientaIrA(toggleRegistro, 'registro-canciones')">📊 Registro de canciones</button>
-    <button onclick="herramientaIrA(toggleAnalisisReal, 'analisis-real')">📈 Análisis real</button>
-    <button onclick="window.open('https://drive.google.com/drive/folders/1RxOwnOCtt7Oa_J6rUzG1jC242md5MT1-', '_blank')">
-  🎧 Recursos </button>
-  <button onclick="herramientaIrA(toggleAusencias, 'ausencias')">
+    <button
+  style="background:var(--accent);"
+  onclick="herramientaIrA('registro-canciones')"
+>
+  📊 Registro de canciones
+</button>
+
+<button
+  onclick="herramientaIrA('analisis-real')"
+>
+  📈 Análisis real
+</button>
+
+<button
+  onclick="herramientaIrA('ausencias')"
+>
   📅 Ausencias
 </button>
   </div>
@@ -1915,57 +1926,102 @@ function cerrarHerramientas() {
    IR A UNA SECCIÓN DESDE HERRAMIENTAS
 ===================================================== */
 
-function herramientaIrA(
-  funcion,
-  idSeccion
-) {
+function herramientaIrA(idSeccion) {
 
-  /* Ejecutar función original */
+  /* ================================================
+     IDENTIFICAR QUÉ SECCIÓN SE HA PULSADO
+  ================================================= */
 
-  if (
-    typeof funcion === "function"
-  ) {
+  if (idSeccion === "registro-canciones") {
 
-    funcion();
+    if (
+      typeof window.toggleRegistro === "function"
+    ) {
+
+      window.toggleRegistro();
+
+    }
 
   }
 
 
-  /* Cerrar Herramientas */
+  else if (idSeccion === "analisis-real") {
+
+    if (
+      typeof window.toggleAnalisisReal === "function"
+    ) {
+
+      window.toggleAnalisisReal();
+
+    }
+
+  }
+
+
+  else if (idSeccion === "ausencias") {
+
+    if (
+      typeof window.toggleAusencias === "function"
+    ) {
+
+      window.toggleAusencias();
+
+    }
+
+  }
+
+
+  /* ================================================
+     CERRAR HERRAMIENTAS
+  ================================================= */
 
   cerrarHerramientas();
 
 
-  /* Esperar a que la sección
-     se haga visible */
+  /* ================================================
+     ESPERAR A QUE LA SECCIÓN APAREZCA
+  ================================================= */
 
-  setTimeout(
-    function() {
+  setTimeout(function() {
 
-      const seccion =
-        document.getElementById(
-          idSeccion
-        );
-
-      if (!seccion) {
-        return;
-      }
+    const seccion =
+      document.getElementById(idSeccion);
 
 
-      /* Scroll suave */
+    if (!seccion) {
 
-      seccion.scrollIntoView({
+      console.error(
+        "No se encontró la sección:",
+        idSeccion
+      );
 
-        behavior: "smooth",
+      return;
 
-        block: "start"
+    }
 
-      });
 
-    },
-    120
-  );
+    /* ==============================================
+       SCROLL SUAVE
+    ============================================== */
+
+    seccion.scrollIntoView({
+
+      behavior: "smooth",
+
+      block: "start"
+
+    });
+
+
+  }, 200);
+
 }
+
+
+/* Hacerla accesible desde los botones HTML */
+
+window.herramientaIrA =
+  herramientaIrA;
 
 
 /* =====================================================
