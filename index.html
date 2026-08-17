@@ -2537,57 +2537,215 @@ function stopMetronome(){
 // TAP TEMPO
 ///////////////////////////////
 
-function tapTempo(){
+let tapTimes = [];
+let lastTap = 0;
+
+// Número de intervalos recientes utilizados
+// para calcular el BPM.
+const TAP_INTERVALS_TO_USE = 3;
+
+// Si pasan más de 2 segundos entre taps,
+// empezamos una nueva medición.
+const RESET_TIME = 2000;
+
+// Evita dobles registros accidentales,
+// pero permite taps humanos muy rápidos.
+const MIN_INTERVAL = 45;
+
+
+function tapTempo() {
 
   initMetronome();
 
   const now = performance.now();
 
-  // reset si pasa mucho tiempo
-  if(now - lastTap > RESET_TIME){
+
+  /* =================================================
+     SI HA PASADO MUCHO TIEMPO,
+     COMENZAMOS UNA NUEVA MEDICIÓN
+  ================================================= */
+
+  if (
+    lastTap &&
+    now - lastTap > RESET_TIME
+  ) {
+
     tapTimes = [];
+
   }
 
-  // ignorar taps demasiado rápidos
-  if(lastTap && (now - lastTap) < MIN_INTERVAL){
+
+  /* =================================================
+     IGNORAR ÚNICAMENTE DOBLE REGISTRO
+     
+     45 ms es suficientemente bajo para no
+     interferir con tempos musicales normales.
+  ================================================= */
+
+  if (
+    lastTap &&
+    now - lastTap < MIN_INTERVAL
+  ) {
+
     return;
+
   }
 
-  lastTap = now;
+
+  /* =================================================
+     REGISTRAR TAP
+  ================================================= */
 
   tapTimes.push(now);
 
-  if(tapTimes.length > MAX_TAPS){
+  lastTap = now;
+
+
+  /* =================================================
+     MANTENER SOLO LOS ÚLTIMOS TAPS
+     
+     No queremos que un BPM anterior siga
+     afectando demasiado cuando el usuario
+     cambia rápidamente de tempo.
+  ================================================= */
+
+  if (tapTimes.length > 6) {
+
     tapTimes.shift();
+
   }
 
-  if(tapTimes.length < 2) return;
+
+  /* =================================================
+     NECESITAMOS AL MENOS 2 TAPS
+  ================================================= */
+
+  if (tapTimes.length < 2) {
+
+    return;
+
+  }
+
+
+  /* =================================================
+     CALCULAR INTERVALOS
+  ================================================= */
 
   let intervals = [];
 
-  for(let i = 1; i < tapTimes.length; i++){
-    intervals.push(tapTimes[i] - tapTimes[i-1]);
+  for (
+    let i = 1;
+    i < tapTimes.length;
+    i++
+  ) {
+
+    intervals.push(
+      tapTimes[i] - tapTimes[i - 1]
+    );
+
   }
 
-  const avg = intervals.reduce((a,b)=>a+b,0) / intervals.length;
 
-  const bpm = Math.round(60000 / avg);
+  /* =================================================
+     UTILIZAR SOLO LOS ÚLTIMOS INTERVALOS
+     
+     Esto permite cambiar rápidamente:
 
-  if(bpm >= 40 && bpm <= 300){
+     90 BPM
+       ↓
+     119 BPM
+       ↓
+     100 BPM
 
-    currentBpm = bpm;
+     sin que los taps antiguos dominen
+     el cálculo.
+  ================================================= */
 
-    bpmSlider().value = bpm;
+  const recentIntervals =
+    intervals.slice(
+      -TAP_INTERVALS_TO_USE
+    );
 
-    bpmValue().textContent = bpm;
 
-    localStorage.setItem("metroBpm", bpm);
+  const averageInterval =
+    recentIntervals.reduce(
+      (sum, interval) =>
+        sum + interval,
+      0
+    ) / recentIntervals.length;
 
-    if(isRunning){
-      stopMetronome();
-      startMetronome();
-    }
+
+  /* =================================================
+     CONVERTIR INTERVALO → BPM
+  ================================================= */
+
+  const bpm =
+    Math.round(
+      60000 / averageInterval
+    );
+
+
+  /* =================================================
+     LIMITAR BPM VÁLIDOS
+  ================================================= */
+
+  if (
+    bpm < 40 ||
+    bpm > 300
+  ) {
+
+    return;
+
   }
+
+
+  /* =================================================
+     ACTUALIZAR METRÓNOMO
+  ================================================= */
+
+  currentBpm = bpm;
+
+
+  const slider =
+    bpmSlider();
+
+  const display =
+    bpmValue();
+
+
+  if (slider) {
+
+    slider.value = bpm;
+
+  }
+
+
+  if (display) {
+
+    display.textContent = bpm;
+
+  }
+
+
+  localStorage.setItem(
+    "metroBpm",
+    bpm
+  );
+
+
+  /* =================================================
+     SI EL METRÓNOMO ESTÁ FUNCIONANDO,
+     ACTUALIZAR SU VELOCIDAD
+  ================================================= */
+
+  if (isRunning) {
+
+    stopMetronome();
+
+    startMetronome();
+
+  }
+
 }
 
 function toggleMetronome(){
@@ -2626,7 +2784,23 @@ document.addEventListener("click", e => {
   }
 });
 
-document.getElementById("tapTempo").addEventListener("click", tapTempo);
+const tapButton =
+  document.getElementById("tapTempo");
+
+if (tapButton) {
+
+  tapButton.addEventListener(
+    "pointerdown",
+    function(event) {
+
+      event.preventDefault();
+
+      tapTempo();
+
+    }
+  );
+
+}
 
 
 // 🔊 Reactivar audio al volver a la app (iOS / PWA)
@@ -2642,17 +2816,6 @@ window.addEventListener("pageshow", ()=>{
   }
 });
 
-let lastTouchEnd = 0;
-
-document.addEventListener("touchend", function (event) {
-  const now = Date.now();
-  if (now - lastTouchEnd <= 300) {
-    if (event.target.closest("#tapTempo")) {
-      event.preventDefault();
-    }
-  }
-  lastTouchEnd = now;
-}, { passive: false });
 
 /* BOOT */
 
