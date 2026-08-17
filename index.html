@@ -800,11 +800,11 @@ body.dark #herramientas-panel {
     <button onclick="abrirMetronomo()">🕒 Metrónomo</button>
     <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵Mostrar lista</button>
     <button onclick="toggleListadoMensual()">📅 Listado mensual</button>
-    <button style="background:var(--accent);" onclick="toggleRegistro()">📊 Registro de canciones</button>
-    <button onclick="toggleAnalisisReal()">📈 Análisis real</button>
+    <button style="background:var(--accent);" onclick="herramientaIrA(toggleRegistro, 'registro-canciones')">📊 Registro de canciones</button>
+    <button onclick="herramientaIrA(toggleAnalisisReal, 'analisis-real')">📈 Análisis real</button>
     <button onclick="window.open('https://drive.google.com/drive/folders/1RxOwnOCtt7Oa_J6rUzG1jC242md5MT1-', '_blank')">
   🎧 Recursos </button>
-  <button onclick="toggleAusencias()">
+  <button onclick="herramientaIrA(toggleAusencias, 'ausencias')">
   📅 Ausencias
 </button>
   </div>
@@ -1816,7 +1816,6 @@ window.cambiarMesAusencias =
 ////////////////////
 
 
-
 /* =====================================================
    🛠️ HERRAMIENTAS
    ABRIR / CERRAR
@@ -1834,27 +1833,19 @@ function toggleHerramientas() {
       "herramientas-toggle"
     );
 
-  if (
-    !panel ||
-    !button
-  ) {
-
+  if (!panel || !button) {
     return;
-
   }
-
 
   const abierto =
     panel.classList.toggle(
       "abierto"
     );
 
-
   button.classList.toggle(
     "abierto",
     abierto
   );
-
 
   button.setAttribute(
     "aria-expanded",
@@ -1863,15 +1854,119 @@ function toggleHerramientas() {
       : "false"
   );
 
-
   panel.setAttribute(
     "aria-hidden",
     abierto
       ? "false"
       : "true"
   );
-
 }
+
+
+/* =====================================================
+   HACER LA FUNCIÓN ACCESIBLE DESDE HTML
+===================================================== */
+
+window.toggleHerramientas =
+  toggleHerramientas;
+
+
+/* =====================================================
+   CERRAR HERRAMIENTAS
+===================================================== */
+
+function cerrarHerramientas() {
+
+  const panel =
+    document.getElementById(
+      "herramientas-panel"
+    );
+
+  const button =
+    document.getElementById(
+      "herramientas-toggle"
+    );
+
+  if (!panel || !button) {
+    return;
+  }
+
+  panel.classList.remove(
+    "abierto"
+  );
+
+  button.classList.remove(
+    "abierto"
+  );
+
+  button.setAttribute(
+    "aria-expanded",
+    "false"
+  );
+
+  panel.setAttribute(
+    "aria-hidden",
+    "true"
+  );
+}
+
+
+/* =====================================================
+   IR A UNA SECCIÓN DESDE HERRAMIENTAS
+===================================================== */
+
+function herramientaIrA(
+  funcion,
+  idSeccion
+) {
+
+  /* Ejecutar función original */
+
+  if (
+    typeof funcion === "function"
+  ) {
+
+    funcion();
+
+  }
+
+
+  /* Cerrar Herramientas */
+
+  cerrarHerramientas();
+
+
+  /* Esperar a que la sección
+     se haga visible */
+
+  setTimeout(
+    function() {
+
+      const seccion =
+        document.getElementById(
+          idSeccion
+        );
+
+      if (!seccion) {
+        return;
+      }
+
+
+      /* Scroll suave */
+
+      seccion.scrollIntoView({
+
+        behavior: "smooth",
+
+        block: "start"
+
+      });
+
+    },
+    120
+  );
+}
+
 
 /* =====================================================
    CERRAR AL PULSAR FUERA
@@ -1896,7 +1991,6 @@ document.addEventListener(
         "herramientas-toggle"
       );
 
-
     if (
       !wrapper ||
       !panel ||
@@ -1907,10 +2001,6 @@ document.addEventListener(
 
     }
 
-
-    /* Si el menú está abierto
-       y pulsamos fuera */
-
     if (
       panel.classList.contains(
         "abierto"
@@ -1920,28 +2010,13 @@ document.addEventListener(
       )
     ) {
 
-      panel.classList.remove(
-        "abierto"
-      );
-
-      button.classList.remove(
-        "abierto"
-      );
-
-      button.setAttribute(
-        "aria-expanded",
-        "false"
-      );
-
-      panel.setAttribute(
-        "aria-hidden",
-        "true"
-      );
+      cerrarHerramientas();
 
     }
 
   }
 );
+
 
 
 window.toggleHerramientas =
