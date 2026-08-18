@@ -3180,14 +3180,43 @@ async function cargarSeccion(tipo){
   if (sel) sel.value = data.cantante || "";
 }
       
-      // Sección principal con título y canciones
-     cont.innerHTML = `
+// Sección principal con título y canciones
+cont.innerHTML = `
   <h3>${data.titulo || ""}</h3>
+
   ${tipo === "semana"
-    ? `<p>🎤 Cantante: <strong>${data.cantante || "-"}</strong></p>`
+    ? `
+      <p>
+        Domingo ${
+          data.fechaServicio
+            ? new Date(
+                data.fechaServicio + "T00:00:00"
+              ).toLocaleDateString(
+                "es-ES",
+                {
+                  day: "numeric",
+                  month: "long"
+                }
+              )
+            : "-"
+        } 🗓️
+      </p>
+
+      <p>
+        🎤 Cantante:
+        <strong>
+          ${data.cantante || "-"}
+        </strong>
+      </p>
+    `
     : ""
   }
-  <ul>${(data.canciones || []).map(c => `<li>${c}</li>`).join("")}</ul>
+
+  <ul>
+    ${(data.canciones || [])
+      .map(c => `<li>${c}</li>`)
+      .join("")}
+  </ul>
 `;
 
       // Renderizar notas si existe el contenedor
