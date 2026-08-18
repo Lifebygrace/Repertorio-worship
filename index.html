@@ -3752,7 +3752,135 @@ window.addEventListener(
 
   }
 );
+/* =====================================================
+   👆 DOBLE TOQUE PARA CERRAR SECCIONES
+===================================================== */
 
+function activarDobleToqueCabecera(
+  idSeccion,
+  funcionCerrar
+) {
+
+  const seccion =
+    document.getElementById(
+      idSeccion
+    );
+
+  if (!seccion) return;
+
+  const cabecera =
+    seccion.querySelector(
+      "h2"
+    );
+
+  if (!cabecera) return;
+
+  /* Evitar añadir el listener
+     más de una vez */
+
+  if (
+    cabecera.dataset.dobleToqueActivo === "true"
+  ) {
+    return;
+  }
+
+  cabecera.dataset.dobleToqueActivo =
+    "true";
+
+
+  let ultimoToque = 0;
+
+
+  cabecera.addEventListener(
+    "pointerup",
+    function(event) {
+
+      const ahora =
+        performance.now();
+
+
+      if (
+        ahora - ultimoToque >= 80 &&
+        ahora - ultimoToque <= 400
+      ) {
+
+        if (
+          typeof funcionCerrar ===
+          "function"
+        ) {
+
+          funcionCerrar();
+
+        }
+
+        ultimoToque = 0;
+
+        return;
+      }
+
+
+      ultimoToque = ahora;
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   REGISTRO
+===================================================== */
+
+function activarDobleToqueRegistro() {
+
+  activarDobleToqueCabecera(
+    "registro-canciones",
+    toggleRegistro
+  );
+
+}
+
+
+/* =====================================================
+   ANÁLISIS REAL
+===================================================== */
+
+function activarDobleToqueAnalisisReal() {
+
+  activarDobleToqueCabecera(
+    "analisis-real",
+    toggleAnalisisReal
+  );
+
+}
+
+
+/* =====================================================
+   AUSENCIAS
+===================================================== */
+
+function activarDobleToqueAusencias() {
+
+  activarDobleToqueCabecera(
+    "ausencias",
+    toggleAusencias
+  );
+
+}
+
+/* =====================================================
+   COMPROBAR CABECERAS DINÁMICAS
+===================================================== */
+
+setInterval(function() {
+
+  activarDobleToqueRegistro();
+
+  activarDobleToqueAnalisisReal();
+
+  activarDobleToqueAusencias();
+
+}, 500);
 
 /* BOOT */
 
