@@ -2324,45 +2324,338 @@ function construirCard(d){
   const div = document.createElement("div");
   div.className = "card fade-apple";
 
-  // título (editable en modo edición)
-  const q = document.getElementById("search").value || "";
-  const tituloHtml = modoEdicion 
-    ? `<input type="text" class="edit-titulo edit-input" value="${(d.titulo||'').replace(/"/g,'&quot;')}" />`
-    : `<h2>${resaltar(d.titulo||'', q)}</h2>`;
 
-  // meta-line (vecestocada / última) justo debajo del título
-  const metaHtml = `
-    <div class="meta-line">
-      <span class="plays" id="plays-${d.id}">🎵 Veces tocada: —</span>
-      <span class="last" id="last-${d.id}">| Última vez: —</span>
-      ${modoEdicion ? `<button class="tocada-btn" id="tocadaBtn-${d.id}">Tocada +1</button>` : ''}
+/* =====================================================
+   🎵 TARJETA NORMAL DE CANCIÓN
+   En modo edición se mantiene visualmente normal
+   hasta que el usuario pulse la tarjeta.
+===================================================== */
+
+const q =
+  document.getElementById(
+    "search"
+  ).value || "";
+
+
+/* Título */
+
+const tituloHtml =
+  `<h2>${resaltar(
+    d.titulo || "",
+    q
+  )}</h2>`;
+
+
+/* Meta */
+
+const metaHtml = `
+  <div class="meta-line">
+
+    <span
+      class="plays"
+      id="plays-${d.id}"
+    >
+      🎵 Veces tocada: —
+    </span>
+
+    <span
+      class="last"
+      id="last-${d.id}"
+    >
+      | Última vez: —
+    </span>
+
+  </div>
+`;
+
+
+/* Acordes */
+
+const acordesHtml =
+  `<p>${d.acordes || ""}</p>`;
+
+
+/* Imágenes */
+
+const imagenesHtml =
+  `<div>
+    ${(d.imagenes || [])
+      .map(
+        u =>
+          `<img
+            src="${u}"
+            style="
+              width:100%;
+              margin-top:8px;
+              border-radius:8px;
+            "
+          >`
+      )
+      .join("")}
+  </div>`;
+
+
+/* Audio */
+
+const audioHtml =
+  d.audio
+    ? `<a
+        class="link-btn"
+        href="${d.audio}"
+        target="_blank"
+      >
+        🎧 Escuchar
+      </a>`
+    : "";
+
+
+/* YouTube */
+
+const youtubeHtml =
+  d.youtube
+    ? `<a
+        class="link-btn"
+        href="${d.youtube}"
+        target="_blank"
+      >
+        📺 YouTube
+      </a>`
+    : "";
+
+
+/* Render normal */
+
+div.innerHTML =
+
+  tituloHtml +
+
+  metaHtml +
+
+  acordesHtml +
+
+  `<div style="margin-top:8px">
+    ${imagenesHtml}
+  </div>` +
+
+  `<div style="margin-top:8px">
+    ${audioHtml}
+    ${youtubeHtml}
+  </div>`;
+  
+  /* =====================================================
+   ✏️ ABRIR EDITOR DE UNA CANCIÓN
+===================================================== */
+
+function abrirEditorCancion(
+  d,
+  div
+) {
+
+  if (!modoEdicion) {
+    return;
+  }
+
+
+  /* Evitar volver a abrirlo */
+
+  if (
+    div.dataset.editando === "true"
+  ) {
+    return;
+  }
+
+
+  div.dataset.editando =
+    "true";
+
+
+  div.innerHTML = `
+
+    <input
+      type="text"
+      class="edit-titulo edit-input"
+      value="${(d.titulo || "")
+        .replace(/"/g, "&quot;")}"
+      placeholder="Título"
+    >
+
+
+    <textarea
+      class="edit-acordes edit-input"
+      placeholder="Acordes"
+    >${d.acordes || ""}</textarea>
+
+
+    <textarea
+      class="edit-imagenes edit-input"
+      data-id="${d.id}"
+      placeholder="Una imagen por línea"
+    >${(d.imagenes || []).join("\n")}</textarea>
+
+
+    <div
+      id="preview-${d.id}"
+      class="preview-edicion"
+    >
+      ${(d.imagenes || [])
+        .map(
+          u =>
+            `<img
+              class="preview-img"
+              src="${u}"
+            />`
+        )
+        .join("")}
     </div>
+
+
+    <input
+      type="text"
+      class="edit-audio edit-input"
+      value="${(d.audio || "")
+        .replace(/"/g, "&quot;")}"
+      placeholder="Link de audio"
+    >
+
+
+    <input
+      type="text"
+      class="edit-youtube edit-input"
+      value="${(d.youtube || "")
+        .replace(/"/g, "&quot;")}"
+      placeholder="Link de YouTube"
+    >
+
+
+    <div
+      style="
+        margin-top:10px;
+        display:flex;
+        gap:8px;
+        flex-wrap:wrap;
+      "
+    >
+
+      <button
+        onclick="
+          guardarEdicion('${d.id}', this)
+        "
+      >
+        💾 Guardar
+      </button>
+
+
+      <button
+        onclick="
+          cancelarEdicionCancion('${d.id}')
+        "
+      >
+        ✖️ Cancelar
+      </button>
+
+
+      <button
+        class="delete-btn"
+        onclick="
+          borrarCancion('${d.id}')
+        "
+      >
+        🗑️ Borrar
+      </button>
+
+    </div>
+
   `;
 
-  // acordes
-  const acordesHtml = modoEdicion 
-    ? `<textarea class="edit-acordes edit-input">${(d.acordes||'')}</textarea>`
-    : `<p>${(d.acordes||'')}</p>`;
 
-  // imágenes: en edición mostramos textarea para URLs + preview div; fuera de edición mostramos imgs
-  const imagenesHtml = modoEdicion
-    ? `<textarea class="edit-imagenes edit-input" data-id="${d.id}">${(d.imagenes||[]).join("\n")}</textarea><div id="preview-${d.id}">${(d.imagenes||[]).map(u=>`<img class="preview-img" src="${u}" />`).join("")}</div>`
-    : `<div>${(d.imagenes||[]).map(u=>`<img src="${u}" style="width:100%;margin-top:8px;border-radius:8px;">`).join("")}</div>`;
+  /* Preview de imágenes */
 
-  // audio / youtube fields
-  const audioHtml = modoEdicion ? `<input type="text" class="edit-audio edit-input" value="${(d.audio||'').replace(/"/g,'&quot;')}" placeholder="Link de audio">` : (d.audio ? `<a class="link-btn" href="${d.audio}" target="_blank">🎧 Escuchar</a>` : "");
-  const youtubeHtml = modoEdicion ? `<input type="text" class="edit-youtube edit-input" value="${(d.youtube||'').replace(/"/g,'&quot;')}" placeholder="Link de YouTube">` : (d.youtube ? `<a class="link-btn" href="${d.youtube}" target="_blank">📺 YouTube</a>` : "");
+  const area =
+    div.querySelector(
+      ".edit-imagenes"
+    );
 
-  // edit buttons
-const editButtons = modoEdicion 
-  ? `<div style="margin-top:10px">
-       <button onclick="guardarEdicion('${d.id}', this)">💾 Guardar</button> 
-       <button class="delete-btn" onclick="borrarCancion('${d.id}')">🗑️ Borrar</button>
-     </div>` 
-  : "";
+  const preview =
+    div.querySelector(
+      `#preview-${d.id}`
+    );
 
-  div.innerHTML = tituloHtml + metaHtml + acordesHtml + `<div style="margin-top:8px">${imagenesHtml}</div>` + `<div style="margin-top:8px">${audioHtml} ${youtubeHtml}</div>` + editButtons;
 
+  if (
+    area &&
+    preview
+  ) {
+
+    area.addEventListener(
+      "input",
+      () => {
+
+        const urls =
+          area.value
+            .split("\n")
+            .map(
+              s => s.trim()
+            )
+            .filter(Boolean);
+
+
+        preview.innerHTML =
+          urls
+            .map(
+              u =>
+                `<img
+                  class="preview-img"
+                  src="${u}"
+                />`
+            )
+            .join("");
+
+      }
+    );
+
+  }
+
+
+  /* Hacer que la tarjeta se mantenga
+     visible en pantalla */
+
+  div.scrollIntoView({
+
+    behavior: "smooth",
+
+    block: "nearest"
+
+  });
+
+}
+
+/* =====================================================
+   ✖️ CANCELAR EDICIÓN DE CANCIÓN
+===================================================== */
+
+function cancelarEdicionCancion(id) {
+
+  const cancion =
+    cancionesCache.find(
+      c => c.id === id
+    );
+
+  if (!cancion) {
+    return;
+  }
+
+
+  cargarCanciones();
+
+}
+
+window.abrirEditorCancion =
+  abrirEditorCancion;
+
+window.cancelarEdicionCancion =
+  cancelarEdicionCancion;
+  
+  
   // actualizar data de registro en la tarjeta
   actualizarRegistroCard(d.id);
 
@@ -2383,6 +2676,45 @@ const editButtons = modoEdicion
         });
       }
     },0);
+  }
+  /* =====================================================
+     👆 TOCAR TARJETA → ABRIR EDITOR
+     
+     Solo funciona cuando estamos en modo edición.
+     Los botones, enlaces, inputs y textarea quedan
+     excluidos para que no interfiera con ellos.
+  ===================================================== */
+
+  if (modoEdicion) {
+
+    div.style.cursor = "pointer";
+
+    div.addEventListener(
+      "click",
+      function(event) {
+
+        /* No abrir el editor si hemos pulsado
+           un elemento interactivo */
+
+        if (
+          event.target.closest(
+            "button, a, input, textarea, select"
+          )
+        ) {
+          return;
+        }
+
+
+        /* Abrir el editor de ESTA canción */
+
+        abrirEditorCancion(
+          d,
+          div
+        );
+
+      }
+    );
+
   }
 
   return div;
@@ -2600,13 +2932,26 @@ async function cargarSeccion(tipo){
       if(modoEdicion && notasEdit) notasEdit.value = "";
     }
 
-    const contenedor = document.getElementById(`contenedor-${tipo}`);
-    if(contenedor) contenedor.style.display = modoEdicion ? "block" : "none";
+const contenedor =
+  document.getElementById(
+    `contenedor-${tipo}`
+  );
+
+if (contenedor) {
+
+  /* El formulario permanece cerrado
+     aunque estemos en modo edición */
+
+  contenedor.style.display = "none";
+
+}
 
   } catch(e){
     console.error("Error en cargarSeccion:", e);
   }
 }
+
+
 
 // Toggle notas
 /* =====================================================
@@ -2649,6 +2994,128 @@ async function guardarSeccion(tipo){
   alert("✅ Sección guardada");
   cargarSeccion(tipo);
 }
+
+
+
+/* =====================================================
+   ✏️ EDITAR SECCIÓN DESDE SU PROPIA TARJETA
+===================================================== */
+
+function abrirEditorSeccion(tipo) {
+
+  if (!modoEdicion) {
+    return;
+  }
+
+  const contenedor =
+    document.getElementById(
+      `contenedor-${tipo}`
+    );
+
+  if (!contenedor) {
+    return;
+  }
+
+
+  const abierto =
+    contenedor.style.display === "block";
+
+
+  if (abierto) {
+
+    contenedor.style.display = "none";
+
+    return;
+
+  }
+
+
+  contenedor.style.display = "block";
+
+
+  /* Llevar ligeramente el formulario a la vista */
+
+  setTimeout(() => {
+
+    contenedor.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest"
+    });
+
+  }, 50);
+
+}
+
+window.abrirEditorSeccion =
+  abrirEditorSeccion;
+  
+  
+  /* =====================================================
+   👆 HACER LAS SECCIONES EDITABLES AL TOCARLAS
+===================================================== */
+
+function activarClickEdicionSecciones() {
+
+  const tipos = [
+    "semana",
+    "mes"
+  ];
+
+
+  tipos.forEach(tipo => {
+
+    const cont =
+      document.getElementById(
+        `mostrar-${tipo}`
+      );
+
+    if (!cont) {
+      return;
+    }
+
+
+    if (
+      cont.dataset.editorActivo === "true"
+    ) {
+      return;
+    }
+
+
+    cont.dataset.editorActivo =
+      "true";
+
+
+    cont.addEventListener(
+      "click",
+      function(event) {
+
+        if (!modoEdicion) {
+          return;
+        }
+
+
+        /* No abrir el editor si se ha pulsado
+           un enlace, botón, select o formulario */
+
+        if (
+          event.target.closest(
+            "button, a, input, textarea, select"
+          )
+        ) {
+
+          return;
+
+        }
+
+
+        abrirEditorSeccion(tipo);
+      }
+    );
+  });
+}
+
+activarClickEdicionSecciones();
+
 
 /* MODO EDICIÓN con PIN 2025 */
 /* =========================
