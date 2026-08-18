@@ -3035,30 +3035,52 @@ async function cargarSeccion(tipo){
            es la que manda.
         */
 
-        if (domingo) {
+      if (domingo) {
 
-          data = {
+  /*
+     Las canciones y cantante vienen del
+     Listado Mensual.
 
-            titulo:
-              domingo.titulo ||
-              "Canciones para la semana",
+     Las notas permanecen en
+     secciones/semana.
+  */
 
-            canciones:
-              domingo.canciones ||
-              [],
+  const semanaSnap =
+    await getDoc(
+      doc(
+        db,
+        "secciones",
+        "semana"
+      )
+    );
 
-            cantante:
-              domingo.cantante ||
-              "",
+  const semanaData =
+    semanaSnap.exists()
+      ? semanaSnap.data()
+      : {};
 
-            notas:
-              ""
+  data = {
 
-          };
+    titulo:
+      domingo.titulo ||
+      semanaData.titulo ||
+      "Canciones para la semana",
 
-        }
+    canciones:
+      domingo.canciones ||
+      [],
 
-      }
+    cantante:
+      domingo.cantante ||
+      "",
+
+    notas:
+      semanaData.notas ||
+      ""
+
+  };
+
+}
 
 
       /* =================================================
@@ -3458,19 +3480,21 @@ async function guardarSeccion(tipo){
          3️⃣ Actualizar SOLO el domingo actual
       ----------------------------------------------- */
 
-      listado[
-        fechaServicio
-      ] = {
+    listado[
+  fechaServicio
+] = {
 
-        ...(listado[
-          fechaServicio
-        ] || {}),
+  ...(listado[
+    fechaServicio
+  ] || {}),
 
-        canciones,
+  canciones,
 
-        cantante
+  cantante,
 
-      };
+  notas
+
+};
 
 
       /* -----------------------------------------------
@@ -5048,7 +5072,26 @@ window.guardarListadoMensual =
         .slice(0,7);
 
 
-    const datosGuardar = {};
+    const listadoRef =
+  doc(
+    db,
+    "listado_mensual",
+    mes
+  );
+
+const listadoSnap =
+  await getDoc(
+    listadoRef
+  );
+
+const datosExistentes =
+  listadoSnap.exists()
+    ? listadoSnap.data()
+    : {};
+
+const datosGuardar = {
+  ...datosExistentes
+};
 
 
     /* =================================================
@@ -5087,15 +5130,19 @@ window.guardarListadoMensual =
               : "";
 
 
-          datosGuardar[
-            fecha
-          ] = {
+      datosGuardar[
+  fecha
+] = {
 
-            canciones,
+  ...(datosGuardar[
+    fecha
+  ] || {}),
 
-            cantante
+  canciones,
 
-          };
+  cantante
+
+};
 
         }
       );
@@ -5166,35 +5213,36 @@ window.guardarListadoMensual =
            Actualizar sección semanal
         ------------------------------------------- */
 
-        await setDoc(
-          doc(
-            db,
-            "secciones",
-            "semana"
-          ),
-          {
+   await setDoc(
+  doc(
+    db,
+    "secciones",
+    "semana"
+  ),
+  {
 
-            titulo:
-              semanaActual.titulo ||
-              "Canciones para la semana",
+    titulo:
+      semanaActual.titulo ||
+      "Canciones para la semana",
 
-            canciones:
-              infoActual.canciones ||
-              [],
+    canciones:
+      infoActual.canciones ||
+      [],
 
-            cantante:
-              infoActual.cantante ||
-              "",
+    cantante:
+      infoActual.cantante ||
+      "",
 
-            notas:
-              semanaActual.notas ||
-              "",
+    notas:
+      infoActual.notas ??
+      semanaActual.notas ??
+      "",
 
-            fechaServicio:
-              domingoActual
+    fechaServicio:
+      domingoActual
 
-          }
-        );
+  }
+);
 
       }
 
