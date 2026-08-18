@@ -2885,6 +2885,280 @@ function renderNotas(texto){
   return `<ul>${procesadas.map(l => `<li>${l}</li>`).join("")}</ul>`;
 }
 
+/* =====================================================
+   📅 SINCRONIZACIÓN SEMANAL
+   Listado mensual ↔ Canciones para la semana
+===================================================== */
+
+
+/* =====================================================
+   OBTENER DOMINGO DEL SERVICIO ACTUAL
+===================================================== */
+
+function obtenerDomingoServicioActual() {
+
+  const hoy = new Date();
+
+  /*
+    Domingo = 0
+    Lunes   = 1
+    ...
+    Sábado  = 6
+
+    Domingo:
+      utiliza hoy.
+
+    Lunes-Sábado:
+      utiliza el próximo domingo.
+  */
+
+  const dia =
+    hoy.getDay();
+
+  const diasHastaDomingo =
+    dia === 0
+      ? 0
+      : 7 - dia;
+
+  const domingo =
+    new Date(hoy);
+
+  domingo.setDate(
+    hoy.getDate() +
+    diasHastaDomingo
+  );
+
+
+  /*
+    Fecha LOCAL YYYY-MM-DD
+    para evitar problemas de
+    zona horaria.
+  */
+
+  const year =
+    domingo.getFullYear();
+
+  const month =
+    String(
+      domingo.getMonth() + 1
+    ).padStart(2, "0");
+
+  const day =
+    String(
+      domingo.getDate()
+    ).padStart(2, "0");
+
+
+  return `${year}-${month}-${day}`;
+
+}
+
+
+/* =====================================================
+   OBTENER MES DE UNA FECHA
+===================================================== */
+
+function obtenerMesDeFecha(
+  fechaISO
+) {
+
+  return fechaISO.slice(
+    0,
+    7
+  );
+
+}
+
+
+/* =====================================================
+   🔄 SINCRONIZAR SEMANA CON LISTADO MENSUAL
+===================================================== */
+
+async function sincronizarSemanaConListadoMensual() {
+
+  try {
+
+    const fechaServicio =
+      obtenerDomingoServicioActual();
+
+
+    const mes =
+      obtenerMesDeFecha(
+        fechaServicio
+      );
+
+
+    /* -----------------------------------------------
+       Buscar el mes
+    ----------------------------------------------- */
+
+    const listadoSnap =
+      await getDoc(
+        doc(
+          db,
+          "listado_mensual",
+          mes
+        )
+      );
+
+
+    /*
+       Si el mes todavía no existe,
+       no hacemos nada.
+    */
+
+    if (
+      !listadoSnap.exists()
+    ) {
+
+      return;
+
+    }
+
+
+    const listado =
+      listadoSnap.data();
+
+
+    /*
+       Buscar el domingo correspondiente.
+    */
+
+    const domingo =
+      listado[
+        fechaServicio
+      ];
+
+
+    /*
+       Si todavía no hay información
+       para ese domingo, NO modificamos
+       Canciones para la semana.
+    */
+
+    if (!domingo) {
+
+      return;
+
+    }
+
+
+    /* -----------------------------------------------
+       Leer la semana actual
+    ----------------------------------------------- */
+
+    const semanaRef =
+      doc(
+        db,
+        "secciones",
+        "semana"
+      );
+
+
+    const semanaSnap =
+      await getDoc(
+        semanaRef
+      );
+
+
+    const semana =
+      semanaSnap.exists()
+        ? semanaSnap.data()
+        : {};
+
+
+    /* -----------------------------------------------
+       IMPORTANTE:
+
+       Las NOTAS vienen de secciones/semana
+       y NO se reemplazan con el listado mensual.
+    ----------------------------------------------- */
+
+    const nuevaSemana = {
+
+      titulo:
+        semana.titulo ||
+        "Canciones para la semana",
+
+      canciones:
+        domingo.canciones ||
+        [],
+
+      cantante:
+        domingo.cantante ||
+        "",
+
+      notas:
+        semana.notas ||
+        "",
+
+      fechaServicio:
+        fechaServicio
+
+    };
+
+
+    /* -----------------------------------------------
+       Evitar escrituras innecesarias
+    ----------------------------------------------- */
+
+    const cancionesActuales =
+      JSON.stringify(
+        semana.canciones || []
+      );
+
+    const cancionesNuevas =
+      JSON.stringify(
+        nuevaSemana.canciones
+      );
+
+
+    const haCambiado =
+      cancionesActuales !==
+        cancionesNuevas ||
+
+      (semana.cantante || "") !==
+        nuevaSemana.cantante ||
+
+      semana.fechaServicio !==
+        fechaServicio;
+
+
+    if (!haCambiado) {
+
+      return;
+
+    }
+
+
+    /* -----------------------------------------------
+       Guardar
+    ----------------------------------------------- */
+
+    await setDoc(
+      semanaRef,
+      nuevaSemana
+    );
+
+
+    console.log(
+      "🔄 Semana sincronizada:",
+      fechaServicio
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "❌ Error sincronizando semana:",
+      error
+    );
+
+  }
+
+}
+
 // Función principal
 async function cargarSeccion(tipo){
   try{
