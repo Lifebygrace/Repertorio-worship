@@ -5072,26 +5072,7 @@ window.guardarListadoMensual =
         .slice(0,7);
 
 
-    const listadoRef =
-  doc(
-    db,
-    "listado_mensual",
-    mes
-  );
-
-const listadoSnap =
-  await getDoc(
-    listadoRef
-  );
-
-const datosExistentes =
-  listadoSnap.exists()
-    ? listadoSnap.data()
-    : {};
-
-const datosGuardar = {
-  ...datosExistentes
-};
+const datosGuardar = {};
 
 
     /* =================================================
