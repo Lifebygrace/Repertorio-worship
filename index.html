@@ -4945,34 +4945,241 @@ domingos.forEach(fecha => {
   }
 }
 
+/* =====================================================
+   💾 GUARDAR LISTADO MENSUAL
+   Sincroniza el domingo actual con "Canciones para la semana"
+===================================================== */
+
 window.guardarListadoMensual = async function(){
 
-  const mes = mesListadoActual.toISOString().slice(0,7);
-  const datosGuardar = {};
+  try {
 
-  document.querySelectorAll(".edit-listado").forEach(textarea => {
+    const mes =
+      mesListadoActual
+        .toISOString()
+        .slice(0, 7);
 
-    const fecha = textarea.dataset.fecha;
 
-    const canciones = textarea.value
-      .split("\n")
-      .map(s => s.trim())
-      .filter(Boolean);
+    /* =================================================
+       1️⃣ LEER EL MES QUE YA EXISTE
 
-    const select = document.querySelector(`.cantante-listado[data-fecha="${fecha}"]`);
-    const cantante = select ? select.value : "";
+       Esto es importante porque queremos conservar
+       cualquier información que ya exista.
+    ================================================= */
 
-    datosGuardar[fecha] = {
-      canciones,
-      cantante
-    };
+    const listadoRef =
+      doc(
+        db,
+        "listado_mensual",
+        mes
+      );
 
-  });
+    const listadoSnap =
+      await getDoc(
+        listadoRef
+      );
 
-  await setDoc(doc(db,"listado_mensual",mes), datosGuardar);
+    const datosGuardar =
+      listadoSnap.exists()
+        ? {
+            ...listadoSnap.data()
+          }
+        : {};
 
-  alert("✅ Listado mensual guardado");
-  renderListadoMensual();
+
+    /* =================================================
+       2️⃣ RECORRER LOS DOMINGOS EDITABLES
+    ================================================= */
+
+    document
+      .querySelectorAll(
+        ".edit-listado"
+      )
+      .forEach(
+        textarea => {
+
+          const fecha =
+            textarea.dataset.fecha;
+
+
+          const canciones =
+            textarea.value
+              .split("\n")
+              .map(
+                s => s.trim()
+              )
+              .filter(Boolean);
+
+
+          const select =
+            document.querySelector(
+              `.cantante-listado[data-fecha="${fecha}"]`
+            );
+
+
+          const cantante =
+            select
+              ? select.value
+              : "";
+
+
+          /* -------------------------------------------
+             Conservar cualquier información previa
+             de ese domingo.
+          ------------------------------------------- */
+
+          datosGuardar[
+            fecha
+          ] = {
+
+            ...(
+              datosGuardar[
+                fecha
+              ] || {}
+            ),
+
+            canciones,
+
+            cantante
+
+          };
+
+        }
+      );
+
+
+    /* =================================================
+       3️⃣ GUARDAR EL MES
+    ================================================= */
+
+    await setDoc(
+      listadoRef,
+      datosGuardar
+    );
+
+
+    /* =================================================
+       4️⃣ IDENTIFICAR EL DOMINGO ACTUAL
+    ================================================= */
+
+    const domingoActual =
+      obtenerDomingoServicioActual();
+
+
+    /* =================================================
+       5️⃣ SOLO SI ESTAMOS GUARDANDO EL MES
+          DEL DOMINGO ACTUAL
+    ================================================= */
+
+    if (
+      mes ===
+      obtenerMesDeFecha(
+        domingoActual
+      )
+    ) {
+
+      const infoDomingo =
+        datosGuardar[
+          domingoActual
+        ];
+
+
+      /*
+         Si ese domingo existe en el listado,
+         sincronizamos sus canciones y cantante.
+      */
+
+      if (infoDomingo) {
+
+        const semanaRef =
+          doc(
+            db,
+            "secciones",
+            "semana"
+          );
+
+
+        const semanaSnap =
+          await getDoc(
+            semanaRef
+          );
+
+
+        const semana =
+          semanaSnap.exists()
+            ? semanaSnap.data()
+            : {};
+
+
+        /* -------------------------------------------
+           ACTUALIZAR SEMANA
+
+           ⚠️ Las NOTAS se conservan exactamente
+           como están en secciones/semana.
+        ------------------------------------------- */
+
+        await setDoc(
+          semanaRef,
+          {
+
+            titulo:
+              semana.titulo ||
+              "Canciones para la semana",
+
+            canciones:
+              infoDomingo.canciones ||
+              [],
+
+            cantante:
+              infoDomingo.cantante ||
+              "",
+
+            notas:
+              semana.notas ||
+              "",
+
+            fechaServicio:
+              domingoActual
+
+          }
+        );
+
+      }
+
+    }
+
+
+    /* =================================================
+       6️⃣ ACTUALIZAR INTERFAZ
+    ================================================= */
+
+    alert(
+      "✅ Listado mensual guardado y sincronizado"
+    );
+
+
+    await renderListadoMensual();
+
+
+    await cargarSeccion(
+      "semana"
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "❌ Error guardando listado mensual:",
+      error
+    );
+
+    alert(
+      "❌ No se pudo guardar el listado mensual"
+    );
+
+  }
+
 };
 
 ///////
