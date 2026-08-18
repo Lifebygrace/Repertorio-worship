@@ -3249,26 +3249,233 @@ function toggleNotas(tipo){
   }
 }
 
+/* =====================================================
+   💾 GUARDAR SECCIÓN
+===================================================== */
+
 async function guardarSeccion(tipo){
-  const titulo = document.getElementById(`titulo-${tipo}`).value.trim();
-  const canciones = document.getElementById(`canciones-${tipo}`).value.trim().split("\n").map(s=>s.trim()).filter(Boolean);
-  const cantante =
-  tipo === "semana"
-    ? document.getElementById("cantante-semana")?.value || ""
-    : undefined;
-  const notas = document.getElementById(`notas-edit-${tipo}`).value.trim();
 
- await setDoc(doc(db, "secciones", tipo), { 
-  titulo, 
-  canciones, 
-  ...(tipo === "semana" && { cantante }),
-  notas 
-});
+  try {
 
-  alert("✅ Sección guardada");
-  cargarSeccion(tipo);
+    const titulo =
+      document
+        .getElementById(`titulo-${tipo}`)
+        .value
+        .trim();
+
+
+    const canciones =
+      document
+        .getElementById(`canciones-${tipo}`)
+        .value
+        .trim()
+        .split("\n")
+        .map(s => s.trim())
+        .filter(Boolean);
+
+
+    const notas =
+      document
+        .getElementById(`notas-edit-${tipo}`)
+        .value
+        .trim();
+
+
+    const cantante =
+      tipo === "semana"
+        ? (
+            document
+              .getElementById("cantante-semana")
+              ?.value || ""
+          )
+        : undefined;
+
+
+    /* =================================================
+       🎶 CANCIONES PARA LA SEMANA
+    ================================================= */
+
+    if (tipo === "semana") {
+
+      const fechaServicio =
+        obtenerDomingoServicioActual();
+
+
+      const mes =
+        obtenerMesDeFecha(
+          fechaServicio
+        );
+
+
+      /* -----------------------------------------------
+         1. Guardar secciones/semana
+
+         Las NOTAS se guardan aquí.
+      ----------------------------------------------- */
+
+      await setDoc(
+        doc(
+          db,
+          "secciones",
+          "semana"
+        ),
+        {
+
+          titulo,
+
+          canciones,
+
+          cantante,
+
+          notas,
+
+          fechaServicio
+
+        }
+      );
+
+
+      /* -----------------------------------------------
+         2. Leer el listado mensual existente
+      ----------------------------------------------- */
+
+      const listadoRef =
+        doc(
+          db,
+          "listado_mensual",
+          mes
+        );
+
+
+      const listadoSnap =
+        await getDoc(
+          listadoRef
+        );
+
+
+      const listado =
+        listadoSnap.exists()
+          ? listadoSnap.data()
+          : {};
+
+
+      /* -----------------------------------------------
+         3. Actualizar SOLO el domingo actual
+
+         NO tocamos ninguna otra fecha.
+      ----------------------------------------------- */
+
+      listado[
+        fechaServicio
+      ] = {
+
+        ...(
+          listado[
+            fechaServicio
+          ] || {}
+        ),
+
+        canciones,
+
+        cantante
+
+      };
+
+
+      /* -----------------------------------------------
+         4. Guardar listado mensual
+      ----------------------------------------------- */
+
+      await setDoc(
+        listadoRef,
+        listado
+      );
+
+
+      alert(
+        "✅ Semana guardada y sincronizada"
+      );
+
+    }
+
+
+    /* =================================================
+       🆕 CANCIONES NUEVAS DEL MES
+    ================================================= */
+
+    else {
+
+      await setDoc(
+        doc(
+          db,
+          "secciones",
+          tipo
+        ),
+        {
+
+          titulo,
+
+          canciones,
+
+          notas
+
+        }
+      );
+
+
+      alert(
+        "✅ Sección guardada"
+      );
+
+    }
+
+
+    /* -----------------------------------------------
+       Actualizar la sección visualmente
+    ----------------------------------------------- */
+
+    await cargarSeccion(
+      tipo
+    );
+
+
+    /* -----------------------------------------------
+       Si el Listado Mensual está abierto,
+       refrescarlo.
+    ----------------------------------------------- */
+
+    const listadoMensual =
+      document.getElementById(
+        "listado-mensual"
+      );
+
+
+    if (
+      listadoMensual &&
+      listadoMensual.style.display ===
+        "block"
+    ) {
+
+      renderListadoMensual();
+
+    }
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "❌ Error guardando sección:",
+      error
+    );
+
+    alert(
+      "❌ No se pudo guardar la sección"
+    );
+
+  }
+
 }
-
 
 
 /* =====================================================
