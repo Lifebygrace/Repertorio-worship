@@ -800,25 +800,31 @@ body.dark #herramientas-panel {
     <button onclick="abrirMetronomo()">🕒 Metrónomo</button>
     <button id="toggleCancionesBtn" onclick="toggleCanciones()">🎵Mostrar lista</button>
     <button onclick="toggleListadoMensual()">📅 Listado mensual</button>
-    <button
+<button
+  id="btn-herramienta-registro"
   style="background:var(--accent);"
-  onclick="herramientaIrA('registro-canciones')"
+  onclick="herramientaRegistro()"
 >
   📊 Registro de canciones
 </button>
 
 <button
-  onclick="herramientaIrA('analisis-real')"
+  id="btn-herramienta-analisis"
+  onclick="herramientaAnalisisReal()"
 >
   📈 Análisis real
 </button>
+
 <button onclick="window.open('https://drive.google.com/drive/folders/1RxOwnOCtt7Oa_J6rUzG1jC242md5MT1-', '_blank')">
   🎧 Recursos </button>
+
 <button
-  onclick="herramientaIrA('ausencias')"
+  id="btn-herramienta-ausencias"
+  onclick="herramientaAusencias()"
 >
   📅 Ausencias
 </button>
+
   </div>
 </header>
 
@@ -1828,10 +1834,146 @@ window.cambiarMesAusencias =
 ////////////////////
 
 
+
+/* =====================================================
+   📊 REGISTRO DESDE HERRAMIENTAS
+===================================================== */
+
+function herramientaRegistro() {
+
+  const seccion =
+    document.getElementById(
+      "registro-canciones"
+    );
+
+  if (!seccion) return;
+
+
+  /* Si está cerrado → abrir */
+
+  if (seccion.style.display !== "block") {
+
+    toggleRegistro();
+
+    cerrarHerramientas();
+
+    setTimeout(() => {
+
+      seccion.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+    }, 200);
+
+    return;
+  }
+
+
+  /* Si ya está abierto → cerrar */
+
+  toggleRegistro();
+
+}
+
+window.herramientaRegistro =
+  herramientaRegistro;
+  
+  
+  /* =====================================================
+   📈 ANÁLISIS REAL DESDE HERRAMIENTAS
+===================================================== */
+
+function herramientaAnalisisReal() {
+
+  const seccion =
+    document.getElementById(
+      "analisis-real"
+    );
+
+  if (!seccion) return;
+
+
+  /* Si está cerrado → abrir */
+
+  if (seccion.style.display !== "block") {
+
+    toggleAnalisisReal();
+
+    cerrarHerramientas();
+
+    setTimeout(() => {
+
+      seccion.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+    }, 250);
+
+    return;
+  }
+
+
+  /* Si ya está abierto → cerrar */
+
+  toggleAnalisisReal();
+
+}
+
+window.herramientaAnalisisReal =
+  herramientaAnalisisReal;
+  
+  
+  /* =====================================================
+   📅 AUSENCIAS DESDE HERRAMIENTAS
+===================================================== */
+
+function herramientaAusencias() {
+
+  const seccion =
+    document.getElementById(
+      "ausencias"
+    );
+
+  if (!seccion) return;
+
+
+  /* Si está cerrado → abrir */
+
+  if (seccion.style.display !== "block") {
+
+    toggleAusencias();
+
+    cerrarHerramientas();
+
+    setTimeout(() => {
+
+      seccion.scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+      });
+
+    }, 200);
+
+    return;
+  }
+
+
+  /* Si ya está abierto → cerrar */
+
+  toggleAusencias();
+
+}
+
+window.herramientaAusencias =
+  herramientaAusencias;
+
 /* =====================================================
    🛠️ HERRAMIENTAS
    ABRIR / CERRAR
 ===================================================== */
+
 
 function toggleHerramientas() {
 
