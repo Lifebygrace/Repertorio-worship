@@ -2810,6 +2810,7 @@ async function agregarCancion(){
     imagenes: document.getElementById("imagenes").value.trim().split("\n").map(s=>s.trim()).filter(Boolean),
     audio: document.getElementById("audio").value.trim(),
     youtube: document.getElementById("youtube").value.trim()
+    letraAcordes: null
   });
   document.getElementById("formulario").reset();
   document.getElementById("formulario").style.display = "none";
