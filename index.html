@@ -825,6 +825,13 @@ body.dark #herramientas-panel {
   📅 Ausencias
 </button>
 
+<button
+  type="button"
+  onclick="abrirLetraAcordes()"
+>
+  🎼 Prueba letra + acordes
+</button>
+
   </div>
 </header>
 
@@ -5989,6 +5996,45 @@ async function mostrarWorshipPack(tipo) {
   boton.textContent = "🔽 Ocultar pack";
 }
 
+/* =====================================================
+   🎼 LETRA + ACORDES
+   PASO 1 — ABRIR / CERRAR MODAL
+===================================================== */
+
+function abrirLetraAcordes() {
+
+  const modal =
+    document.getElementById(
+      "modal-letra-acordes"
+    );
+
+  if (!modal) return;
+
+  modal.style.display = "flex";
+
+}
+
+
+function cerrarLetraAcordes() {
+
+  const modal =
+    document.getElementById(
+      "modal-letra-acordes"
+    );
+
+  if (!modal) return;
+
+  modal.style.display = "none";
+
+}
+
+
+window.abrirLetraAcordes =
+  abrirLetraAcordes;
+
+window.cerrarLetraAcordes =
+  cerrarLetraAcordes;
+
 window.addEventListener('load', ()=>{
   const saved = localStorage.getItem("theme");
   if(saved === "dark") document.body.classList.add("dark");
@@ -6057,6 +6103,46 @@ window.addEventListener('load', ()=>{
       </div>
     </div>
   </div>
+</div>
+
+<!-- =====================================================
+     🎼 MODAL LETRA + ACORDES
+     PASO 1 — ESTRUCTURA VACÍA
+===================================================== -->
+
+<div
+  id="modal-letra-acordes"
+  class="modal"
+  style="display:none;"
+>
+
+  <div class="modal-content fade-apple">
+
+    <button
+      class="close-btn"
+      type="button"
+      onclick="cerrarLetraAcordes()"
+    >
+      ✖
+    </button>
+
+    <h3 id="letra-acordes-titulo">
+      🎼 Letra + acordes
+    </h3>
+
+    <div
+      id="letra-acordes-contenido"
+      style="margin-top:20px;"
+    >
+
+      <p style="text-align:center;">
+        Aquí aparecerá la letra y los acordes.
+      </p>
+
+    </div>
+
+  </div>
+
 </div>
 </body>
 </html>
