@@ -6576,6 +6576,9 @@ function crearVisorLetraAcordes() {
               document.createElement(
                 "div"
               );
+              
+              acordes.className =
+              "la-acorde-visor";
 
             acordes.textContent =
               linea.acordes;
@@ -6835,6 +6838,32 @@ function transponerEditor(
     );
 
 
+  const visor =
+  document.getElementById(
+    "la-visor-container"
+  );
+
+const editor =
+  document.getElementById(
+    "la-editor-container"
+  );
+
+
+/* =================================================
+   MODO EDITOR
+================================================= */
+
+if (
+  editor &&
+  editor.style.display !== "none"
+) {
+
+  const inputs =
+    editor.querySelectorAll(
+      ".la-acordes-linea"
+    );
+
+
   inputs.forEach(
     input => {
 
@@ -6847,6 +6876,37 @@ function transponerEditor(
     }
   );
 
+}
+
+
+/* =================================================
+   MODO VISOR
+================================================= */
+
+if (
+  visor &&
+  visor.style.display === "block"
+) {
+
+  const acordesVisor =
+    visor.querySelectorAll(
+      ".la-acorde-visor"
+    );
+
+
+  acordesVisor.forEach(
+    acorde => {
+
+      acorde.textContent =
+        transponerLineaAcordes(
+          acorde.textContent,
+          pasos
+        );
+
+    }
+  );
+
+}
 
   /* Actualizar Key */
 
