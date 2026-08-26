@@ -2361,6 +2361,399 @@ function actualizarContador(){
   el.textContent = `Canciones totales 🎶: ${n}`;
 }
 
+/* =====================================================
+   🎼 VISOR LETRA + ACORDES DENTRO DE LA TARJETA
+===================================================== */
+
+function crearVisorTarjeta(
+  cancion,
+  contenedor
+) {
+
+  if (!contenedor) return;
+
+
+  const datos =
+    cancion.letraAcordes;
+
+
+  /* =================================================
+     SI TODAVÍA NO HAY LETRA + ACORDES
+  ================================================= */
+
+  if (
+    !datos ||
+    !Array.isArray(
+      datos.secciones
+    ) ||
+    datos.secciones.length === 0
+  ) {
+
+    contenedor.innerHTML = `
+      <div
+        style="
+          padding:15px;
+          text-align:center;
+          opacity:.6;
+          font-size:14px;
+        "
+      >
+        🎼 Esta canción todavía no tiene
+        letra y acordes.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  contenedor.innerHTML = "";
+
+
+  /* =================================================
+     TONO DE LA CANCIÓN
+  ================================================= */
+
+  let tonoActual =
+    datos.tonoOriginal ||
+    cancion.acordes ||
+    "-";
+
+
+  /* =================================================
+     CONTENEDOR DEL VISOR
+  ================================================= */
+
+  const visor =
+    document.createElement(
+      "div"
+    );
+
+  visor.className =
+    "la-cancion-vista";
+
+
+  /* =================================================
+     CONTROL DE TONO
+  ================================================= */
+
+  const tonoControl =
+    document.createElement(
+      "div"
+    );
+
+  tonoControl.className =
+    "la-tono-control";
+
+
+  const bajar =
+    document.createElement(
+      "button"
+    );
+
+  bajar.type =
+    "button";
+
+  bajar.textContent =
+    "◀";
+
+
+  const centro =
+    document.createElement(
+      "div"
+    );
+
+  centro.className =
+    "la-tono-centro";
+
+
+  const small =
+    document.createElement(
+      "small"
+    );
+
+  small.textContent =
+    "Tono";
+
+
+  const tono =
+    document.createElement(
+      "strong"
+    );
+
+  tono.textContent =
+    tonoActual;
+
+
+  centro.appendChild(
+    small
+  );
+
+  centro.appendChild(
+    tono
+  );
+
+
+  const subir =
+    document.createElement(
+      "button"
+    );
+
+  subir.type =
+    "button";
+
+  subir.textContent =
+    "▶";
+
+
+  tonoControl.appendChild(
+    bajar
+  );
+
+  tonoControl.appendChild(
+    centro
+  );
+
+  tonoControl.appendChild(
+    subir
+  );
+
+
+  visor.appendChild(
+    tonoControl
+  );
+
+
+  /* =================================================
+     CONTENIDO DE LA CANCIÓN
+  ================================================= */
+
+  const contenido =
+    document.createElement(
+      "div"
+    );
+
+
+  contenido.className =
+    "la-contenido-tarjeta";
+
+
+  datos.secciones.forEach(
+    seccion => {
+
+      /* NOMBRE DE SECCIÓN */
+
+      if (seccion.nombre) {
+
+        const titulo =
+          document.createElement(
+            "h4"
+          );
+
+        titulo.textContent =
+          seccion.nombre;
+
+        titulo.style.marginTop =
+          "22px";
+
+        titulo.style.marginBottom =
+          "12px";
+
+        contenido.appendChild(
+          titulo
+        );
+
+      }
+
+
+      /* LÍNEAS */
+
+      if (
+        !Array.isArray(
+          seccion.lineas
+        )
+      ) {
+        return;
+      }
+
+
+      seccion.lineas.forEach(
+        linea => {
+
+          const bloque =
+            document.createElement(
+              "div"
+            );
+
+          bloque.className =
+            "la-bloque-linea";
+
+
+          bloque.style.marginBottom =
+            "16px";
+
+
+          /* ACORDES */
+
+          const acordes =
+            document.createElement(
+              "div"
+            );
+
+          acordes.className =
+            "la-acorde-visor";
+
+          acordes.textContent =
+            linea.acordes || "";
+
+          acordes.style.fontFamily =
+            "monospace";
+
+          acordes.style.fontWeight =
+            "700";
+
+          acordes.style.whiteSpace =
+            "pre";
+
+          acordes.style.overflowX =
+            "auto";
+
+
+          /* LETRA */
+
+          const letra =
+            document.createElement(
+              "div"
+            );
+
+          letra.className =
+            "la-letra-visor";
+
+          letra.textContent =
+            linea.letra || "";
+
+          letra.style.whiteSpace =
+            "pre-wrap";
+
+
+          bloque.appendChild(
+            acordes
+          );
+
+          bloque.appendChild(
+            letra
+          );
+
+
+          contenido.appendChild(
+            bloque
+          );
+
+        }
+      );
+
+    }
+  );
+
+
+  visor.appendChild(
+    contenido
+  );
+
+
+  contenedor.appendChild(
+    visor
+  );
+
+
+  /* =================================================
+     TRANSPOSICIÓN
+  ================================================= */
+
+  bajar.addEventListener(
+    "click",
+    function(event) {
+
+      event.stopPropagation();
+
+      const acordes =
+        visor.querySelectorAll(
+          ".la-acorde-visor"
+        );
+
+
+      acordes.forEach(
+        elemento => {
+
+          elemento.textContent =
+            transponerLineaAcordes(
+              elemento.textContent,
+              -1
+            );
+
+        }
+      );
+
+
+      tonoActual =
+        transponerNota(
+          normalizarNota(
+            tonoActual
+          ),
+          -1
+        );
+
+
+      tono.textContent =
+        tonoActual;
+
+    }
+  );
+
+
+  subir.addEventListener(
+    "click",
+    function(event) {
+
+      event.stopPropagation();
+
+      const acordes =
+        visor.querySelectorAll(
+          ".la-acorde-visor"
+        );
+
+
+      acordes.forEach(
+        elemento => {
+
+          elemento.textContent =
+            transponerLineaAcordes(
+              elemento.textContent,
+              1
+            );
+
+        }
+      );
+
+
+      tonoActual =
+        transponerNota(
+          normalizarNota(
+            tonoActual
+          ),
+          1
+        );
+
+
+      tono.textContent =
+        tonoActual;
+
+    }
+  );
+
+}
+
 /* Construcción de tarjeta — meta debajo del título + edición completa + preview imágenes en edición */
 function construirCard(d){
   const div = document.createElement("div");
