@@ -6469,6 +6469,175 @@ function crearLineaEditor(
 
 }
 
+
+/* =====================================================
+   👁️ CREAR VISOR DE CANCIÓN
+===================================================== */
+
+function crearVisorLetraAcordes() {
+
+  const contenedor =
+    document.getElementById(
+      "la-visor-container"
+    );
+
+  if (!contenedor) return;
+
+
+  const cancion =
+    window.cancionLetraAcordes;
+
+  if (!cancion) return;
+
+
+  const datos =
+    cancion.letraAcordes;
+
+  if (
+    !datos ||
+    !Array.isArray(datos.secciones)
+  ) {
+
+    contenedor.innerHTML = `
+      <p style="text-align:center;">
+        🎼 Esta canción todavía no tiene
+        letra y acordes guardados.
+      </p>
+    `;
+
+    return;
+  }
+
+
+  contenedor.innerHTML = "";
+
+
+  datos.secciones.forEach(
+    seccion => {
+
+      /* ===============================
+         NOMBRE DE SECCIÓN
+      =============================== */
+
+      if (seccion.nombre) {
+
+        const titulo =
+          document.createElement("h4");
+
+        titulo.textContent =
+          seccion.nombre;
+
+        titulo.style.marginTop =
+          "24px";
+
+        titulo.style.marginBottom =
+          "14px";
+
+        titulo.style.fontWeight =
+          "700";
+
+        contenedor.appendChild(
+          titulo
+        );
+
+      }
+
+
+      /* ===============================
+         LÍNEAS
+      =============================== */
+
+      if (
+        !Array.isArray(
+          seccion.lineas
+        )
+      ) {
+        return;
+      }
+
+
+      seccion.lineas.forEach(
+        linea => {
+
+          const bloque =
+            document.createElement(
+              "div"
+            );
+
+          bloque.style.marginBottom =
+            "18px";
+
+
+          /* ACORDES */
+
+          if (linea.acordes) {
+
+            const acordes =
+              document.createElement(
+                "div"
+              );
+
+            acordes.textContent =
+              linea.acordes;
+
+            acordes.style.fontFamily =
+              "monospace";
+
+            acordes.style.fontWeight =
+              "700";
+
+            acordes.style.whiteSpace =
+              "pre";
+
+            acordes.style.paddingLeft =
+              "10px";
+
+
+            bloque.appendChild(
+              acordes
+            );
+
+          }
+
+
+          /* LETRA */
+
+          if (linea.letra) {
+
+            const letra =
+              document.createElement(
+                "div"
+              );
+
+            letra.textContent =
+              linea.letra;
+
+            letra.style.marginTop =
+              "2px";
+
+            letra.style.whiteSpace =
+              "pre-wrap";
+
+
+            bloque.appendChild(
+              letra
+            );
+
+          }
+
+
+          contenedor.appendChild(
+            bloque
+          );
+
+        }
+      );
+
+    }
+  );
+
+}
+
 /* =====================================================
    🎼 TRANSPOSICIÓN DE ACORDES
    PASO 5
@@ -7007,6 +7176,71 @@ crearSeccionEditor(
   }
 );
 
+/* =====================================================
+   👁️ / ✏️ CAMBIAR ENTRE VISOR Y EDITOR
+===================================================== */
+
+document.addEventListener(
+  "click",
+  function(event) {
+
+    if (
+      event.target.id !==
+      "la-ver-cancion"
+    ) {
+      return;
+    }
+
+
+    const editor =
+      document.getElementById(
+        "la-editor-container"
+      );
+
+    const visor =
+      document.getElementById(
+        "la-visor-container"
+      );
+
+
+    if (!editor || !visor) {
+      return;
+    }
+
+
+    const mostrandoVisor =
+      visor.style.display === "block";
+
+
+    if (mostrandoVisor) {
+
+      visor.style.display =
+        "none";
+
+      editor.style.display =
+        "block";
+
+      event.target.textContent =
+        "👁️ Ver canción";
+
+    } else {
+
+      crearVisorLetraAcordes();
+
+      editor.style.display =
+        "none";
+
+      visor.style.display =
+        "block";
+
+      event.target.textContent =
+        "✏️ Volver a editar";
+
+    }
+
+  }
+);
+
 function cerrarLetraAcordes() {
 
   const modal =
@@ -7156,6 +7390,18 @@ window.addEventListener('load', ()=>{
   >
   </div>
 
+<!-- =================================================
+     👁️ VISOR DE CANCIÓN
+================================================= -->
+
+<div
+  id="la-visor-container"
+  style="
+    display:none;
+    margin-top:20px;
+  "
+>
+</div>
 
   <!-- CONTROLES -->
   <div
@@ -7167,6 +7413,13 @@ window.addEventListener('load', ()=>{
       margin-top:16px;
     "
   >
+  
+<button
+  type="button"
+  id="la-ver-cancion"
+>
+  👁️ Ver canción
+</button>
 
     <button
       type="button"
