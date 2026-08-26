@@ -2405,16 +2405,24 @@ function crearVisorTarjetaInline(
   }
 
 
-  /* =================================================
-     TONO ORIGINAL
-  ================================================= */
+  /* =================================================/* =================================================
+   TONO ORIGINAL
+   Acepta "A" o "Key: A"
+================================================= */
 
-  const tonoOriginal =
-    normalizarNota(
-      datos.tonoOriginal ||
-      cancion.acordes ||
-      "C"
-    );
+const tonoBase =
+  String(
+    datos.tonoOriginal ||
+    cancion.acordes ||
+    "C"
+  )
+  .replace(/^Key:\s*/i, "")
+  .trim();
+
+const tonoOriginal =
+  normalizarNota(
+    tonoBase
+  );
 
 
   let pasos =
@@ -2488,7 +2496,7 @@ function crearVisorTarjetaInline(
               font-size:1.35rem;
             "
           >
-            ${tonoOriginal}
+          Key: ${tonoOriginal}
           </strong>
 
         </div>
@@ -2703,12 +2711,12 @@ function crearVisorTarjetaInline(
             pasos
           );
 
-        if (tonoActual) {
+      if (tonoActual) {
 
-          tonoActual.textContent =
-            nuevoTono;
+  tonoActual.textContent =
+    `Key: ${nuevoTono}`;
 
-        }
+}
 
         renderizar();
 
@@ -2743,12 +2751,12 @@ function crearVisorTarjetaInline(
             pasos
           );
 
-        if (tonoActual) {
+       if (tonoActual) {
 
-          tonoActual.textContent =
-            nuevoTono;
+  tonoActual.textContent =
+    `Key: ${nuevoTono}`;
 
-        }
+}
 
         renderizar();
 
