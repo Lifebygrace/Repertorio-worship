@@ -6578,6 +6578,206 @@ function transponerEditor(
 
 }
 
+/* =====================================================
+   💾 GUARDAR LETRA + ACORDES
+===================================================== */
+
+async function guardarLetraAcordes() {
+
+  const cancion =
+    window.cancionLetraAcordes;
+
+  if (!cancion || !cancion.id) {
+
+    alert("❌ No se ha seleccionado ninguna canción.");
+
+    return;
+
+  }
+
+
+  const secciones = [];
+
+
+  document
+    .querySelectorAll(".la-seccion-editor")
+    .forEach(seccion => {
+
+      const nombreInput =
+        seccion.querySelector(
+          ".la-seccion-nombre"
+        );
+
+      const nombre =
+        nombreInput
+          ? nombreInput.value.trim()
+          : "";
+
+
+      const lineas = [];
+
+
+      seccion
+        .querySelectorAll(".la-linea-editor")
+        .forEach(fila => {
+
+          const acordesInput =
+            fila.querySelector(
+              ".la-acordes-linea"
+            );
+
+          const letraInput =
+            fila.querySelector(
+              ".la-letra-linea"
+            );
+
+
+          const acordes =
+            acordesInput
+              ? acordesInput.value.trim()
+              : "";
+
+
+          const letra =
+            letraInput
+              ? letraInput.value.trim()
+              : "";
+
+
+          /*
+             No guardamos líneas completamente vacías
+          */
+
+          if (acordes || letra) {
+
+            lineas.push({
+              acordes,
+              letra
+            });
+
+          }
+
+        });
+
+
+      /*
+         Solo guardar secciones que tengan
+         nombre o contenido
+      */
+
+      if (
+        nombre ||
+        lineas.length > 0
+      ) {
+
+        secciones.push({
+          nombre,
+          lineas
+        });
+
+      }
+
+    });
+
+
+  const tono =
+    document
+      .getElementById(
+        "la-tono-actual"
+      )
+      ?.textContent
+      .trim() || "";
+
+
+  const letraAcordes = {
+
+    tonoOriginal:
+      cancion.letraAcordes?.tonoOriginal ||
+      tono,
+
+    secciones
+
+  };
+
+
+  try {
+
+    await updateDoc(
+      doc(
+        db,
+        "canciones",
+        cancion.id
+      ),
+      {
+        letraAcordes
+      }
+    );
+
+
+    /*
+       Actualizar la canción en memoria
+       para que no tengamos que recargar
+       toda la página
+    */
+
+    cancion.letraAcordes =
+      letraAcordes;
+
+
+    const indice =
+      cancionesCache.findIndex(
+        c => c.id === cancion.id
+      );
+
+
+    if (indice !== -1) {
+
+      cancionesCache[indice].letraAcordes =
+        letraAcordes;
+
+    }
+
+
+    alert(
+      "✅ Letra y acordes guardados"
+    );
+
+
+  } catch (error) {
+
+    console.error(
+      "Error guardando letra y acordes:",
+      error
+    );
+
+
+    alert(
+      "❌ No se pudo guardar la letra y los acordes."
+    );
+
+  }
+
+}
+
+/* =====================================================
+   BOTÓN GUARDAR
+===================================================== */
+
+document.addEventListener(
+  "click",
+  function(event) {
+
+    if (
+      event.target.id ===
+      "la-guardar"
+    ) {
+
+      guardarLetraAcordes();
+
+    }
+
+  }
+);
 
 /* =====================================================
    ◀ BAJAR TONO
