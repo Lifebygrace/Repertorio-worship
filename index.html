@@ -6023,8 +6023,8 @@ async function mostrarWorshipPack(tipo) {
 ===================================================== */
 
 /* =====================================================
-   🎼 LETRA + ACORDES
-   PASO 2 — ABRIR UNA CANCIÓN CON SU ID
+   🎼 EDITOR LETRA + ACORDES
+   PASO 3 — EDITOR VISUAL
 ===================================================== */
 
 function abrirLetraAcordes(id) {
@@ -6037,29 +6037,30 @@ function abrirLetraAcordes(id) {
   if (!modal) return;
 
 
-  /* Buscar la canción existente */
   const cancion =
     cancionesCache.find(
       c => c.id === id
     );
 
   if (!cancion) {
+
     console.warn(
       "No se encontró la canción:",
       id
     );
+
     return;
   }
 
 
-  /* Guardamos temporalmente la canción
-     seleccionada */
+  /* Guardar canción seleccionada
+     temporalmente */
 
   window.cancionLetraAcordes =
     cancion;
 
 
-  /* Mostrar título */
+  /* Título */
 
   const titulo =
     document.getElementById(
@@ -6074,35 +6075,333 @@ function abrirLetraAcordes(id) {
   }
 
 
-  /* Mostrar contenido temporal */
+  /* Tono inicial */
 
-  const contenido =
+  const tono =
     document.getElementById(
-      "letra-acordes-contenido"
+      "la-tono-actual"
     );
 
-  if (contenido) {
+  if (tono) {
 
-    contenido.innerHTML = `
-      <p style="text-align:center;">
-        🎵 ${cancion.titulo || ""}
-      </p>
-
-      <p style="
-        text-align:center;
-        opacity:0.7;
-      ">
-        Editor de letra y acordes
-      </p>
-    `;
+    tono.textContent =
+      cancion.letraAcordes?.tonoOriginal ||
+      cancion.acordes ||
+      "A";
 
   }
 
 
+  /* Crear editor */
+
+  crearEditorLetraAcordes();
+
+
+  /* Mostrar modal */
+
   modal.style.display =
     "flex";
+
 }
 
+/* =====================================================
+   CREAR EDITOR
+===================================================== */
+
+function crearEditorLetraAcordes() {
+
+  const contenedor =
+    document.getElementById(
+      "la-editor-container"
+    );
+
+  if (!contenedor) return;
+
+
+  contenedor.innerHTML = "";
+
+
+  /* ===============================
+     SECCIÓN INICIAL
+  =============================== */
+
+  const seccion =
+    document.createElement("div");
+
+  seccion.className =
+    "la-seccion-editor";
+
+  seccion.style.marginBottom =
+    "20px";
+
+
+  /* Nombre de sección */
+
+  const nombre =
+    document.createElement("input");
+
+  nombre.type = "text";
+
+  nombre.placeholder =
+    "Nombre de sección (ej. ESTROFA 1)";
+
+  nombre.className =
+    "la-seccion-nombre";
+
+  nombre.style.width =
+    "100%";
+
+  nombre.style.boxSizing =
+    "border-box";
+
+  nombre.style.marginBottom =
+    "10px";
+
+  nombre.style.fontWeight =
+    "700";
+
+
+  seccion.appendChild(
+    nombre
+  );
+
+
+  /* Contenedor de líneas */
+
+  const lineas =
+    document.createElement("div");
+
+  lineas.className =
+    "la-lineas";
+
+
+  seccion.appendChild(
+    lineas
+  );
+
+
+  contenedor.appendChild(
+    seccion
+  );
+
+
+  /* Primera línea */
+
+  crearLineaEditor(
+    lineas
+  );
+
+}
+
+
+/* =====================================================
+   CREAR UNA LÍNEA DE CANCIÓN
+===================================================== */
+
+function crearLineaEditor(
+  contenedor
+) {
+
+  const fila =
+    document.createElement("div");
+
+  fila.className =
+    "la-linea-editor";
+
+  fila.style.marginBottom =
+    "12px";
+
+
+  /* Acordes */
+
+  const acordes =
+    document.createElement("input");
+
+  acordes.type = "text";
+
+  acordes.placeholder =
+    "A        E/G#";
+
+  acordes.className =
+    "la-acordes-linea";
+
+  acordes.style.width =
+    "100%";
+
+  acordes.style.boxSizing =
+    "border-box";
+
+  acordes.style.fontFamily =
+    "monospace";
+
+  acordes.style.fontWeight =
+    "700";
+
+  acordes.style.marginBottom =
+    "4px";
+
+
+  /* Letra */
+
+  const letra =
+    document.createElement("input");
+
+  letra.type = "text";
+
+  letra.placeholder =
+    "Escribe la letra aquí";
+
+  letra.className =
+    "la-letra-linea";
+
+  letra.style.width =
+    "100%";
+
+  letra.style.boxSizing =
+    "border-box";
+
+
+  /* Añadir */
+
+  fila.appendChild(
+    acordes
+  );
+
+  fila.appendChild(
+    letra
+  );
+
+
+  contenedor.appendChild(
+    fila
+  );
+
+}
+
+/* =====================================================
+   ➕ AÑADIR LÍNEA
+===================================================== */
+
+document.addEventListener(
+  "click",
+  function(event) {
+
+    if (
+      event.target.id !==
+      "la-anadir-linea"
+    ) {
+      return;
+    }
+
+
+    const seccion =
+      document.querySelector(
+        ".la-seccion-editor"
+      );
+
+    if (!seccion) return;
+
+
+    const lineas =
+      seccion.querySelector(
+        ".la-lineas"
+      );
+
+    if (!lineas) return;
+
+
+    crearLineaEditor(
+      lineas
+    );
+
+  }
+);
+
+/* =====================================================
+   ➕ AÑADIR SECCIÓN
+===================================================== */
+
+document.addEventListener(
+  "click",
+  function(event) {
+
+    if (
+      event.target.id !==
+      "la-anadir-seccion"
+    ) {
+      return;
+    }
+
+
+    const contenedor =
+      document.getElementById(
+        "la-editor-container"
+      );
+
+    if (!contenedor) return;
+
+
+    const seccion =
+      document.createElement("div");
+
+    seccion.className =
+      "la-seccion-editor";
+
+    seccion.style.marginBottom =
+      "20px";
+
+
+    const nombre =
+      document.createElement("input");
+
+    nombre.type = "text";
+
+    nombre.placeholder =
+      "Nombre de sección (ej. CORO)";
+
+    nombre.className =
+      "la-seccion-nombre";
+
+    nombre.style.width =
+      "100%";
+
+    nombre.style.boxSizing =
+      "border-box";
+
+    nombre.style.marginBottom =
+      "10px";
+
+    nombre.style.fontWeight =
+      "700";
+
+
+    const lineas =
+      document.createElement("div");
+
+    lineas.className =
+      "la-lineas";
+
+
+    seccion.appendChild(
+      nombre
+    );
+
+    seccion.appendChild(
+      lineas
+    );
+
+
+    contenedor.appendChild(
+      seccion
+    );
+
+
+    crearLineaEditor(
+      lineas
+    );
+
+  }
+);
 
 function cerrarLetraAcordes() {
 
@@ -6247,31 +6546,37 @@ window.addEventListener('load', ()=>{
 
 
   <!-- EDITOR -->
-  <div style="margin-top:20px;">
+  <div
+    id="la-editor-container"
+    style="margin-top:20px;"
+  >
+  </div>
 
-    <label
-      for="la-editor"
-      style="
-        display:block;
-        font-weight:600;
-        margin-bottom:8px;
-      "
+
+  <!-- CONTROLES -->
+  <div
+    style="
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      justify-content:center;
+      margin-top:16px;
+    "
+  >
+
+    <button
+      type="button"
+      id="la-anadir-linea"
     >
-      🎼 Letra y acordes
-    </label>
+      ➕ Añadir línea
+    </button>
 
-    <textarea
-      id="la-editor"
-      rows="16"
-      placeholder="Escribe aquí la letra y los acordes..."
-      style="
-        width:100%;
-        box-sizing:border-box;
-        resize:vertical;
-        font-family:monospace;
-        line-height:1.6;
-      "
-    ></textarea>
+    <button
+      type="button"
+      id="la-anadir-seccion"
+    >
+      ➕ Añadir sección
+    </button>
 
   </div>
 
@@ -6293,6 +6598,8 @@ window.addEventListener('load', ()=>{
     </button>
 
   </div>
+
+</div>
 
 </div>
 
