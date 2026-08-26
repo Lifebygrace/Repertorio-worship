@@ -6334,6 +6334,293 @@ function crearLineaEditor(contenedor) {
 }
 
 /* =====================================================
+   🎼 TRANSPOSICIÓN DE ACORDES
+   PASO 5
+===================================================== */
+
+const NOTAS_TRANSPOSICION = [
+  "C",
+  "C#",
+  "D",
+  "D#",
+  "E",
+  "F",
+  "F#",
+  "G",
+  "G#",
+  "A",
+  "A#",
+  "B"
+];
+
+
+/* =====================================================
+   CONVERTIR bemoles → sostenidos
+===================================================== */
+
+function normalizarNota(nota) {
+
+  const equivalencias = {
+    "Db": "C#",
+    "Eb": "D#",
+    "Gb": "F#",
+    "Ab": "G#",
+    "Bb": "A#"
+  };
+
+  return equivalencias[nota] || nota;
+}
+
+
+/* =====================================================
+   TRANSPONER UNA NOTA
+===================================================== */
+
+function transponerNota(
+  nota,
+  pasos
+) {
+
+  const normalizada =
+    normalizarNota(nota);
+
+  const indice =
+    NOTAS_TRANSPOSICION.indexOf(
+      normalizada
+    );
+
+  if (indice === -1) {
+    return nota;
+  }
+
+  const nuevoIndice =
+    (
+      indice +
+      pasos +
+      NOTAS_TRANSPOSICION.length
+    ) %
+    NOTAS_TRANSPOSICION.length;
+
+  return NOTAS_TRANSPOSICION[
+    nuevoIndice
+  ];
+}
+
+
+/* =====================================================
+   TRANSPONER UN ACORDE
+   Ejemplos:
+
+   A       → A#
+   F#m     → F#m
+   E/G#    → F/A
+   D/F#    → D#/G
+   C#m7    → Dm7
+===================================================== */
+
+function transponerAcorde(
+  acorde,
+  pasos
+) {
+
+  if (!acorde) {
+    return acorde;
+  }
+
+
+  const match =
+    acorde.match(
+      /^([A-G](?:#|b)?)(.*)$/
+    );
+
+
+  if (!match) {
+    return acorde;
+  }
+
+
+  const nota =
+    match[1];
+
+  let resto =
+    match[2];
+
+
+  /* Transponer nota principal */
+
+  const nuevaNota =
+    transponerNota(
+      nota,
+      pasos
+    );
+
+
+  /* =================================================
+     ACORDE CON BAJO
+
+     E/G#
+     D/F#
+     C/E
+  ================================================= */
+
+  resto =
+    resto.replace(
+      /^\/([A-G](?:#|b)?)/,
+      function(_, bajo) {
+
+        return (
+          "/" +
+          transponerNota(
+            bajo,
+            pasos
+          )
+        );
+
+      }
+    );
+
+
+  return (
+    nuevaNota +
+    resto
+  );
+
+}
+
+
+/* =====================================================
+   TRANSPONER UNA LÍNEA COMPLETA DE ACORDES
+===================================================== */
+
+function transponerLineaAcordes(
+  texto,
+  pasos
+) {
+
+  if (!texto) {
+    return texto;
+  }
+
+
+  return texto
+    .split(/\s+/)
+    .map(
+      acorde =>
+        transponerAcorde(
+          acorde,
+          pasos
+        )
+    )
+    .join("        ");
+
+}
+
+
+/* =====================================================
+   TRANSPONER TODO EL EDITOR
+===================================================== */
+
+function transponerEditor(
+  pasos
+) {
+
+  const inputs =
+    document.querySelectorAll(
+      ".la-acordes-linea"
+    );
+
+
+  inputs.forEach(
+    input => {
+
+      input.value =
+        transponerLineaAcordes(
+          input.value,
+          pasos
+        );
+
+    }
+  );
+
+
+  /* Actualizar Key */
+
+  const tono =
+    document.getElementById(
+      "la-tono-actual"
+    );
+
+  if (!tono) {
+    return;
+  }
+
+
+  const notaActual =
+    normalizarNota(
+      tono.textContent
+        .replace(
+          "Key:",
+          ""
+        )
+        .trim()
+    );
+
+
+  const nuevaNota =
+    transponerNota(
+      notaActual,
+      pasos
+    );
+
+
+  tono.textContent =
+    nuevaNota;
+
+}
+
+
+/* =====================================================
+   ◀ BAJAR TONO
+===================================================== */
+
+document.addEventListener(
+  "click",
+  function(event) {
+
+    if (
+      event.target.id ===
+      "la-tono-bajar"
+    ) {
+
+      transponerEditor(-1);
+
+    }
+
+  }
+);
+
+
+/* =====================================================
+   ▶ SUBIR TONO
+===================================================== */
+
+document.addEventListener(
+  "click",
+  function(event) {
+
+    if (
+      event.target.id ===
+      "la-tono-subir"
+    ) {
+
+      transponerEditor(1);
+
+    }
+
+  }
+);
+
+/* =====================================================
    ➕ AÑADIR LÍNEA
 ===================================================== */
 
