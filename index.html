@@ -2417,24 +2417,15 @@ const acordesHtml =
   `<p>${d.acordes || ""}</p>`;
 
 
-/* Imágenes */
+/* =====================================================
+   🎼 CONTENEDOR DEL VISOR LETRA + ACORDES
+===================================================== */
 
-const imagenesHtml =
-  `<div>
-    ${(d.imagenes || [])
-      .map(
-        u =>
-          `<img
-            src="${u}"
-            style="
-              width:100%;
-              margin-top:8px;
-              border-radius:8px;
-            "
-          >`
-      )
-      .join("")}
-  </div>`;
+const visorHtml =
+  `<div
+    class="visor-tarjeta-container"
+    style="margin-top:12px;"
+  ></div>`;
 
 
 /* Audio */
@@ -2497,9 +2488,7 @@ div.innerHTML =
 
   acordesHtml +
 
-  `<div style="margin-top:8px">
-    ${imagenesHtml}
-  </div>` +
+  visorHtml +
 
   `<div style="margin-top:8px">
     ${audioHtml}
@@ -2508,6 +2497,25 @@ div.innerHTML =
 
   tocadaHtml;
   
+  
+/* =====================================================
+   🎼 CARGAR VISOR EN LA TARJETA
+===================================================== */
+
+const visorContenedor =
+  div.querySelector(
+    ".visor-tarjeta-container"
+  );
+
+if (visorContenedor) {
+
+  crearVisorTarjeta(
+    d,
+    visorContenedor
+  );
+
+}
+
   /* =====================================================
    🎼 BOTÓN LETRA + ACORDES
 ===================================================== */
