@@ -2443,24 +2443,7 @@ const tocadaHtml =
       </div>
     `
     : "";
-    
-    
-/* =====================================================
-   🎼 LETRA + ACORDES
-===================================================== */
 
-const letraAcordesHtml = `
-  <div style="
-    margin-top:10px;
-  ">
-    <button
-      type="button"
-      onclick="abrirLetraAcordes('${d.id}')"
-    >
-      🎼 Letra + acordes
-    </button>
-  </div>
-`;
 
 /* Render normal */
 
@@ -2482,33 +2465,8 @@ div.innerHTML =
   </div>` +
 
   tocadaHtml;
-  LetraAcordesHtml;
 
 
-  
-  /* =====================================================
-   🎼 ABRIR LETRA + ACORDES
-   PRUEBA INICIAL
-===================================================== */
-
-function abrirLetraAcordes(id) {
-
-  const cancion =
-    cancionesCache.find(
-      c => c.id === id
-    );
-
-  if (!cancion) {
-    return;
-  }
-
-  alert(
-    `🎼 Letra + acordes\n\n${cancion.titulo}`
-  );
-}
-
-window.abrirLetraAcordes =
-  abrirLetraAcordes;
   
   /* =====================================================
    ✏️ ABRIR EDITOR DE UNA CANCIÓN
