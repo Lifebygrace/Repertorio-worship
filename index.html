@@ -6195,12 +6195,10 @@ function crearEditorLetraAcordes() {
 
 
 /* =====================================================
-   CREAR UNA LÍNEA DE CANCIÓN
+   🎼 CREAR UNA LÍNEA DE CANCIÓN
 ===================================================== */
 
-function crearLineaEditor(
-  contenedor
-) {
+function crearLineaEditor(contenedor) {
 
   const fila =
     document.createElement("div");
@@ -6209,10 +6207,15 @@ function crearLineaEditor(
     "la-linea-editor";
 
   fila.style.marginBottom =
-    "12px";
+    "14px";
+
+  fila.style.position =
+    "relative";
 
 
-  /* Acordes */
+  /* ===============================
+     CONTENEDOR DE ACORDES
+  =============================== */
 
   const acordes =
     document.createElement("input");
@@ -6226,7 +6229,7 @@ function crearLineaEditor(
     "la-acordes-linea";
 
   acordes.style.width =
-    "100%";
+    "calc(100% - 45px)";
 
   acordes.style.boxSizing =
     "border-box";
@@ -6238,10 +6241,12 @@ function crearLineaEditor(
     "700";
 
   acordes.style.marginBottom =
-    "4px";
+    "5px";
 
 
-  /* Letra */
+  /* ===============================
+     CONTENEDOR DE LETRA
+  =============================== */
 
   const letra =
     document.createElement("input");
@@ -6255,13 +6260,59 @@ function crearLineaEditor(
     "la-letra-linea";
 
   letra.style.width =
-    "100%";
+    "calc(100% - 45px)";
 
   letra.style.boxSizing =
     "border-box";
 
 
-  /* Añadir */
+  /* ===============================
+     BOTÓN ELIMINAR
+  =============================== */
+
+  const eliminar =
+    document.createElement("button");
+
+  eliminar.type =
+    "button";
+
+  eliminar.textContent =
+    "🗑️";
+
+  eliminar.title =
+    "Eliminar línea";
+
+  eliminar.style.position =
+    "absolute";
+
+  eliminar.style.right =
+    "0";
+
+  eliminar.style.top =
+    "4px";
+
+  eliminar.style.width =
+    "38px";
+
+  eliminar.style.height =
+    "70px";
+
+  eliminar.style.padding =
+    "0";
+
+  eliminar.addEventListener(
+    "click",
+    function() {
+
+      fila.remove();
+
+    }
+  );
+
+
+  /* ===============================
+     AÑADIR ELEMENTOS
+  =============================== */
 
   fila.appendChild(
     acordes
@@ -6269,6 +6320,10 @@ function crearLineaEditor(
 
   fila.appendChild(
     letra
+  );
+
+  fila.appendChild(
+    eliminar
   );
 
 
@@ -6381,6 +6436,27 @@ document.addEventListener(
     lineas.className =
       "la-lineas";
 
+
+const eliminarSeccion =
+  document.createElement("button");
+
+eliminarSeccion.type =
+  "button";
+
+eliminarSeccion.textContent =
+  "🗑️ Eliminar sección";
+
+eliminarSeccion.style.marginBottom =
+  "8px";
+
+eliminarSeccion.addEventListener(
+  "click",
+  function() {
+
+    seccion.remove();
+
+  }
+);
 
     seccion.appendChild(
       nombre
