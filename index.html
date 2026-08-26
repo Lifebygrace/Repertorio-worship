@@ -749,118 +749,6 @@ body.dark #herramientas-panel {
 
 }
 
-/* =====================================================
-   🎼 MODO INTÉRPRETE — PANTALLA COMPLETA
-===================================================== */
-
-.la-fullscreen {
-  position: fixed !important;
-
-  inset: 0 !important;
-
-  width: 100vw !important;
-  height: 100vh !important;
-
-  max-width: none !important;
-  max-height: none !important;
-
-  margin: 0 !important;
-
-  z-index: 99999 !important;
-
-  overflow-y: auto !important;
-
-  border-radius: 0 !important;
-
-  box-sizing: border-box;
-
-  padding:
-    max(20px, env(safe-area-inset-top))
-    max(18px, env(safe-area-inset-right))
-    max(20px, env(safe-area-inset-bottom))
-    max(18px, env(safe-area-inset-left)) !important;
-}
-
-
-/* Visor dentro de pantalla completa */
-
-.la-fullscreen
-.la-cancion-vista {
-
-  max-width: 850px;
-
-  margin:
-    0 auto;
-
-  padding:
-    20px 0 80px 0;
-
-}
-
-
-/* Acordes */
-
-.la-fullscreen
-.la-acorde-visor {
-
-  font-size: 18px !important;
-
-  line-height: 1.4 !important;
-
-}
-
-
-/* Letra */
-
-.la-fullscreen
-.la-letra-visor {
-
-  font-size: 20px !important;
-
-  line-height: 1.65 !important;
-
-}
-
-
-/* Secciones */
-
-.la-fullscreen
-h4 {
-
-  font-size: 18px !important;
-
-  margin-top: 34px !important;
-
-}
-
-
-/* Botón cerrar */
-
-.la-fullscreen-close {
-
-  position: fixed;
-
-  top:
-    max(12px, env(safe-area-inset-top));
-
-  right:
-    max(12px, env(safe-area-inset-right));
-
-  z-index: 100000;
-
-  width: 42px;
-
-  height: 42px;
-
-  border-radius: 50%;
-
-  border: none;
-
-  font-size: 20px;
-
-  cursor: pointer;
-
-}
   </style>
 </head>
 
@@ -6830,114 +6718,6 @@ function crearVisorLetraAcordes() {
 }
 
 /* =====================================================
-   ⛶ ENTRAR EN PANTALLA COMPLETA
-===================================================== */
-
-function entrarPantallaCompletaLetra() {
-
-  const visor =
-    document.getElementById(
-      "la-visor-container"
-    );
-
-  if (!visor) return;
-
-
-  /* El visor debe estar visible */
-
-  if (
-    visor.style.display !== "block"
-  ) {
-
-    crearVisorLetraAcordes();
-
-    visor.style.display =
-      "block";
-
-  }
-
-
-  /* Convertir el propio visor en pantalla completa */
-
-  visor.classList.add(
-    "la-fullscreen"
-  );
-
-
-  /* Botón cerrar */
-
-  let cerrar =
-    document.getElementById(
-      "la-fullscreen-close"
-    );
-
-
-  if (!cerrar) {
-
-    cerrar =
-      document.createElement(
-        "button"
-      );
-
-    cerrar.id =
-      "la-fullscreen-close";
-
-    cerrar.className =
-      "la-fullscreen-close";
-
-    cerrar.type =
-      "button";
-
-    cerrar.textContent =
-      "✕";
-
-    cerrar.onclick =
-      salirPantallaCompletaLetra;
-
-
-    document.body.appendChild(
-      cerrar
-    );
-
-  }
-
-}
-
-
-/* =====================================================
-   ✕ SALIR DE PANTALLA COMPLETA
-===================================================== */
-
-function salirPantallaCompletaLetra() {
-
-  const visor =
-    document.getElementById(
-      "la-visor-container"
-    );
-
-  if (visor) {
-
-    visor.classList.remove(
-      "la-fullscreen"
-    );
-
-  }
-
-
-  const cerrar =
-    document.getElementById(
-      "la-fullscreen-close"
-    );
-
-  if (cerrar) {
-
-    cerrar.remove();
-
-  }
-
-}
-
-/* =====================================================
    🎼 TRANSPOSICIÓN DE ACORDES
    PASO 5
 ===================================================== */
@@ -7597,27 +7377,6 @@ document.addEventListener(
   }
 );
 
-/* =====================================================
-   ⛶ BOTÓN PANTALLA COMPLETA
-===================================================== */
-
-document.addEventListener(
-  "click",
-  function(event) {
-
-    if (
-      event.target.id !==
-      "la-pantalla-completa"
-    ) {
-      return;
-    }
-
-
-    entrarPantallaCompletaLetra();
-
-  }
-);
-
 function cerrarLetraAcordes() {
 
   const modal =
@@ -7796,13 +7555,6 @@ window.addEventListener('load', ()=>{
   id="la-ver-cancion"
 >
   👁️ Ver canción
-</button>
-
-<button
-  type="button"
-  id="la-pantalla-completa"
->
-  ⛶ Pantalla completa
 </button>
 
     <button
