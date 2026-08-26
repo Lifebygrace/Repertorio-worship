@@ -825,12 +825,6 @@ body.dark #herramientas-panel {
   📅 Ausencias
 </button>
 
-<button
-  type="button"
-  onclick="abrirLetraAcordes()"
->
-  🎼 Prueba letra + acordes
-</button>
 
   </div>
 </header>
@@ -2375,6 +2369,25 @@ const metaHtml = `
   </div>
 `;
 
+/* =====================================================
+   🎼 BOTÓN LETRA + ACORDES
+===================================================== */
+
+const letraAcordesHtml = `
+  <div
+    class="letra-acordes-btn-container"
+    style="margin-top:10px;"
+  >
+
+    <button
+      type="button"
+      onclick="abrirLetraAcordes('${d.id}')"
+    >
+      🎼 Letra + acordes
+    </button>
+
+  </div>
+`;
 
 /* Acordes */
 
@@ -2472,7 +2485,7 @@ div.innerHTML =
   </div>` +
 
   tocadaHtml;
-
+  LetraAcordesHtml;
 
   
   /* =====================================================
@@ -6001,7 +6014,12 @@ async function mostrarWorshipPack(tipo) {
    PASO 1 — ABRIR / CERRAR MODAL
 ===================================================== */
 
-function abrirLetraAcordes() {
+/* =====================================================
+   🎼 LETRA + ACORDES
+   PASO 2 — ABRIR UNA CANCIÓN CON SU ID
+===================================================== */
+
+function abrirLetraAcordes(id) {
 
   const modal =
     document.getElementById(
@@ -6010,8 +6028,71 @@ function abrirLetraAcordes() {
 
   if (!modal) return;
 
-  modal.style.display = "flex";
 
+  /* Buscar la canción existente */
+  const cancion =
+    cancionesCache.find(
+      c => c.id === id
+    );
+
+  if (!cancion) {
+    console.warn(
+      "No se encontró la canción:",
+      id
+    );
+    return;
+  }
+
+
+  /* Guardamos temporalmente la canción
+     seleccionada */
+
+  window.cancionLetraAcordes =
+    cancion;
+
+
+  /* Mostrar título */
+
+  const titulo =
+    document.getElementById(
+      "letra-acordes-titulo"
+    );
+
+  if (titulo) {
+
+    titulo.textContent =
+      `🎼 ${cancion.titulo || "Canción"}`;
+
+  }
+
+
+  /* Mostrar contenido temporal */
+
+  const contenido =
+    document.getElementById(
+      "letra-acordes-contenido"
+    );
+
+  if (contenido) {
+
+    contenido.innerHTML = `
+      <p style="text-align:center;">
+        🎵 ${cancion.titulo || ""}
+      </p>
+
+      <p style="
+        text-align:center;
+        opacity:0.7;
+      ">
+        Editor de letra y acordes
+      </p>
+    `;
+
+  }
+
+
+  modal.style.display =
+    "flex";
 }
 
 
