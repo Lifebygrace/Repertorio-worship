@@ -6759,25 +6759,7 @@ async function guardarLetraAcordes() {
 
 }
 
-/* =====================================================
-   BOTÓN GUARDAR
-===================================================== */
-
-document.addEventListener(
-  "click",
-  function(event) {
-
-    if (
-      event.target.id ===
-      "la-guardar"
-    ) {
-
-      guardarLetraAcordes();
-
-    }
-
-  }
-);
+window.guardarLetraAcordes = guardarLetraAcordes;
 
 /* =====================================================
    ◀ BAJAR TONO
@@ -7152,13 +7134,14 @@ window.addEventListener('load', ()=>{
       margin-top:16px;
     "
   >
-
-    <button
-      type="button"
-      id="la-guardar"
-    >
-      💾 Guardar letra y acordes
-    </button>
+  
+  <button
+  type="button"
+  id="la-guardar"
+  onclick="guardarLetraAcordes()"
+>
+  💾 Guardar letra y acordes
+</button>
 
   </div>
 
