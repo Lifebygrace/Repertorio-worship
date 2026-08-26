@@ -6472,9 +6472,9 @@ function crearLineaEditor(
 
 }
 
-
 /* =====================================================
    👁️ CREAR VISOR DE CANCIÓN
+   PASO 13 — VISUAL FINAL
 ===================================================== */
 
 function crearVisorLetraAcordes() {
@@ -6496,16 +6496,27 @@ function crearVisorLetraAcordes() {
   const datos =
     cancion.letraAcordes;
 
+
+  /* =================================================
+     SIN DATOS
+  ================================================= */
+
   if (
     !datos ||
     !Array.isArray(datos.secciones)
   ) {
 
     contenedor.innerHTML = `
-      <p style="text-align:center;">
+      <div
+        style="
+          text-align:center;
+          padding:30px 10px;
+          opacity:.7;
+        "
+      >
         🎼 Esta canción todavía no tiene
         letra y acordes guardados.
-      </p>
+      </div>
     `;
 
     return;
@@ -6515,8 +6526,30 @@ function crearVisorLetraAcordes() {
   contenedor.innerHTML = "";
 
 
+  /* =================================================
+     CONTENEDOR PRINCIPAL
+  ================================================= */
+
+  const cancionVista =
+    document.createElement("div");
+
+  cancionVista.className =
+    "la-cancion-vista";
+
+  cancionVista.style.width =
+    "100%";
+
+  cancionVista.style.boxSizing =
+    "border-box";
+
+
+  /* =================================================
+     SECCIONES
+  ================================================= */
+
   datos.secciones.forEach(
     seccion => {
+
 
       /* ===============================
          NOMBRE DE SECCIÓN
@@ -6531,15 +6564,19 @@ function crearVisorLetraAcordes() {
           seccion.nombre;
 
         titulo.style.marginTop =
-          "24px";
+          "28px";
 
         titulo.style.marginBottom =
-          "14px";
+          "16px";
 
         titulo.style.fontWeight =
           "700";
 
-        contenedor.appendChild(
+        titulo.style.fontSize =
+          "16px";
+
+
+        cancionVista.appendChild(
           titulo
         );
 
@@ -6555,7 +6592,9 @@ function crearVisorLetraAcordes() {
           seccion.lineas
         )
       ) {
+
         return;
+
       }
 
 
@@ -6567,11 +6606,17 @@ function crearVisorLetraAcordes() {
               "div"
             );
 
+          bloque.className =
+            "la-bloque-linea";
+
+
           bloque.style.marginBottom =
-            "18px";
+            "20px";
 
 
-          /* ACORDES */
+          /*
+             ACORDES
+          */
 
           if (linea.acordes) {
 
@@ -6579,12 +6624,14 @@ function crearVisorLetraAcordes() {
               document.createElement(
                 "div"
               );
-              
-              acordes.className =
+
+            acordes.className =
               "la-acorde-visor";
+
 
             acordes.textContent =
               linea.acordes;
+
 
             acordes.style.fontFamily =
               "monospace";
@@ -6592,11 +6639,20 @@ function crearVisorLetraAcordes() {
             acordes.style.fontWeight =
               "700";
 
+            acordes.style.fontSize =
+              "15px";
+
+            acordes.style.lineHeight =
+              "1.3";
+
             acordes.style.whiteSpace =
               "pre";
 
+            acordes.style.overflowX =
+              "auto";
+
             acordes.style.paddingLeft =
-              "10px";
+              "8px";
 
 
             bloque.appendChild(
@@ -6606,7 +6662,9 @@ function crearVisorLetraAcordes() {
           }
 
 
-          /* LETRA */
+          /*
+             LETRA
+          */
 
           if (linea.letra) {
 
@@ -6615,11 +6673,20 @@ function crearVisorLetraAcordes() {
                 "div"
               );
 
+
+            letra.className =
+              "la-letra-visor";
+
+
             letra.textContent =
               linea.letra;
 
-            letra.style.marginTop =
-              "2px";
+
+            letra.style.fontSize =
+              "16px";
+
+            letra.style.lineHeight =
+              "1.5";
 
             letra.style.whiteSpace =
               "pre-wrap";
@@ -6632,7 +6699,7 @@ function crearVisorLetraAcordes() {
           }
 
 
-          contenedor.appendChild(
+          cancionVista.appendChild(
             bloque
           );
 
@@ -6640,6 +6707,11 @@ function crearVisorLetraAcordes() {
       );
 
     }
+  );
+
+
+  contenedor.appendChild(
+    cancionVista
   );
 
 }
