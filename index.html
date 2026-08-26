@@ -6219,19 +6219,85 @@ window.addEventListener('load', ()=>{
       🎼 Letra + acordes
     </h3>
 
-    <div
-      id="letra-acordes-contenido"
-      style="margin-top:20px;"
+<div id="letra-acordes-contenido">
+
+  <!-- TONO -->
+  <div class="la-tono-control">
+
+    <button
+      type="button"
+      id="la-tono-bajar"
     >
+      ◀
+    </button>
 
-      <p style="text-align:center;">
-        Aquí aparecerá la letra y los acordes.
-      </p>
-
+    <div class="la-tono-centro">
+      <small>Tono</small>
+      <strong id="la-tono-actual">A</strong>
     </div>
+
+    <button
+      type="button"
+      id="la-tono-subir"
+    >
+      ▶
+    </button>
+
+  </div>
+
+
+  <!-- EDITOR -->
+  <div style="margin-top:20px;">
+
+    <label
+      for="la-editor"
+      style="
+        display:block;
+        font-weight:600;
+        margin-bottom:8px;
+      "
+    >
+      🎼 Letra y acordes
+    </label>
+
+    <textarea
+      id="la-editor"
+      rows="16"
+      placeholder="Escribe aquí la letra y los acordes..."
+      style="
+        width:100%;
+        box-sizing:border-box;
+        resize:vertical;
+        font-family:monospace;
+        line-height:1.6;
+      "
+    ></textarea>
+
+  </div>
+
+
+  <!-- GUARDAR -->
+  <div
+    style="
+      display:flex;
+      justify-content:center;
+      margin-top:16px;
+    "
+  >
+
+    <button
+      type="button"
+      id="la-guardar"
+    >
+      💾 Guardar letra y acordes
+    </button>
+
+  </div>
+
+</div>
 
   </div>
 
 </div>
 </body>
-</html>
+</html> 
