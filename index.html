@@ -6019,13 +6019,10 @@ async function mostrarWorshipPack(tipo) {
 }
 
 /* =====================================================
-   🎼 LETRA + ACORDES
-   PASO 1 — ABRIR / CERRAR MODAL
-===================================================== */
+   🎼 ABRIR LETRA + ACORDES
 
-/* =====================================================
-   🎼 EDITOR LETRA + ACORDES
-   PASO 3 — EDITOR VISUAL
+   MODO NORMAL  → VISOR
+   MODO EDICIÓN → EDITOR
 ===================================================== */
 
 function abrirLetraAcordes(id) {
@@ -6043,6 +6040,7 @@ function abrirLetraAcordes(id) {
       c => c.id === id
     );
 
+
   if (!cancion) {
 
     console.warn(
@@ -6051,22 +6049,27 @@ function abrirLetraAcordes(id) {
     );
 
     return;
+
   }
 
 
-  /* Guardar canción seleccionada
-     temporalmente */
+  /* =================================================
+     GUARDAR CANCIÓN SELECCIONADA
+  ================================================= */
 
   window.cancionLetraAcordes =
     cancion;
 
 
-  /* Título */
+  /* =================================================
+     TÍTULO
+  ================================================= */
 
   const titulo =
     document.getElementById(
       "letra-acordes-titulo"
     );
+
 
   if (titulo) {
 
@@ -6076,38 +6079,152 @@ function abrirLetraAcordes(id) {
   }
 
 
-  /* Tono inicial */
+  /* =================================================
+     TONO INICIAL
+  ================================================= */
 
-const tono =
-  document.getElementById(
-    "la-tono-actual"
-  );
-
-if (tono) {
-
-  const tonoInicial =
-    cancion.letraAcordes?.tonoOriginal ||
-    cancion.acordes ||
-    "-";
-
-  tono.textContent =
-    tonoInicial;
-
-}
+  const tono =
+    document.getElementById(
+      "la-tono-actual"
+    );
 
 
-  /* Crear editor */
+  if (tono) {
 
-  crearEditorLetraAcordes();
+    const tonoInicial =
+      cancion.letraAcordes?.tonoOriginal ||
+      cancion.acordes ||
+      "-";
 
 
-  /* Mostrar modal */
+    tono.textContent =
+      tonoInicial;
+
+  }
+
+
+  /* =================================================
+     CONTENEDORES
+  ================================================= */
+
+  const editor =
+    document.getElementById(
+      "la-editor-container"
+    );
+
+
+  const visor =
+    document.getElementById(
+      "la-visor-container"
+    );
+
+
+  const controlesEditor =
+    document.getElementById(
+      "la-controles-editor"
+    );
+
+
+  if (!editor || !visor) {
+
+    console.warn(
+      "No se encontraron los contenedores del editor/visor."
+    );
+
+    return;
+
+  }
+
+
+  /* =================================================
+     MODO EDICIÓN
+  ================================================= */
+
+  if (modoEdicion) {
+
+    /* Crear/cargar editor */
+
+    crearEditorLetraAcordes();
+
+
+    editor.style.display =
+      "block";
+
+
+    visor.style.display =
+      "none";
+
+
+    /* Mostrar controles de edición */
+
+    if (controlesEditor) {
+
+      controlesEditor.style.display =
+        "flex";
+
+    }
+
+
+  }
+
+  /* =================================================
+     MODO NORMAL → VISOR
+  ================================================= */
+
+  else {
+
+    /* Crear visor */
+
+    crearVisorLetraAcordes();
+
+
+    editor.style.display =
+      "none";
+
+
+    visor.style.display =
+      "block";
+
+
+    /* Ocultar controles de edición */
+
+    if (controlesEditor) {
+
+      controlesEditor.style.display =
+        "none";
+
+    }
+
+  }
+
+
+  /* =================================================
+     OCULTAR BOTÓN ANTIGUO
+     👁️ Ver canción / ✏️ Volver a editar
+  ================================================= */
+
+  const botonVer =
+    document.getElementById(
+      "la-ver-cancion"
+    );
+
+
+  if (botonVer) {
+
+    botonVer.style.display =
+      "none";
+
+  }
+
+
+  /* =================================================
+     MOSTRAR MODAL
+  ================================================= */
 
   modal.style.display =
     "flex";
 
 }
-
 /* =====================================================
    CREAR EDITOR
    CARGA DATOS GUARDADOS SI EXISTEN
@@ -7312,70 +7429,6 @@ crearSeccionEditor(
   }
 );
 
-/* =====================================================
-   👁️ / ✏️ CAMBIAR ENTRE VISOR Y EDITOR
-===================================================== */
-
-document.addEventListener(
-  "click",
-  function(event) {
-
-    if (
-      event.target.id !==
-      "la-ver-cancion"
-    ) {
-      return;
-    }
-
-
-    const editor =
-      document.getElementById(
-        "la-editor-container"
-      );
-
-    const visor =
-      document.getElementById(
-        "la-visor-container"
-      );
-
-
-    if (!editor || !visor) {
-      return;
-    }
-
-
-    const mostrandoVisor =
-      visor.style.display === "block";
-
-
-    if (mostrandoVisor) {
-
-      visor.style.display =
-        "none";
-
-      editor.style.display =
-        "block";
-
-      event.target.textContent =
-        "👁️ Ver canción";
-
-    } else {
-
-      crearVisorLetraAcordes();
-
-      editor.style.display =
-        "none";
-
-      visor.style.display =
-        "block";
-
-      event.target.textContent =
-        "✏️ Volver a editar";
-
-    }
-
-  }
-);
 
 function cerrarLetraAcordes() {
 
@@ -7540,8 +7593,10 @@ window.addEventListener('load', ()=>{
 </div>
 
   <!-- CONTROLES -->
+  
   <div
-    style="
+  id="la-controles-editor"
+  style="
       display:flex;
       flex-wrap:wrap;
       gap:8px;
