@@ -6077,19 +6077,22 @@ function abrirLetraAcordes(id) {
 
   /* Tono inicial */
 
-  const tono =
-    document.getElementById(
-      "la-tono-actual"
-    );
+const tono =
+  document.getElementById(
+    "la-tono-actual"
+  );
 
-  if (tono) {
+if (tono) {
 
-    tono.textContent =
-      cancion.letraAcordes?.tonoOriginal ||
-      cancion.acordes ||
-      "A";
+  const tonoInicial =
+    cancion.letraAcordes?.tonoOriginal ||
+    cancion.acordes ||
+    "-";
 
-  }
+  tono.textContent =
+    tonoInicial;
+
+}
 
 
   /* Crear editor */
@@ -7430,7 +7433,7 @@ window.addEventListener('load', ()=>{
 
     <div class="la-tono-centro">
       <small>Tono</small>
-      <strong id="la-tono-actual">A</strong>
+      <strong id="la-tono-actual">-</strong>
     </div>
 
     <button
