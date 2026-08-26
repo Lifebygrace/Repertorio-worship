@@ -2415,26 +2415,23 @@ const metaHtml = `
 
 const acordesHtml =
   `<p>${d.acordes || ""}</p>`;
+  
+  
+  /* =====================================================
+   🎼 VISOR LETRA + ACORDES DE LA TARJETA
+===================================================== */
 
-
-/* Imágenes */
-
-const imagenesHtml =
-  `<div>
-    ${(d.imagenes || [])
-      .map(
-        u =>
-          `<img
-            src="${u}"
-            style="
-              width:100%;
-              margin-top:8px;
-              border-radius:8px;
-            "
-          >`
-      )
-      .join("")}
-  </div>`;
+const visorTarjetaHtml = `
+  <div
+    class="visor-tarjeta"
+    data-cancion-id="${d.id}"
+    style="
+      margin-top:12px;
+      padding-top:4px;
+    "
+  >
+  </div>
+`;
 
 
 /* Audio */
@@ -2495,13 +2492,11 @@ div.innerHTML =
 
   metaHtml +
 
-  acordesHtml +
+acordesHtml +
 
-  `<div style="margin-top:8px">
-    ${imagenesHtml}
-  </div>` +
+visorTarjetaHtml +
 
-  `<div style="margin-top:8px">
+`<div style="margin-top:8px">
     ${audioHtml}
     ${youtubeHtml}
   </div>` +
