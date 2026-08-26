@@ -2361,6 +2361,404 @@ function actualizarContador(){
   el.textContent = `Canciones totales 🎶: ${n}`;
 }
 
+/* =====================================================
+   🎼 VISOR LETRA + ACORDES DENTRO DE LA TARJETA
+   Cada tarjeta tiene su propio tono y transposición
+===================================================== */
+
+function crearVisorTarjetaInline(
+  cancion,
+  contenedor
+) {
+
+  if (!contenedor) return;
+
+
+  const datos =
+    cancion.letraAcordes;
+
+
+  /* =================================================
+     SI NO HAY LETRA + ACORDES
+  ================================================= */
+
+  if (
+    !datos ||
+    !Array.isArray(datos.secciones) ||
+    datos.secciones.length === 0
+  ) {
+
+    contenedor.innerHTML = `
+      <div style="
+        padding:20px;
+        text-align:center;
+        opacity:0.75;
+        font-size:1rem;
+      ">
+        🎼 Esta canción todavía no tiene
+        letra y acordes guardados.
+      </div>
+    `;
+
+    return;
+
+  }
+
+
+  /* =================================================
+     TONO ORIGINAL
+  ================================================= */
+
+  const tonoOriginal =
+    normalizarNota(
+      datos.tonoOriginal ||
+      cancion.acordes ||
+      "C"
+    );
+
+
+  let pasos =
+    0;
+
+
+  /* =================================================
+     ESTRUCTURA
+  ================================================= */
+
+  contenedor.innerHTML = `
+
+    <div
+      class="visor-inline"
+      style="
+        margin-top:8px;
+        padding:18px;
+        border-radius:16px;
+        background:rgba(255,255,255,0.06);
+        box-sizing:border-box;
+      "
+    >
+
+      <!-- CONTROLES DE TONO -->
+
+      <div
+        style="
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          gap:18px;
+          margin-bottom:22px;
+        "
+      >
+
+        <button
+          type="button"
+          class="inline-tono-bajar"
+          style="
+            width:58px;
+            height:58px;
+            min-width:58px;
+            border-radius:14px;
+          "
+        >
+          ◀
+        </button>
+
+
+        <div
+          style="
+            min-width:90px;
+            text-align:center;
+          "
+        >
+
+          <small
+            style="
+              display:block;
+              opacity:.7;
+              margin-bottom:3px;
+            "
+          >
+            Tono
+          </small>
+
+          <strong
+            class="inline-tono-actual"
+            style="
+              display:block;
+              font-size:1.35rem;
+            "
+          >
+            ${tonoOriginal}
+          </strong>
+
+        </div>
+
+
+        <button
+          type="button"
+          class="inline-tono-subir"
+          style="
+            width:58px;
+            height:58px;
+            min-width:58px;
+            border-radius:14px;
+          "
+        >
+          ▶
+        </button>
+
+      </div>
+
+
+      <!-- LETRA + ACORDES -->
+
+      <div class="inline-letra-contenido"></div>
+
+    </div>
+
+  `;
+
+
+  const contenido =
+    contenedor.querySelector(
+      ".inline-letra-contenido"
+    );
+
+
+  const tonoActual =
+    contenedor.querySelector(
+      ".inline-tono-actual"
+    );
+
+
+  /* =================================================
+     RENDERIZAR LETRA
+  ================================================= */
+
+  function renderizar() {
+
+    if (!contenido) return;
+
+
+    contenido.innerHTML = "";
+
+
+    datos.secciones.forEach(
+      seccion => {
+
+        /* Nombre de sección */
+
+        if (seccion.nombre) {
+
+          const titulo =
+            document.createElement(
+              "h3"
+            );
+
+          titulo.textContent =
+            seccion.nombre;
+
+          titulo.style.margin =
+            "22px 0 12px";
+
+          titulo.style.fontSize =
+            "1.05rem";
+
+          titulo.style.fontWeight =
+            "700";
+
+          contenido.appendChild(
+            titulo
+          );
+
+        }
+
+
+        /* Líneas */
+
+        (seccion.lineas || [])
+          .forEach(
+            linea => {
+
+              const bloque =
+                document.createElement(
+                  "div"
+                );
+
+              bloque.style.marginBottom =
+                "14px";
+
+
+              /* Acordes */
+
+              if (linea.acordes) {
+
+                const acordes =
+                  document.createElement(
+                    "div"
+                  );
+
+                acordes.className =
+                  "inline-acordes";
+
+                acordes.style.whiteSpace =
+                  "pre-wrap";
+
+                acordes.style.fontFamily =
+                  "monospace";
+
+                acordes.style.fontWeight =
+                  "700";
+
+                acordes.style.color =
+                  "#4da3ff";
+
+                acordes.style.fontSize =
+                  "0.95rem";
+
+                acordes.textContent =
+                  transponerLineaAcordes(
+                    linea.acordes,
+                    pasos
+                  );
+
+                bloque.appendChild(
+                  acordes
+                );
+
+              }
+
+
+              /* Letra */
+
+              if (linea.letra) {
+
+                const letra =
+                  document.createElement(
+                    "div"
+                  );
+
+                letra.style.whiteSpace =
+                  "pre-wrap";
+
+                letra.style.fontSize =
+                  "1rem";
+
+                letra.style.lineHeight =
+                  "1.5";
+
+                letra.style.marginTop =
+                  "2px";
+
+                letra.textContent =
+                  linea.letra;
+
+                bloque.appendChild(
+                  letra
+                );
+
+              }
+
+
+              contenido.appendChild(
+                bloque
+              );
+
+            }
+          );
+
+      }
+    );
+
+  }
+
+
+  /* Primera carga */
+
+  renderizar();
+
+
+  /* =================================================
+     BAJAR TONO
+  ================================================= */
+
+  const botonBajar =
+    contenedor.querySelector(
+      ".inline-tono-bajar"
+    );
+
+  if (botonBajar) {
+
+    botonBajar.addEventListener(
+      "click",
+      function(event) {
+
+        event.stopPropagation();
+
+        pasos--;
+
+        const nuevoTono =
+          transponerNota(
+            tonoOriginal,
+            pasos
+          );
+
+        if (tonoActual) {
+
+          tonoActual.textContent =
+            nuevoTono;
+
+        }
+
+        renderizar();
+
+      }
+    );
+
+  }
+
+
+  /* =================================================
+     SUBIR TONO
+  ================================================= */
+
+  const botonSubir =
+    contenedor.querySelector(
+      ".inline-tono-subir"
+    );
+
+  if (botonSubir) {
+
+    botonSubir.addEventListener(
+      "click",
+      function(event) {
+
+        event.stopPropagation();
+
+        pasos++;
+
+        const nuevoTono =
+          transponerNota(
+            tonoOriginal,
+            pasos
+          );
+
+        if (tonoActual) {
+
+          tonoActual.textContent =
+            nuevoTono;
+
+        }
+
+        renderizar();
+
+      }
+    );
+
+  }
+
+}
+
 /* Construcción de tarjeta — meta debajo del título + edición completa + preview imágenes en edición */
 function construirCard(d){
   const div = document.createElement("div");
@@ -2502,6 +2900,24 @@ visorTarjetaHtml +
   </div>` +
 
   tocadaHtml;
+  
+  /* =====================================================
+   🎼 CARGAR VISOR DE ESTA CANCIÓN
+===================================================== */
+
+const visorContenedor =
+  div.querySelector(
+    ".visor-tarjeta"
+  );
+
+if (visorContenedor) {
+
+  crearVisorTarjetaInline(
+    d,
+    visorContenedor
+  );
+
+}
   
   /* =====================================================
    🎼 BOTÓN LETRA + ACORDES
