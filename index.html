@@ -6106,6 +6106,7 @@ function abrirLetraAcordes(id) {
 
 /* =====================================================
    CREAR EDITOR
+   CARGA DATOS GUARDADOS SI EXISTEN
 ===================================================== */
 
 function crearEditorLetraAcordes() {
@@ -6121,9 +6122,59 @@ function crearEditorLetraAcordes() {
   contenedor.innerHTML = "";
 
 
-  /* ===============================
-     SECCIÓN INICIAL
-  =============================== */
+  const cancion =
+    window.cancionLetraAcordes;
+
+
+  /* =================================================
+     SI EXISTEN DATOS GUARDADOS
+  ================================================= */
+
+  if (
+    cancion &&
+    cancion.letraAcordes &&
+    Array.isArray(
+      cancion.letraAcordes.secciones
+    ) &&
+    cancion.letraAcordes.secciones.length > 0
+  ) {
+
+    cancion.letraAcordes.secciones
+      .forEach(
+        datosSeccion => {
+
+          crearSeccionEditor(
+            contenedor,
+            datosSeccion
+          );
+
+        }
+      );
+
+
+    return;
+
+  }
+
+
+  /* =================================================
+     SI NO EXISTEN DATOS → CREAR EDITOR VACÍO
+  ================================================= */
+
+  crearSeccionEditor(
+    contenedor
+  );
+
+}
+
+/* =====================================================
+   CREAR SECCIÓN DEL EDITOR
+===================================================== */
+
+function crearSeccionEditor(
+  contenedor,
+  datos = null
+) {
 
   const seccion =
     document.createElement("div");
@@ -6135,12 +6186,15 @@ function crearEditorLetraAcordes() {
     "20px";
 
 
-  /* Nombre de sección */
+  /* =================================================
+     NOMBRE DE LA SECCIÓN
+  ================================================= */
 
   const nombre =
     document.createElement("input");
 
-  nombre.type = "text";
+  nombre.type =
+    "text";
 
   nombre.placeholder =
     "Nombre de sección (ej. ESTROFA 1)";
@@ -6161,12 +6215,54 @@ function crearEditorLetraAcordes() {
     "700";
 
 
+  if (datos) {
+
+    nombre.value =
+      datos.nombre || "";
+
+  }
+
+
   seccion.appendChild(
     nombre
   );
 
 
-  /* Contenedor de líneas */
+  /* =================================================
+     BOTÓN ELIMINAR SECCIÓN
+  ================================================= */
+
+  const eliminarSeccion =
+    document.createElement("button");
+
+  eliminarSeccion.type =
+    "button";
+
+  eliminarSeccion.textContent =
+    "🗑️ Eliminar sección";
+
+  eliminarSeccion.style.marginBottom =
+    "8px";
+
+
+  eliminarSeccion.addEventListener(
+    "click",
+    function() {
+
+      seccion.remove();
+
+    }
+  );
+
+
+  seccion.appendChild(
+    eliminarSeccion
+  );
+
+
+  /* =================================================
+     CONTENEDOR DE LÍNEAS
+  ================================================= */
 
   const lineas =
     document.createElement("div");
@@ -6185,11 +6281,38 @@ function crearEditorLetraAcordes() {
   );
 
 
-  /* Primera línea */
+  /* =================================================
+     CARGAR LÍNEAS GUARDADAS
+  ================================================= */
 
-  crearLineaEditor(
-    lineas
-  );
+  if (
+    datos &&
+    Array.isArray(
+      datos.lineas
+    ) &&
+    datos.lineas.length > 0
+  ) {
+
+    datos.lineas.forEach(
+      linea => {
+
+        crearLineaEditor(
+          lineas,
+          linea
+        );
+
+      }
+    );
+
+  } else {
+
+    /* Primera línea vacía */
+
+    crearLineaEditor(
+      lineas
+    );
+
+  }
 
 }
 
@@ -6198,7 +6321,10 @@ function crearEditorLetraAcordes() {
    🎼 CREAR UNA LÍNEA DE CANCIÓN
 ===================================================== */
 
-function crearLineaEditor(contenedor) {
+function crearLineaEditor(
+  contenedor,
+  datos = null
+) {
 
   const fila =
     document.createElement("div");
@@ -6242,7 +6368,12 @@ function crearLineaEditor(contenedor) {
 
   acordes.style.marginBottom =
     "5px";
+    if (datos) {
 
+  acordes.value =
+    datos.acordes || "";
+
+}
 
   /* ===============================
      CONTENEDOR DE LETRA
@@ -6264,7 +6395,12 @@ function crearLineaEditor(contenedor) {
 
   letra.style.boxSizing =
     "border-box";
+    if (datos) {
 
+  letra.value =
+    datos.letra || "";
+
+}
 
   /* ===============================
      BOTÓN ELIMINAR
@@ -6856,94 +6992,17 @@ document.addEventListener(
       return;
     }
 
+const contenedor =
+  document.getElementById(
+    "la-editor-container"
+  );
 
-    const contenedor =
-      document.getElementById(
-        "la-editor-container"
-      );
-
-    if (!contenedor) return;
-
-
-    const seccion =
-      document.createElement("div");
-
-    seccion.className =
-      "la-seccion-editor";
-
-    seccion.style.marginBottom =
-      "20px";
+if (!contenedor) return;
 
 
-    const nombre =
-      document.createElement("input");
-
-    nombre.type = "text";
-
-    nombre.placeholder =
-      "Nombre de sección (ej. CORO)";
-
-    nombre.className =
-      "la-seccion-nombre";
-
-    nombre.style.width =
-      "100%";
-
-    nombre.style.boxSizing =
-      "border-box";
-
-    nombre.style.marginBottom =
-      "10px";
-
-    nombre.style.fontWeight =
-      "700";
-
-
-    const lineas =
-      document.createElement("div");
-
-    lineas.className =
-      "la-lineas";
-
-
-const eliminarSeccion =
-  document.createElement("button");
-
-eliminarSeccion.type =
-  "button";
-
-eliminarSeccion.textContent =
-  "🗑️ Eliminar sección";
-
-eliminarSeccion.style.marginBottom =
-  "8px";
-
-eliminarSeccion.addEventListener(
-  "click",
-  function() {
-
-    seccion.remove();
-
-  }
+crearSeccionEditor(
+  contenedor
 );
-
-    seccion.appendChild(
-      nombre
-    );
-
-    seccion.appendChild(
-      lineas
-    );
-
-
-    contenedor.appendChild(
-      seccion
-    );
-
-
-    crearLineaEditor(
-      lineas
-    );
 
   }
 );
