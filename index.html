@@ -2369,25 +2369,6 @@ const metaHtml = `
   </div>
 `;
 
-/* =====================================================
-   🎼 BOTÓN LETRA + ACORDES
-===================================================== */
-
-const letraAcordesHtml = `
-  <div
-    class="letra-acordes-btn-container"
-    style="margin-top:10px;"
-  >
-
-    <button
-      type="button"
-      onclick="abrirLetraAcordes('${d.id}')"
-    >
-      🎼 Letra + acordes
-    </button>
-
-  </div>
-`;
 
 /* Acordes */
 
@@ -2485,6 +2466,34 @@ div.innerHTML =
   </div>` +
 
   tocadaHtml;
+  
+  /* =====================================================
+   🎼 BOTÓN LETRA + ACORDES
+===================================================== */
+
+const letraBtn =
+  document.createElement("button");
+
+letraBtn.type = "button";
+
+letraBtn.textContent =
+  "🎼 Letra + acordes";
+
+letraBtn.style.marginTop =
+  "10px";
+
+letraBtn.addEventListener(
+  "click",
+  function(event) {
+
+    event.stopPropagation();
+
+    abrirLetraAcordes(d.id);
+
+  }
+);
+
+div.appendChild(letraBtn);
 
   
   /* =====================================================
