@@ -2810,26 +2810,6 @@ const acordesHtml =
   `<p>${d.acordes || ""}</p>`;
 
 
-/* Imágenes */
-
-const imagenesHtml =
-  `<div>
-    ${(d.imagenes || [])
-      .map(
-        u =>
-          `<img
-            src="${u}"
-            style="
-              width:100%;
-              margin-top:8px;
-              border-radius:8px;
-            "
-          >`
-      )
-      .join("")}
-  </div>`;
-
-
 /* Audio */
 
 const audioHtml =
@@ -2902,34 +2882,23 @@ div.innerHTML =
   tocadaHtml;
   
   /* =====================================================
-   🎼 BOTÓN LETRA + ACORDES
+   🎼 VISOR LETRA + ACORDES
 ===================================================== */
 
-const letraBtn =
-  document.createElement("button");
+const visorContenedor =
+  div.querySelector(
+    ".visor-tarjeta-container"
+  );
 
-letraBtn.type = "button";
+if (visorContenedor) {
 
-letraBtn.textContent =
-  "🎼 Letra + acordes";
+  crearVisorTarjeta(
+    d,
+    visorContenedor
+  );
 
-letraBtn.style.marginTop =
-  "10px";
-
-letraBtn.addEventListener(
-  "click",
-  function(event) {
-
-    event.stopPropagation();
-
-    abrirLetraAcordes(d.id);
-
-  }
-);
-
-div.appendChild(letraBtn);
-
-  
+}
+    
   /* =====================================================
    ✏️ ABRIR EDITOR DE UNA CANCIÓN
 ===================================================== */
