@@ -6436,6 +6436,37 @@ function crearSeccionEditor(
     lineas
   );
 
+/* =================================================
+   ➕ BOTÓN AÑADIR LÍNEA
+================================================= */
+
+const anadirLinea =
+  document.createElement("button");
+
+anadirLinea.type =
+  "button";
+
+anadirLinea.textContent =
+  "➕ Añadir línea";
+
+anadirLinea.style.marginTop =
+  "8px";
+
+anadirLinea.addEventListener(
+  "click",
+  function() {
+
+    crearLineaEditor(
+      lineas
+    );
+
+  }
+);
+
+
+seccion.appendChild(
+  anadirLinea
+);
 
   contenedor.appendChild(
     seccion
@@ -7419,44 +7450,6 @@ document.addEventListener(
   }
 );
 
-/* =====================================================
-   ➕ AÑADIR LÍNEA
-===================================================== */
-
-document.addEventListener(
-  "click",
-  function(event) {
-
-    if (
-      event.target.id !==
-      "la-anadir-linea"
-    ) {
-      return;
-    }
-
-
-    const seccion =
-      document.querySelector(
-        ".la-seccion-editor"
-      );
-
-    if (!seccion) return;
-
-
-    const lineas =
-      seccion.querySelector(
-        ".la-lineas"
-      );
-
-    if (!lineas) return;
-
-
-    crearLineaEditor(
-      lineas
-    );
-
-  }
-);
 
 /* =====================================================
    ➕ AÑADIR SECCIÓN
@@ -7672,13 +7665,6 @@ window.addEventListener('load', ()=>{
     id="la-ver-cancion"
   >
     👁️ Ver canción
-  </button>
-
-  <button
-    type="button"
-    id="la-anadir-linea"
-  >
-    ➕ Añadir línea
   </button>
 
   <button
