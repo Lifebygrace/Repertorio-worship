@@ -2445,6 +2445,7 @@ const tonoOriginal =
         box-sizing:border-box;
       "
     >
+    
 
       <!-- CONTROLES DE TONO -->
 
@@ -2517,6 +2518,22 @@ const tonoOriginal =
 
       </div>
 
+${modoEdicion ? `
+  <div
+    style="
+      display:flex;
+      justify-content:center;
+      margin-bottom:18px;
+    "
+  >
+    <button
+      type="button"
+      class="inline-editar-letra"
+    >
+      ✏️ Editar letra + acordes
+    </button>
+  </div>
+` : ""}
 
       <!-- LETRA + ACORDES -->
 
@@ -2525,6 +2542,32 @@ const tonoOriginal =
     </div>
 
   `;
+  
+  /* =================================================
+   ✏️ EDITAR LETRA + ACORDES
+================================================= */
+
+const botonEditarLetra =
+  contenedor.querySelector(
+    ".inline-editar-letra"
+  );
+
+if (botonEditarLetra) {
+
+  botonEditarLetra.addEventListener(
+    "click",
+    function(event) {
+
+      event.stopPropagation();
+
+      abrirLetraAcordes(
+        cancion.id
+      );
+
+    }
+  );
+
+}
 
 
   const contenido =
