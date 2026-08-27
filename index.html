@@ -7594,6 +7594,7 @@ function transponerAcorde(
 
 /* =====================================================
    TRANSPONER UNA LÍNEA COMPLETA DE ACORDES
+   Conserva exactamente los espacios originales
 ===================================================== */
 
 function transponerLineaAcordes(
@@ -7606,16 +7607,23 @@ function transponerLineaAcordes(
   }
 
 
-  return texto
-    .split(/\s+/)
-    .map(
-      acorde =>
-        transponerAcorde(
-          acorde,
-          pasos
-        )
-    )
-    .join("        ");
+  /*
+     Solo sustituimos los acordes.
+     Todos los espacios, tabulaciones y
+     posiciones originales permanecen intactos.
+  */
+
+  return texto.replace(
+    /\S+/g,
+    function(acorde) {
+
+      return transponerAcorde(
+        acorde,
+        pasos
+      );
+
+    }
+  );
 
 }
 
@@ -7793,16 +7801,15 @@ async function guardarLetraAcordes() {
             );
 
 
-          const acordes =
-            acordesInput
-              ? acordesInput.value.trim()
-              : "";
+const acordes =
+  acordesInput
+    ? acordesInput.value
+    : "";
 
-
-          const letra =
-            letraInput
-              ? letraInput.value.trim()
-              : "";
+const letra =
+  letraInput
+    ? letraInput.value
+    : "";
 
 
           /*
