@@ -2378,31 +2378,80 @@ function crearVisorTarjetaInline(
     cancion.letraAcordes;
 
 
-  /* =================================================
-     SI NO HAY LETRA + ACORDES
-  ================================================= */
+/* =================================================
+   SI NO HAY LETRA + ACORDES
+================================================= */
 
-  if (
-    !datos ||
-    !Array.isArray(datos.secciones) ||
-    datos.secciones.length === 0
-  ) {
+if (
+  !datos ||
+  !Array.isArray(datos.secciones) ||
+  datos.secciones.length === 0
+) {
 
-    contenedor.innerHTML = `
-      <div style="
+  contenedor.innerHTML = `
+    <div
+      class="visor-inline"
+      style="
         padding:20px;
         text-align:center;
-        opacity:0.75;
+        opacity:0.85;
         font-size:1rem;
-      ">
+      "
+    >
+
+      <div style="margin-bottom:14px;">
         🎼 Esta canción todavía no tiene
         letra y acordes guardados.
       </div>
-    `;
 
-    return;
+      ${
+        modoEdicion
+          ? `
+            <button
+              type="button"
+              class="inline-editar-letra"
+            >
+              ✏️ Añadir letra + acordes
+            </button>
+          `
+          : ""
+      }
+
+    </div>
+  `;
+
+
+  /* =================================================
+     ✏️ BOTÓN AÑADIR LETRA + ACORDES
+  ================================================= */
+
+  const botonEditarLetra =
+    contenedor.querySelector(
+      ".inline-editar-letra"
+    );
+
+
+  if (botonEditarLetra) {
+
+    botonEditarLetra.addEventListener(
+      "click",
+      function(event) {
+
+        event.stopPropagation();
+
+        abrirLetraAcordes(
+          cancion.id
+        );
+
+      }
+    );
 
   }
+
+
+  return;
+
+}
 
 
   /* =================================================/* =================================================
@@ -2969,35 +3018,6 @@ if (visorContenedor) {
   );
 
 }
-  
-  /* =====================================================
-   🎼 BOTÓN LETRA + ACORDES
-===================================================== */
-
-const letraBtn =
-  document.createElement("button");
-
-letraBtn.type = "button";
-
-letraBtn.textContent =
-  "🎼 Letra + acordes";
-
-letraBtn.style.marginTop =
-  "10px";
-
-letraBtn.addEventListener(
-  "click",
-  function(event) {
-
-    event.stopPropagation();
-
-    abrirLetraAcordes(d.id);
-
-  }
-);
-
-div.appendChild(letraBtn);
-
   
   /* =====================================================
    ✏️ ABRIR EDITOR DE UNA CANCIÓN
