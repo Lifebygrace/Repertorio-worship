@@ -7148,31 +7148,81 @@ function crearVisorLetraAcordes() {
     cancion.letraAcordes;
 
 
-  /* =================================================
-     SIN DATOS
-  ================================================= */
 
-  if (
-    !datos ||
-    !Array.isArray(datos.secciones)
-  ) {
+/* =================================================
+   SI NO HAY LETRA + ACORDES
+================================================= */
 
-    contenedor.innerHTML = `
-      <div
-        style="
-          text-align:center;
-          padding:30px 10px;
-          opacity:.7;
-        "
-      >
+if (
+  !datos ||
+  !Array.isArray(datos.secciones) ||
+  datos.secciones.length === 0
+) {
+
+  contenedor.innerHTML = `
+    <div
+      class="visor-inline"
+      style="
+        margin-top:8px;
+        padding:18px;
+        border-radius:16px;
+        background:rgba(255,255,255,0.06);
+        box-sizing:border-box;
+        text-align:center;
+      "
+    >
+
+      <div style="
+        opacity:0.75;
+        margin-bottom:${modoEdicion ? "14px" : "0"};
+      ">
         🎼 Esta canción todavía no tiene
         letra y acordes guardados.
       </div>
-    `;
 
-    return;
+      ${modoEdicion ? `
+        <button
+          type="button"
+          class="inline-editar-letra"
+        >
+          ✏️ Añadir letra + acordes
+        </button>
+      ` : ""}
+
+    </div>
+  `;
+
+
+  /* =================================================
+     BOTÓN AÑADIR / EDITAR
+  ================================================= */
+
+  const botonEditarLetra =
+    contenedor.querySelector(
+      ".inline-editar-letra"
+    );
+
+  if (botonEditarLetra) {
+
+    botonEditarLetra.addEventListener(
+      "click",
+      function(event) {
+
+        event.stopPropagation();
+
+        abrirLetraAcordes(
+          cancion.id
+        );
+
+      }
+    );
+
   }
 
+
+  return;
+
+}
 
   contenedor.innerHTML = "";
 
