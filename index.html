@@ -5648,64 +5648,288 @@ window.exportarListadoMensualPDF = async function() {
     }).join("");
 
     // Documento que se muestra en el iframe y que se puede imprimir como PDF.
-    const documentoHTML = `
-      <!DOCTYPE html>
-      <html lang="es">
-      <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Repertorio ${escaparHTML(nombreMes)}</title>
-        <style>
-          * { box-sizing: border-box; }
-          body { margin: 0; padding: 35px; font-family: Arial, Helvetica, sans-serif; background: #f4f6f3; color: #263a34; }
-          .documento { max-width: 850px; margin: auto; }
-          .cabecera { background: #172b35; color: white; padding: 35px; border-radius: 16px; margin-bottom: 25px; }
-          .marca { font-size: 12px; letter-spacing: 3px; color: #a8c7be; font-weight: bold; }
-          h1 { font-size: 32px; margin: 22px 0 8px; text-transform: uppercase; }
-          .subtitulo { color: #c0d0ce; font-size: 15px; }
-          .resumen { margin-top: 25px; font-size: 11px; letter-spacing: 1px; color: #a8c7be; }
-          .domingo-card { background: white; border: 1px solid #e3e9e4; border-radius: 12px; padding: 22px; margin-bottom: 16px; break-inside: avoid; }
-          .domingo-header { display: flex; align-items: center; justify-content: space-between; }
-          .fecha { display: flex; align-items: center; gap: 13px; }
-          .numero { background: #e5eeea; color: #244b43; font-size: 24px; font-weight: bold; padding: 12px; border-radius: 9px; }
-          .etiqueta { font-size: 10px; color: #84918a; font-weight: bold; letter-spacing: 1px; }
-          .fecha-completa { font-weight: bold; margin-top: 4px; }
-          .numero-servicio { color: #718078; font-size: 10px; letter-spacing: 1px; }
-          .separador { height: 1px; background: #e8ece8; margin: 17px 0; }
-          ol { padding-left: 25px; margin: 0; }
-          li { padding: 5px 0 5px 5px; font-size: 14px; }
-          li::marker { color: #6c9587; font-weight: bold; }
-          .cantante { margin-top: 18px; padding-top: 12px; border-top: 1px solid #edf0ed; font-size: 12px; color: #718078; }
-          .cantante strong { color: #263a34; }
-          .sin-canciones { color: #89938d; font-style: italic; font-size: 13px; }
-          .pie { text-align: center; padding: 20px; color: #87938b; font-size: 10px; letter-spacing: 2px; }
-          @page { size: A4; margin: 12mm; }
-          @media print {
-            body { background: white; padding: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-            .cabecera, .domingo-card { break-inside: avoid; }
-          }
-          @media screen and (max-width: 600px) {
-            body { padding: 14px; }
-            .cabecera { padding: 24px; }
-            h1 { font-size: 25px; }
-            .domingo-card { padding: 16px; }
-          }
-        </style>
-      </head>
-      <body>
-        <main class="documento">
-          <header class="cabecera">
-            <div class="marca">REPERTORIO</div>
-            <h1>${escaparHTML(nombreMes)}</h1>
-            <div class="subtitulo">Canciones para nuestros domingos</div>
-            <div class="resumen">${domingos.length} DOMINGOS · PLANIFICACIÓN MUSICAL</div>
-          </header>
-          ${tarjetas}
-          <footer class="pie">REPERTORIO MENSUAL</footer>
-        </main>
-      </body>
-      </html>
-    `;
+
+const documentoHTML = `
+  <!DOCTYPE html>
+  <html lang="es">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Repertorio ${escaparHTML(nombreMes)}</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 35px;
+        font-family: Arial, Helvetica, sans-serif;
+        background: #ffffff;
+        color: #08284b;
+      }
+
+      .documento {
+        max-width: 850px;
+        margin: auto;
+      }
+
+      /* CABECERA AZUL MARINO */
+
+      .cabecera {
+        position: relative;
+        overflow: hidden;
+        background: #06264a;
+        color: #ffffff;
+        padding: 42px;
+        border-radius: 14px;
+        margin-bottom: 27px;
+      }
+
+      .cabecera::after {
+        content: "";
+        position: absolute;
+        width: 230px;
+        height: 230px;
+        border: 32px solid rgba(255, 140, 66, 0.20);
+        border-radius: 50%;
+        top: -105px;
+        right: -65px;
+      }
+
+      .marca {
+        position: relative;
+        z-index: 1;
+        font-size: 12px;
+        letter-spacing: 4px;
+        color: #ffad78;
+        font-weight: bold;
+      }
+
+      h1 {
+        position: relative;
+        z-index: 1;
+        font-size: 38px;
+        margin: 27px 0 8px;
+        text-transform: capitalize;
+        color: #ffffff;
+      }
+
+      .subtitulo {
+        position: relative;
+        z-index: 1;
+        color: #d5e0ed;
+        font-size: 16px;
+      }
+
+      .resumen {
+        position: relative;
+        z-index: 1;
+        margin-top: 30px;
+        font-size: 12px;
+        letter-spacing: 2px;
+        color: #ffad78;
+        font-weight: bold;
+      }
+
+      /* TARJETAS DE LOS DOMINGOS */
+
+      .domingo-card {
+        background: #ffffff;
+        border: 1px solid #dce5ef;
+        border-left: 5px solid #ff873f;
+        border-radius: 15px;
+        padding: 24px 27px;
+        margin-bottom: 17px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .domingo-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .fecha {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .numero {
+        background: #fff0e6;
+        color: #08284b;
+        font-size: 29px;
+        font-weight: bold;
+        padding: 13px;
+        min-width: 58px;
+        text-align: center;
+        border-radius: 13px;
+      }
+
+      .etiqueta {
+        font-size: 11px;
+        color: #7185a1;
+        font-weight: bold;
+        letter-spacing: 1.5px;
+      }
+
+      .fecha-completa {
+        font-size: 16px;
+        font-weight: bold;
+        margin-top: 5px;
+        color: #08284b;
+      }
+
+      .numero-servicio {
+        color: #7185a1;
+        font-size: 11px;
+        font-weight: bold;
+        letter-spacing: 1.5px;
+        white-space: nowrap;
+      }
+
+      .separador {
+        height: 1px;
+        background: #dce5ef;
+        margin: 18px 0;
+      }
+
+      ol {
+        padding-left: 27px;
+        margin: 0;
+      }
+
+      li {
+        padding: 6px 0 6px 5px;
+        font-size: 15px;
+        color: #263e5c;
+      }
+
+      li::marker {
+        color: #ff873f;
+        font-weight: bold;
+      }
+
+      /* CANTANTE */
+
+      .cantante {
+        margin-top: 19px;
+        padding-top: 15px;
+        border-top: 1px solid #e8edf3;
+        font-size: 13px;
+        color: #7185a1;
+      }
+
+      .cantante span {
+        color: #ff873f;
+        font-size: 18px;
+        margin-right: 7px;
+      }
+
+      .cantante strong {
+        color: #08284b;
+        margin-left: 5px;
+      }
+
+      .sin-canciones {
+        color: #8998aa;
+        font-style: italic;
+        font-size: 14px;
+      }
+
+      /* PIE DEL DOCUMENTO */
+
+      .pie {
+        text-align: center;
+        padding: 22px;
+        color: #7185a1;
+        font-size: 10px;
+        font-weight: bold;
+        letter-spacing: 3px;
+      }
+
+      /* IMPRESIÓN Y PDF */
+
+      @page {
+        size: A4;
+        margin: 12mm;
+      }
+
+      @media print {
+        body {
+          background: #ffffff;
+          padding: 0;
+          -webkit-print-color-adjust: exact;
+          print-color-adjust: exact;
+        }
+
+        .cabecera,
+        .domingo-card {
+          break-inside: avoid;
+          page-break-inside: avoid;
+        }
+      }
+
+      /* ADAPTACIÓN A MÓVILES */
+
+      @media screen and (max-width: 600px) {
+        body {
+          padding: 14px;
+        }
+
+        .cabecera {
+          padding: 27px;
+        }
+
+        h1 {
+          font-size: 29px;
+        }
+
+        .domingo-card {
+          padding: 17px;
+        }
+
+        .numero-servicio {
+          font-size: 9px;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="documento">
+
+      <header class="cabecera">
+        <div class="marca">
+          LISTADO MENSUAL · PLANIFICACIÓN MUSICAL
+        </div>
+
+        <h1>${escaparHTML(nombreMes)}</h1>
+
+        <div class="subtitulo">
+          Canciones para nuestros servicios
+        </div>
+
+        <div class="resumen">
+          ${domingos.length} DOMINGOS · REPERTORIO MENSUAL
+        </div>
+      </header>
+
+      ${tarjetas}
+
+      <footer class="pie">
+        REPERTORIO MENSUAL · ${escaparHTML(mes)}
+      </footer>
+
+    </main>
+  </body>
+  </html>
+`;
+
 
     // Crear visor superpuesto dentro de la aplicación.
     const visor = document.createElement("div");
