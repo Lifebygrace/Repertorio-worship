@@ -459,6 +459,41 @@ body.dark .proximo-label {
 }
 
 /* =========================
+   EXPORTAR LISTADO MENSUAL
+========================= */
+.btn-exportar-listado-pdf {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  margin: 12px 0 22px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0, 34, 68, .16);
+}
+
+.btn-exportar-listado-pdf:hover {
+  background: #00345f;
+}
+
+.btn-exportar-listado-pdf:disabled {
+  opacity: .65;
+  cursor: wait;
+  transform: none;
+}
+
+body.dark .btn-exportar-listado-pdf {
+  background: var(--accent);
+  color: #17212b;
+}
+
+/* =========================
    MODAL LISTADO MENSUAL
 ========================= */
 .modal-listado {
@@ -943,15 +978,18 @@ body.dark #herramientas-panel {
     <h3 id="mes-actual"></h3>
     <button onclick="cambiarMes(1)">➡️</button>
   </div>
-<button
-  onclick="exportarListadoMensualPDF()"
-  class="btn-exportar-pdf"
->
-  📄 Exportar listado mensual
-</button>
 
-<div id="domingos-container"></div>
+  <button
+    type="button"
+    id="btn-exportar-listado-pdf"
+    class="btn-exportar-listado-pdf"
+    onclick="exportarListadoMensualPDF()"
+  >
+    <span aria-hidden="true">📄</span>
+    Exportar listado mensual
+  </button>
 
+  <div id="domingos-container" style="margin-top: 6px;"></div>
 </div>
 
   <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
@@ -2370,10 +2408,9 @@ function actualizarContador(){
 
 /* =====================================================
    🎼 VISOR LETRA + ACORDES DENTRO DE LA TARJETA
-   Cada tarjeta tiene su propio tono y transposición
 ===================================================== */
 
-function crearVisorTarjetaInline(
+function crearVisorTarjeta(
   cancion,
   contenedor
 ) {
@@ -2385,484 +2422,380 @@ function crearVisorTarjetaInline(
     cancion.letraAcordes;
 
 
-/* =================================================
-   SI NO HAY LETRA + ACORDES
-================================================= */
-
-if (
-  !datos ||
-  !Array.isArray(datos.secciones) ||
-  datos.secciones.length === 0
-) {
-
-  contenedor.innerHTML = `
-    <div
-      class="visor-inline"
-      style="
-        padding:20px;
-        text-align:center;
-        opacity:0.85;
-        font-size:1rem;
-      "
-    >
-
-      <div style="margin-bottom:14px;">
-        🎼 Esta canción todavía no tiene
-        letra y acordes guardados.
-      </div>
-
-      ${
-        modoEdicion
-          ? `
-            <button
-              type="button"
-              class="inline-editar-letra"
-            >
-              ✏️ Añadir letra + acordes
-            </button>
-          `
-          : ""
-      }
-
-    </div>
-  `;
-
-
   /* =================================================
-     ✏️ BOTÓN AÑADIR LETRA + ACORDES
+     SI TODAVÍA NO HAY LETRA + ACORDES
   ================================================= */
 
-  const botonEditarLetra =
-    contenedor.querySelector(
-      ".inline-editar-letra"
-    );
+  if (
+    !datos ||
+    !Array.isArray(
+      datos.secciones
+    ) ||
+    datos.secciones.length === 0
+  ) {
 
+    contenedor.innerHTML = `
+      <div
+        style="
+          padding:15px;
+          text-align:center;
+          opacity:.6;
+          font-size:14px;
+        "
+      >
+        🎼 Esta canción todavía no tiene
+        letra y acordes.
+      </div>
+    `;
 
-  if (botonEditarLetra) {
-
-    botonEditarLetra.addEventListener(
-      "click",
-      function(event) {
-
-        event.stopPropagation();
-
-        abrirLetraAcordes(
-          cancion.id
-        );
-
-      }
-    );
+    return;
 
   }
 
 
-  return;
-
-}
-
-
-  /* =================================================/* =================================================
-   TONO ORIGINAL
-   Acepta "A" o "Key: A"
-================================================= */
-
-const tonoBase =
-  String(
-    datos.tonoOriginal ||
-    cancion.acordes ||
-    "C"
-  )
-  .replace(/^Key:\s*/i, "")
-  .trim();
-
-const tonoOriginal =
-  normalizarNota(
-    tonoBase
-  );
-
-
-  let pasos =
-    0;
+  contenedor.innerHTML = "";
 
 
   /* =================================================
-     ESTRUCTURA
+     TONO DE LA CANCIÓN
   ================================================= */
 
-  contenedor.innerHTML = `
-
-    <div
-      class="visor-inline"
-      style="
-        margin-top:8px;
-        padding:18px;
-        border-radius:16px;
-        background:rgba(255,255,255,0.06);
-        box-sizing:border-box;
-      "
-    >
-    
-
-      <!-- CONTROLES DE TONO -->
-
-      <div
-        style="
-          display:flex;
-          align-items:center;
-          justify-content:center;
-          gap:18px;
-          margin-bottom:22px;
-        "
-      >
-
-        <button
-          type="button"
-          class="inline-tono-bajar"
-          style="
-            width:58px;
-            height:58px;
-            min-width:58px;
-            border-radius:14px;
-          "
-        >
-          ◀
-        </button>
+  let tonoActual =
+    datos.tonoOriginal ||
+    cancion.acordes ||
+    "-";
 
 
-        <div
-          style="
-            min-width:90px;
-            text-align:center;
-          "
-        >
-
-          <small
-            style="
-              display:block;
-              opacity:.7;
-              margin-bottom:3px;
-            "
-          >
-            Tono
-          </small>
-
-          <strong
-            class="inline-tono-actual"
-            style="
-              display:block;
-              font-size:1.35rem;
-            "
-          >
-          Key: ${tonoOriginal}
-          </strong>
-
-        </div>
-
-
-        <button
-          type="button"
-          class="inline-tono-subir"
-          style="
-            width:58px;
-            height:58px;
-            min-width:58px;
-            border-radius:14px;
-          "
-        >
-          ▶
-        </button>
-
-      </div>
-
-${modoEdicion ? `
-  <div
-    style="
-      display:flex;
-      justify-content:center;
-      margin-bottom:18px;
-    "
-  >
-    <button
-      type="button"
-      class="inline-editar-letra"
-    >
-      ✏️ Editar letra + acordes
-    </button>
-  </div>
-` : ""}
-
-      <!-- LETRA + ACORDES -->
-
-      <div class="inline-letra-contenido"></div>
-
-    </div>
-
-  `;
-  
   /* =================================================
-   ✏️ EDITAR LETRA + ACORDES
-================================================= */
+     CONTENEDOR DEL VISOR
+  ================================================= */
 
-const botonEditarLetra =
-  contenedor.querySelector(
-    ".inline-editar-letra"
+  const visor =
+    document.createElement(
+      "div"
+    );
+
+  visor.className =
+    "la-cancion-vista";
+
+
+  /* =================================================
+     CONTROL DE TONO
+  ================================================= */
+
+  const tonoControl =
+    document.createElement(
+      "div"
+    );
+
+  tonoControl.className =
+    "la-tono-control";
+
+
+  const bajar =
+    document.createElement(
+      "button"
+    );
+
+  bajar.type =
+    "button";
+
+  bajar.textContent =
+    "◀";
+
+
+  const centro =
+    document.createElement(
+      "div"
+    );
+
+  centro.className =
+    "la-tono-centro";
+
+
+  const small =
+    document.createElement(
+      "small"
+    );
+
+  small.textContent =
+    "Tono";
+
+
+  const tono =
+    document.createElement(
+      "strong"
+    );
+
+  tono.textContent =
+    tonoActual;
+
+
+  centro.appendChild(
+    small
   );
 
-if (botonEditarLetra) {
+  centro.appendChild(
+    tono
+  );
 
-  botonEditarLetra.addEventListener(
-    "click",
-    function(event) {
 
-      event.stopPropagation();
+  const subir =
+    document.createElement(
+      "button"
+    );
 
-      abrirLetraAcordes(
-        cancion.id
+  subir.type =
+    "button";
+
+  subir.textContent =
+    "▶";
+
+
+  tonoControl.appendChild(
+    bajar
+  );
+
+  tonoControl.appendChild(
+    centro
+  );
+
+  tonoControl.appendChild(
+    subir
+  );
+
+
+  visor.appendChild(
+    tonoControl
+  );
+
+
+  /* =================================================
+     CONTENIDO DE LA CANCIÓN
+  ================================================= */
+
+  const contenido =
+    document.createElement(
+      "div"
+    );
+
+
+  contenido.className =
+    "la-contenido-tarjeta";
+
+
+  datos.secciones.forEach(
+    seccion => {
+
+      /* NOMBRE DE SECCIÓN */
+
+      if (seccion.nombre) {
+
+        const titulo =
+          document.createElement(
+            "h4"
+          );
+
+        titulo.textContent =
+          seccion.nombre;
+
+        titulo.style.marginTop =
+          "22px";
+
+        titulo.style.marginBottom =
+          "12px";
+
+        contenido.appendChild(
+          titulo
+        );
+
+      }
+
+
+      /* LÍNEAS */
+
+      if (
+        !Array.isArray(
+          seccion.lineas
+        )
+      ) {
+        return;
+      }
+
+
+      seccion.lineas.forEach(
+        linea => {
+
+          const bloque =
+            document.createElement(
+              "div"
+            );
+
+          bloque.className =
+            "la-bloque-linea";
+
+
+          bloque.style.marginBottom =
+            "16px";
+
+
+          /* ACORDES */
+
+          const acordes =
+            document.createElement(
+              "div"
+            );
+
+          acordes.className =
+            "la-acorde-visor";
+
+          acordes.textContent =
+            linea.acordes || "";
+
+          acordes.style.fontFamily =
+            "monospace";
+
+          acordes.style.fontWeight =
+            "700";
+
+          acordes.style.whiteSpace =
+            "pre";
+
+          acordes.style.overflowX =
+            "auto";
+
+
+          /* LETRA */
+
+          const letra =
+            document.createElement(
+              "div"
+            );
+
+          letra.className =
+            "la-letra-visor";
+
+          letra.textContent =
+            linea.letra || "";
+
+          letra.style.whiteSpace =
+            "pre-wrap";
+
+
+          bloque.appendChild(
+            acordes
+          );
+
+          bloque.appendChild(
+            letra
+          );
+
+
+          contenido.appendChild(
+            bloque
+          );
+
+        }
       );
 
     }
   );
 
-}
+
+  visor.appendChild(
+    contenido
+  );
 
 
-  const contenido =
-    contenedor.querySelector(
-      ".inline-letra-contenido"
-    );
-
-
-  const tonoActual =
-    contenedor.querySelector(
-      ".inline-tono-actual"
-    );
+  contenedor.appendChild(
+    visor
+  );
 
 
   /* =================================================
-     RENDERIZAR LETRA
+     TRANSPOSICIÓN
   ================================================= */
 
-  function renderizar() {
+  bajar.addEventListener(
+    "click",
+    function(event) {
 
-    if (!contenido) return;
+      event.stopPropagation();
+
+      const acordes =
+        visor.querySelectorAll(
+          ".la-acorde-visor"
+        );
 
 
-    contenido.innerHTML = "";
+      acordes.forEach(
+        elemento => {
 
-
-    datos.secciones.forEach(
-      seccion => {
-
-        /* Nombre de sección */
-
-        if (seccion.nombre) {
-
-          const titulo =
-            document.createElement(
-              "h3"
+          elemento.textContent =
+            transponerLineaAcordes(
+              elemento.textContent,
+              -1
             );
 
-          titulo.textContent =
-            seccion.nombre;
+        }
+      );
 
-          titulo.style.margin =
-            "22px 0 12px";
 
-          titulo.style.fontSize =
-            "1.05rem";
+      tonoActual =
+        transponerNota(
+          normalizarNota(
+            tonoActual
+          ),
+          -1
+        );
 
-          titulo.style.fontWeight =
-            "700";
 
-          contenido.appendChild(
-            titulo
-          );
+      tono.textContent =
+        tonoActual;
+
+    }
+  );
+
+
+  subir.addEventListener(
+    "click",
+    function(event) {
+
+      event.stopPropagation();
+
+      const acordes =
+        visor.querySelectorAll(
+          ".la-acorde-visor"
+        );
+
+
+      acordes.forEach(
+        elemento => {
+
+          elemento.textContent =
+            transponerLineaAcordes(
+              elemento.textContent,
+              1
+            );
 
         }
+      );
 
 
-        /* Líneas */
+      tonoActual =
+        transponerNota(
+          normalizarNota(
+            tonoActual
+          ),
+          1
+        );
 
-        (seccion.lineas || [])
-          .forEach(
-            linea => {
 
-              const bloque =
-                document.createElement(
-                  "div"
-                );
+      tono.textContent =
+        tonoActual;
 
-              bloque.style.marginBottom =
-                "14px";
-
-
-              /* Acordes */
-
-              if (linea.acordes) {
-
-                const acordes =
-                  document.createElement(
-                    "div"
-                  );
-
-                acordes.className =
-                  "inline-acordes";
-
-                acordes.style.whiteSpace =
-                  "pre-wrap";
-
-                acordes.style.fontFamily =
-                  "monospace";
-
-                acordes.style.fontWeight =
-                  "700";
-
-                acordes.style.color =
-                  "#4da3ff";
-
-                acordes.style.fontSize =
-                  "0.95rem";
-
-                acordes.textContent =
-                  transponerLineaAcordes(
-                    linea.acordes,
-                    pasos
-                  );
-
-                bloque.appendChild(
-                  acordes
-                );
-
-              }
-
-
-              /* Letra */
-
-              if (linea.letra) {
-
-                const letra =
-                  document.createElement(
-                    "div"
-                  );
-
-                letra.style.whiteSpace =
-                  "pre-wrap";
-
-                letra.style.fontSize =
-                  "1rem";
-
-                letra.style.lineHeight =
-                  "1.5";
-
-                letra.style.marginTop =
-                  "2px";
-
-                letra.textContent =
-                  linea.letra;
-
-                bloque.appendChild(
-                  letra
-                );
-
-              }
-
-
-              contenido.appendChild(
-                bloque
-              );
-
-            }
-          );
-
-      }
-    );
-
-  }
-
-
-  /* Primera carga */
-
-  renderizar();
-
-
-  /* =================================================
-     BAJAR TONO
-  ================================================= */
-
-  const botonBajar =
-    contenedor.querySelector(
-      ".inline-tono-bajar"
-    );
-
-  if (botonBajar) {
-
-    botonBajar.addEventListener(
-      "click",
-      function(event) {
-
-        event.stopPropagation();
-
-        pasos--;
-
-        const nuevoTono =
-          transponerNota(
-            tonoOriginal,
-            pasos
-          );
-
-      if (tonoActual) {
-
-  tonoActual.textContent =
-    `Key: ${nuevoTono}`;
-
-}
-
-        renderizar();
-
-      }
-    );
-
-  }
-
-
-  /* =================================================
-     SUBIR TONO
-  ================================================= */
-
-  const botonSubir =
-    contenedor.querySelector(
-      ".inline-tono-subir"
-    );
-
-  if (botonSubir) {
-
-    botonSubir.addEventListener(
-      "click",
-      function(event) {
-
-        event.stopPropagation();
-
-        pasos++;
-
-        const nuevoTono =
-          transponerNota(
-            tonoOriginal,
-            pasos
-          );
-
-       if (tonoActual) {
-
-  tonoActual.textContent =
-    `Key: ${nuevoTono}`;
-
-}
-
-        renderizar();
-
-      }
-    );
-
-  }
+    }
+  );
 
 }
 
@@ -2920,23 +2853,26 @@ const metaHtml = `
 
 const acordesHtml =
   `<p>${d.acordes || ""}</p>`;
-  
-  
-  /* =====================================================
-   🎼 VISOR LETRA + ACORDES DE LA TARJETA
-===================================================== */
 
-const visorTarjetaHtml = `
-  <div
-    class="visor-tarjeta"
-    data-cancion-id="${d.id}"
-    style="
-      margin-top:12px;
-      padding-top:4px;
-    "
-  >
-  </div>
-`;
+
+/* Imágenes */
+
+const imagenesHtml =
+  `<div>
+    ${(d.imagenes || [])
+      .map(
+        u =>
+          `<img
+            src="${u}"
+            style="
+              width:100%;
+              margin-top:8px;
+              border-radius:8px;
+            "
+          >`
+      )
+      .join("")}
+  </div>`;
 
 
 /* Audio */
@@ -2997,11 +2933,13 @@ div.innerHTML =
 
   metaHtml +
 
-acordesHtml +
+  acordesHtml +
 
-visorTarjetaHtml +
+  `<div style="margin-top:8px">
+    ${imagenesHtml}
+  </div>` +
 
-`<div style="margin-top:8px">
+  `<div style="margin-top:8px">
     ${audioHtml}
     ${youtubeHtml}
   </div>` +
@@ -3009,22 +2947,33 @@ visorTarjetaHtml +
   tocadaHtml;
   
   /* =====================================================
-   🎼 CARGAR VISOR DE ESTA CANCIÓN
+   🎼 BOTÓN LETRA + ACORDES
 ===================================================== */
 
-const visorContenedor =
-  div.querySelector(
-    ".visor-tarjeta"
-  );
+const letraBtn =
+  document.createElement("button");
 
-if (visorContenedor) {
+letraBtn.type = "button";
 
-  crearVisorTarjetaInline(
-    d,
-    visorContenedor
-  );
+letraBtn.textContent =
+  "🎼 Letra + acordes";
 
-}
+letraBtn.style.marginTop =
+  "10px";
+
+letraBtn.addEventListener(
+  "click",
+  function(event) {
+
+    event.stopPropagation();
+
+    abrirLetraAcordes(d.id);
+
+  }
+);
+
+div.appendChild(letraBtn);
+
   
   /* =====================================================
    ✏️ ABRIR EDITOR DE UNA CANCIÓN
@@ -5422,6 +5371,11 @@ setInterval(function() {
 ========================= */
 let mesListadoActual = new Date();
 
+// Genera YYYY-MM usando la fecha local del dispositivo (sin conversión UTC).
+function obtenerClaveMesListado(fecha) {
+  return `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}`;
+}
+
 window.toggleListadoMensual = function(){
   const el = document.getElementById("listado-mensual");
 
@@ -5446,7 +5400,7 @@ window.cambiarMes = function(delta){
 
 async function renderListadoMensual(){
 
-  const mes = mesListadoActual.toISOString().slice(0,7);
+  const mes = obtenerClaveMesListado(mesListadoActual);
   const nombreMes = mesListadoActual.toLocaleDateString("es-ES",{month:"long",year:"numeric"});
   document.getElementById("mes-actual").textContent = nombreMes.toUpperCase();
 
@@ -5531,290 +5485,284 @@ domingos.forEach(fecha => {
 
 /* =====================================================
    📄 EXPORTAR LISTADO MENSUAL A PDF
+   Genera un documento imprimible con todos los domingos
+   del mes seleccionado y sus canciones/cantantes.
 ===================================================== */
 
 window.exportarListadoMensualPDF = async function() {
+  const boton = document.getElementById("btn-exportar-listado-pdf");
+  // La vista previa se abre dentro de la propia PWA.
 
-  // Abrir ventana inmediatamente para evitar
-  // bloqueos de ventanas emergentes del navegador.
-  const ventana = window.open("", "_blank");
-
-  if (!ventana) {
-    alert("Permite las ventanas emergentes para exportar el PDF.");
-    return;
+  if (boton) {
+    boton.disabled = true;
+    boton.dataset.textoOriginal = boton.innerHTML;
+    boton.innerHTML = "⏳ Preparando PDF...";
   }
 
+  const escaparHTML = (valor) => String(valor ?? "").replace(/[&<>"']/g, caracter => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[caracter]);
+
   try {
+    const mes = obtenerClaveMesListado(mesListadoActual);
+    const nombreMes = mesListadoActual.toLocaleDateString("es-ES", {
+      month: "long",
+      year: "numeric"
+    });
 
-    // Obtener mes seleccionado en horario local
-    const fecha = mesListadoActual;
-
-    const mes =
-      `${fecha.getFullYear()}-${String(
-        fecha.getMonth() + 1
-      ).padStart(2, "0")}`;
-
-    const nombreMes = fecha.toLocaleDateString(
-      "es-ES",
-      {
-        month: "long",
-        year: "numeric"
-      }
-    );
-
-    // Leer datos reales de Firebase
-    const snap = await getDoc(
-      doc(db, "listado_mensual", mes)
-    );
-
-    const datos = snap.exists()
-      ? snap.data()
-      : {};
-
-    // Obtener todos los domingos
+    // Leer exactamente el documento del mes que está abierto en el modal.
+    const listadoRef = doc(db, "listado_mensual", mes);
+    const listadoSnap = await getDoc(listadoRef);
+    const datos = listadoSnap.exists() ? listadoSnap.data() : {};
     const domingos = obtenerDomingosDelMes(mes);
 
-    // Evitar insertar HTML procedente de Firebase
-    const escaparHTML = (valor) =>
-      String(valor ?? "").replace(
-        /[&<>"']/g,
-        caracter => ({
-          "&": "&amp;",
-          "<": "&lt;",
-          ">": "&gt;",
-          '"': "&quot;",
-          "'": "&#39;"
-        })[caracter]
-      );
-
-    // Construir tarjetas de cada domingo
     const tarjetas = domingos.map((fecha, index) => {
-
-      const info = datos[fecha] || {};
-
-      const canciones = Array.isArray(info.canciones)
-        ? info.canciones
+      const infoDia = datos[fecha] || {};
+      const canciones = Array.isArray(infoDia.canciones)
+        ? infoDia.canciones
         : [];
+      const cantante = infoDia.cantante || "";
+      const numeroDia = fecha.split("-")[2];
 
-      const cantante = info.cantante || "";
-
-      const dia = fecha.split("-")[2];
+      const cancionesHTML = canciones.length
+        ? `<ol class="canciones">${canciones.map(cancion =>
+            `<li>${escaparHTML(cancion)}</li>`
+          ).join("")}</ol>`
+        : `<p class="sin-canciones">Repertorio pendiente de asignar</p>`;
 
       return `
         <article class="domingo-card">
-
-          <div class="domingo-header">
-
-            <div class="fecha">
-
-              <div class="numero">${dia}</div>
-
-              <div>
+          <div class="domingo-cabecera">
+            <div class="fecha-grupo">
+              <div class="numero-dia">${escaparHTML(numeroDia)}</div>
+              <div class="fecha-texto">
                 <div class="etiqueta">DOMINGO</div>
-                <div class="fecha-completa">
-                  ${escaparHTML(isoToDisplay(fecha))}
-                </div>
+                <div class="fecha-completa">${escaparHTML(isoToDisplay(fecha))}</div>
               </div>
-
             </div>
-
-            <div class="numero-servicio">
-              SERVICIO ${index + 1}
-            </div>
-
+            <div class="numero-servicio">SERVICIO ${index + 1}</div>
           </div>
 
           <div class="separador"></div>
 
-          ${
-            canciones.length
-              ? `
-                <ol>
-                  ${canciones.map(c => `
-                    <li>${escaparHTML(c)}</li>
-                  `).join("")}
-                </ol>
-              `
-              : `
-                <p class="sin-canciones">
-                  Repertorio pendiente de asignar
-                </p>
-              `
-          }
+          ${cancionesHTML}
 
           <div class="cantante">
-            <span>♪</span>
-            Cantante:
+            <span class="icono-cantante">♪</span>
+            <span>Cantante</span>
             <strong>${escaparHTML(cantante || "Por asignar")}</strong>
           </div>
-
         </article>
       `;
-
     }).join("");
 
-    // Generar documento
-    ventana.document.open();
-
-    ventana.document.write(`
-
+    const documentoHTML = `
       <!DOCTYPE html>
       <html lang="es">
-
       <head>
-
         <meta charset="UTF-8">
-
-        <meta name="viewport"
-              content="width=device-width, initial-scale=1">
-
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Repertorio ${escaparHTML(nombreMes)}</title>
-
         <style>
-
-          * {
-            box-sizing: border-box;
+          :root {
+            --azul: #002244;
+            --naranja: #ff8c42;
+            --fondo: #f0f4f8;
+            --texto: #17324d;
+            --muted: #718096;
+            --borde: #e2e8f0;
           }
+
+          * { box-sizing: border-box; }
 
           body {
             margin: 0;
-            padding: 35px;
-            font-family: Arial, Helvetica, sans-serif;
-            background: #f4f6f3;
-            color: #263a34;
+            padding: 24px;
+            background: var(--fondo);
+            color: var(--texto);
+            font-family: "Segoe UI", Arial, sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
           }
 
           .documento {
-            max-width: 850px;
-            margin: auto;
+            width: 100%;
+            max-width: 820px;
+            margin: 0 auto;
           }
 
           .cabecera {
-            background: #172b35;
-            color: white;
-            padding: 35px;
+            position: relative;
+            overflow: hidden;
+            padding: 30px 32px 27px;
+            margin-bottom: 20px;
             border-radius: 16px;
-            margin-bottom: 25px;
+            color: #fff;
+            background: var(--azul);
+          }
+
+          .cabecera::after {
+            content: "";
+            position: absolute;
+            width: 170px;
+            height: 170px;
+            right: -48px;
+            top: -76px;
+            border: 25px solid rgba(255,140,66,.22);
+            border-radius: 50%;
           }
 
           .marca {
-            font-size: 12px;
+            color: #ffc08f;
+            font-size: 10px;
+            font-weight: 800;
             letter-spacing: 3px;
-            color: #a8c7be;
-            font-weight: bold;
           }
 
           h1 {
-            font-size: 32px;
-            margin: 22px 0 8px;
-            text-transform: uppercase;
+            position: relative;
+            z-index: 1;
+            margin: 19px 0 6px;
+            font-size: 29px;
+            line-height: 1.15;
+            text-transform: capitalize;
           }
 
           .subtitulo {
-            color: #c0d0ce;
-            font-size: 15px;
+            color: #d7e3ee;
+            font-size: 13px;
           }
 
           .resumen {
-            margin-top: 25px;
-            font-size: 11px;
-            letter-spacing: 1px;
-            color: #a8c7be;
+            margin-top: 22px;
+            color: #ffc08f;
+            font-size: 9px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
           }
 
           .domingo-card {
-            background: white;
-            border: 1px solid #e3e9e4;
+            padding: 18px 20px;
+            margin-bottom: 13px;
+            border: 1px solid var(--borde);
+            border-left: 4px solid var(--naranja);
             border-radius: 12px;
-            padding: 22px;
-            margin-bottom: 16px;
+            background: #fff;
             break-inside: avoid;
+            page-break-inside: avoid;
           }
 
-          .domingo-header {
+          .domingo-cabecera,
+          .fecha-grupo {
             display: flex;
             align-items: center;
+          }
+
+          .domingo-cabecera {
             justify-content: space-between;
+            gap: 12px;
           }
 
-          .fecha {
-            display: flex;
-            align-items: center;
-            gap: 13px;
-          }
+          .fecha-grupo { gap: 12px; }
 
-          .numero {
-            background: #e5eeea;
-            color: #244b43;
-            font-size: 24px;
-            font-weight: bold;
-            padding: 12px;
-            border-radius: 9px;
+          .numero-dia {
+            display: grid;
+            width: 44px;
+            height: 44px;
+            flex: 0 0 44px;
+            place-items: center;
+            border-radius: 10px;
+            background: #fff0e5;
+            color: var(--azul);
+            font-size: 22px;
+            font-weight: 800;
           }
 
           .etiqueta {
-            font-size: 10px;
-            color: #84918a;
-            font-weight: bold;
-            letter-spacing: 1px;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 800;
+            letter-spacing: 1.2px;
           }
 
           .fecha-completa {
-            font-weight: bold;
             margin-top: 4px;
+            color: var(--azul);
+            font-size: 13px;
+            font-weight: 700;
           }
 
           .numero-servicio {
-            color: #718078;
-            font-size: 10px;
+            color: var(--muted);
+            font-size: 9px;
+            font-weight: 700;
             letter-spacing: 1px;
+            white-space: nowrap;
           }
 
           .separador {
             height: 1px;
-            background: #e8ece8;
-            margin: 17px 0;
+            margin: 14px 0 11px;
+            background: var(--borde);
           }
 
-          ol {
-            padding-left: 25px;
+          .canciones {
             margin: 0;
+            padding-left: 22px;
           }
 
-          li {
-            padding: 5px 0 5px 5px;
-            font-size: 14px;
-          }
-
-          li::marker {
-            color: #6c9587;
-            font-weight: bold;
-          }
-
-          .cantante {
-            margin-top: 18px;
-            padding-top: 12px;
-            border-top: 1px solid #edf0ed;
+          .canciones li {
+            padding: 4px 0 4px 3px;
+            color: #263d54;
             font-size: 12px;
-            color: #718078;
+            line-height: 1.4;
           }
 
-          .cantante strong {
-            color: #263a34;
+          .canciones li::marker {
+            color: var(--naranja);
+            font-weight: 800;
           }
 
           .sin-canciones {
-            color: #89938d;
+            margin: 8px 0;
+            color: var(--muted);
+            font-size: 12px;
             font-style: italic;
-            font-size: 13px;
+          }
+
+          .cantante {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            margin-top: 13px;
+            padding-top: 10px;
+            border-top: 1px solid #edf1f5;
+            color: var(--muted);
+            font-size: 10px;
+          }
+
+          .cantante strong {
+            color: var(--azul);
+            font-size: 11px;
+          }
+
+          .icono-cantante {
+            color: var(--naranja);
+            font-size: 15px;
+            font-weight: 800;
           }
 
           .pie {
-            text-align: center;
-            padding: 20px;
-            color: #87938b;
-            font-size: 10px;
+            padding: 13px 0 3px;
+            color: var(--muted);
+            font-size: 8px;
+            font-weight: 700;
             letter-spacing: 2px;
+            text-align: center;
           }
 
           @page {
@@ -5823,90 +5771,141 @@ window.exportarListadoMensualPDF = async function() {
           }
 
           @media print {
-
             body {
-              background: white;
               padding: 0;
-              -webkit-print-color-adjust: exact;
-              print-color-adjust: exact;
+              background: #fff;
             }
 
             .cabecera {
-              break-inside: avoid;
+              border-radius: 10px;
             }
 
             .domingo-card {
-              break-inside: avoid;
+              box-shadow: none;
             }
-
           }
 
+          @media screen and (max-width: 600px) {
+            body { padding: 12px; }
+            .cabecera { padding: 24px 20px; }
+            h1 { font-size: 24px; }
+            .domingo-card { padding: 15px; }
+          }
         </style>
-
       </head>
-
       <body>
-
         <main class="documento">
-
           <header class="cabecera">
-
-            <div class="marca">
-              REPERTORIO
-            </div>
-
-            <h1>
-              ${escaparHTML(nombreMes)}
-            </h1>
-
-            <div class="subtitulo">
-              Canciones para nuestros domingos
-            </div>
-
-            <div class="resumen">
-              ${domingos.length} DOMINGOS ·
-              PLANIFICACIÓN MUSICAL
-            </div>
-
+            <div class="marca">REPERTORIO · PLANIFICACIÓN MUSICAL</div>
+            <h1>${escaparHTML(nombreMes)}</h1>
+            <div class="subtitulo">Canciones para nuestros domingos</div>
+            <div class="resumen">${domingos.length} DOMINGOS · REPERTORIO MENSUAL</div>
           </header>
 
           ${tarjetas}
 
-          <footer class="pie">
-            REPERTORIO MENSUAL
-          </footer>
-
+          <footer class="pie">REPERTORIO MENSUAL · ${escaparHTML(mes)}</footer>
         </main>
-
       </body>
-
       </html>
+    `;
 
-    `);
+    // Crear un visor dentro de la PWA para que en iPhone/iPad
+    // siempre exista una forma visible de volver al listado.
+    const visor = document.createElement("section");
+    visor.id = "visor-pdf-mensual";
+    visor.setAttribute("role", "dialog");
+    visor.setAttribute("aria-modal", "true");
+    visor.setAttribute("aria-label", `Vista previa del repertorio de ${nombreMes}`);
 
-    ventana.document.close();
+    visor.innerHTML = `
+      <style>
+        #visor-pdf-mensual {
+          position: fixed; inset: 0; z-index: 2147483000;
+          display: flex; flex-direction: column;
+          background: #e9eef3;
+          padding-top: env(safe-area-inset-top);
+          padding-bottom: env(safe-area-inset-bottom);
+        }
+        #visor-pdf-mensual .visor-barra {
+          min-height: 58px; display: flex; align-items: center;
+          justify-content: space-between; gap: 10px;
+          padding: 9px 14px; background: #002244; color: #fff;
+          box-shadow: 0 2px 10px rgba(0,0,0,.18);
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+        #visor-pdf-mensual .visor-titulo {
+          min-width: 0; overflow: hidden; text-overflow: ellipsis;
+          white-space: nowrap; font-size: 14px; font-weight: 700;
+        }
+        #visor-pdf-mensual .visor-acciones { display: flex; gap: 8px; flex-shrink: 0; }
+        #visor-pdf-mensual .visor-acciones button {
+          min-height: 38px; border: 0; border-radius: 9px;
+          padding: 8px 12px; font-size: 13px; font-weight: 700;
+          cursor: pointer; -webkit-appearance: none;
+        }
+        #visor-pdf-mensual .visor-volver { color: #002244; background: #fff; }
+        #visor-pdf-mensual .visor-imprimir { color: #17212b; background: #ffb06f; }
+        #visor-pdf-mensual iframe {
+          display: block; flex: 1; width: 100%; min-height: 0;
+          border: 0; background: #e9eef3;
+        }
+        @media print {
+          body > *:not(#visor-pdf-mensual) { display: none !important; }
+          #visor-pdf-mensual {
+            position: static !important; display: block !important;
+            inset: auto !important; padding: 0 !important; background: #fff !important;
+          }
+          #visor-pdf-mensual .visor-barra { display: none !important; }
+          #visor-pdf-mensual iframe {
+            position: static !important; display: block !important;
+            width: 100% !important; height: auto !important; min-height: 0 !important;
+          }
+        }
+      </style>
+      <div class="visor-barra">
+        <div class="visor-titulo">📄 ${escaparHTML(nombreMes)}</div>
+        <div class="visor-acciones">
+          <button type="button" class="visor-volver" id="visor-pdf-volver">← Volver</button>
+          <button type="button" class="visor-imprimir" id="visor-pdf-imprimir">Imprimir / PDF</button>
+        </div>
+      </div>
+      <iframe title="Vista previa del repertorio mensual"></iframe>
+    `;
 
-    // Esperar a que el documento esté preparado
-    ventana.onload = () => {
-      ventana.focus();
-      ventana.print();
+    document.body.appendChild(visor);
+    const iframe = visor.querySelector("iframe");
+    iframe.srcdoc = documentoHTML;
+
+    const cerrarVisor = () => {
+      visor.remove();
+      document.body.style.overflow = "";
+      if (boton) boton.focus();
     };
 
+    visor.querySelector("#visor-pdf-volver").addEventListener("click", cerrarVisor);
+    visor.querySelector("#visor-pdf-imprimir").addEventListener("click", () => {
+      try {
+        iframe.contentWindow.focus();
+        iframe.contentWindow.print();
+      } catch (errorImpresion) {
+        console.error("No se pudo abrir la impresión:", errorImpresion);
+        alert("No se pudo abrir la opción de impresión en este dispositivo.");
+      }
+    });
+
+    document.body.style.overflow = "hidden";
+
+  } catch (error) {
+    console.error("Error exportando listado mensual:", error);
+    alert("No se pudo generar el documento. Comprueba tu conexión e inténtalo de nuevo.");
+  } finally {
+    if (boton) {
+      boton.disabled = false;
+      boton.innerHTML = boton.dataset.textoOriginal || "📄 Exportar listado mensual";
+      delete boton.dataset.textoOriginal;
+    }
   }
-
-  catch(error) {
-
-    console.error(
-      "Error exportando listado mensual:",
-      error
-    );
-
-    ventana.close();
-
-    alert("No se pudo generar el PDF.");
-
-  }
-
 };
 
 /* =====================================================
@@ -5918,10 +5917,7 @@ window.guardarListadoMensual = async function(){
 
   try {
 
-    const mes =
-      mesListadoActual
-        .toISOString()
-        .slice(0, 7);
+    const mes = obtenerClaveMesListado(mesListadoActual);
 
 
     /* =================================================
@@ -7555,81 +7551,31 @@ function crearVisorLetraAcordes() {
     cancion.letraAcordes;
 
 
+  /* =================================================
+     SIN DATOS
+  ================================================= */
 
-/* =================================================
-   SI NO HAY LETRA + ACORDES
-================================================= */
+  if (
+    !datos ||
+    !Array.isArray(datos.secciones)
+  ) {
 
-if (
-  !datos ||
-  !Array.isArray(datos.secciones) ||
-  datos.secciones.length === 0
-) {
-
-  contenedor.innerHTML = `
-    <div
-      class="visor-inline"
-      style="
-        margin-top:8px;
-        padding:18px;
-        border-radius:16px;
-        background:rgba(255,255,255,0.06);
-        box-sizing:border-box;
-        text-align:center;
-      "
-    >
-
-      <div style="
-        opacity:0.75;
-        margin-bottom:${modoEdicion ? "14px" : "0"};
-      ">
+    contenedor.innerHTML = `
+      <div
+        style="
+          text-align:center;
+          padding:30px 10px;
+          opacity:.7;
+        "
+      >
         🎼 Esta canción todavía no tiene
         letra y acordes guardados.
       </div>
+    `;
 
-      ${modoEdicion ? `
-        <button
-          type="button"
-          class="inline-editar-letra"
-        >
-          ✏️ Añadir letra + acordes
-        </button>
-      ` : ""}
-
-    </div>
-  `;
-
-
-  /* =================================================
-     BOTÓN AÑADIR / EDITAR
-  ================================================= */
-
-  const botonEditarLetra =
-    contenedor.querySelector(
-      ".inline-editar-letra"
-    );
-
-  if (botonEditarLetra) {
-
-    botonEditarLetra.addEventListener(
-      "click",
-      function(event) {
-
-        event.stopPropagation();
-
-        abrirLetraAcordes(
-          cancion.id
-        );
-
-      }
-    );
-
+    return;
   }
 
-
-  return;
-
-}
 
   contenedor.innerHTML = "";
 
@@ -7981,7 +7927,6 @@ function transponerAcorde(
 
 /* =====================================================
    TRANSPONER UNA LÍNEA COMPLETA DE ACORDES
-   Conserva exactamente los espacios originales
 ===================================================== */
 
 function transponerLineaAcordes(
@@ -7994,23 +7939,16 @@ function transponerLineaAcordes(
   }
 
 
-  /*
-     Solo sustituimos los acordes.
-     Todos los espacios, tabulaciones y
-     posiciones originales permanecen intactos.
-  */
-
-  return texto.replace(
-    /\S+/g,
-    function(acorde) {
-
-      return transponerAcorde(
-        acorde,
-        pasos
-      );
-
-    }
-  );
+  return texto
+    .split(/\s+/)
+    .map(
+      acorde =>
+        transponerAcorde(
+          acorde,
+          pasos
+        )
+    )
+    .join("        ");
 
 }
 
@@ -8188,15 +8126,16 @@ async function guardarLetraAcordes() {
             );
 
 
-const acordes =
-  acordesInput
-    ? acordesInput.value
-    : "";
+          const acordes =
+            acordesInput
+              ? acordesInput.value.trim()
+              : "";
 
-const letra =
-  letraInput
-    ? letraInput.value
-    : "";
+
+          const letra =
+            letraInput
+              ? letraInput.value.trim()
+              : "";
 
 
           /*
@@ -8508,15 +8447,8 @@ window.addEventListener('load', ()=>{
   class="modal"
   style="display:none;"
 >
-<div
-  class="modal-content fade-apple"
-  style="
-    max-height:90vh;
-    overflow-y:auto;
-    box-sizing:border-box;
-  "
->
 
+  <div class="modal-content fade-apple">
 
     <button
       class="close-btn"
