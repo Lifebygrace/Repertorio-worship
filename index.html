@@ -943,8 +943,15 @@ body.dark #herramientas-panel {
     <h3 id="mes-actual"></h3>
     <button onclick="cambiarMes(1)">➡️</button>
   </div>
+<button
+  onclick="exportarListadoMensualPDF()"
+  class="btn-exportar-pdf"
+>
+  📄 Exportar listado mensual
+</button>
 
-  <div id="domingos-container"></div>
+<div id="domingos-container"></div>
+
 </div>
 
   <button id="btnAgregar" onclick="toggleFormulario()" style="display:none;">➕ Agregar nueva canción</button>
@@ -5521,6 +5528,386 @@ domingos.forEach(fecha => {
     cont.appendChild(btnGuardar);
   }
 }
+
+/* =====================================================
+   📄 EXPORTAR LISTADO MENSUAL A PDF
+===================================================== */
+
+window.exportarListadoMensualPDF = async function() {
+
+  // Abrir ventana inmediatamente para evitar
+  // bloqueos de ventanas emergentes del navegador.
+  const ventana = window.open("", "_blank");
+
+  if (!ventana) {
+    alert("Permite las ventanas emergentes para exportar el PDF.");
+    return;
+  }
+
+  try {
+
+    // Obtener mes seleccionado en horario local
+    const fecha = mesListadoActual;
+
+    const mes =
+      `${fecha.getFullYear()}-${String(
+        fecha.getMonth() + 1
+      ).padStart(2, "0")}`;
+
+    const nombreMes = fecha.toLocaleDateString(
+      "es-ES",
+      {
+        month: "long",
+        year: "numeric"
+      }
+    );
+
+    // Leer datos reales de Firebase
+    const snap = await getDoc(
+      doc(db, "listado_mensual", mes)
+    );
+
+    const datos = snap.exists()
+      ? snap.data()
+      : {};
+
+    // Obtener todos los domingos
+    const domingos = obtenerDomingosDelMes(mes);
+
+    // Evitar insertar HTML procedente de Firebase
+    const escaparHTML = (valor) =>
+      String(valor ?? "").replace(
+        /[&<>"']/g,
+        caracter => ({
+          "&": "&amp;",
+          "<": "&lt;",
+          ">": "&gt;",
+          '"': "&quot;",
+          "'": "&#39;"
+        })[caracter]
+      );
+
+    // Construir tarjetas de cada domingo
+    const tarjetas = domingos.map((fecha, index) => {
+
+      const info = datos[fecha] || {};
+
+      const canciones = Array.isArray(info.canciones)
+        ? info.canciones
+        : [];
+
+      const cantante = info.cantante || "";
+
+      const dia = fecha.split("-")[2];
+
+      return `
+        <article class="domingo-card">
+
+          <div class="domingo-header">
+
+            <div class="fecha">
+
+              <div class="numero">${dia}</div>
+
+              <div>
+                <div class="etiqueta">DOMINGO</div>
+                <div class="fecha-completa">
+                  ${escaparHTML(isoToDisplay(fecha))}
+                </div>
+              </div>
+
+            </div>
+
+            <div class="numero-servicio">
+              SERVICIO ${index + 1}
+            </div>
+
+          </div>
+
+          <div class="separador"></div>
+
+          ${
+            canciones.length
+              ? `
+                <ol>
+                  ${canciones.map(c => `
+                    <li>${escaparHTML(c)}</li>
+                  `).join("")}
+                </ol>
+              `
+              : `
+                <p class="sin-canciones">
+                  Repertorio pendiente de asignar
+                </p>
+              `
+          }
+
+          <div class="cantante">
+            <span>♪</span>
+            Cantante:
+            <strong>${escaparHTML(cantante || "Por asignar")}</strong>
+          </div>
+
+        </article>
+      `;
+
+    }).join("");
+
+    // Generar documento
+    ventana.document.open();
+
+    ventana.document.write(`
+
+      <!DOCTYPE html>
+      <html lang="es">
+
+      <head>
+
+        <meta charset="UTF-8">
+
+        <meta name="viewport"
+              content="width=device-width, initial-scale=1">
+
+        <title>Repertorio ${escaparHTML(nombreMes)}</title>
+
+        <style>
+
+          * {
+            box-sizing: border-box;
+          }
+
+          body {
+            margin: 0;
+            padding: 35px;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #f4f6f3;
+            color: #263a34;
+          }
+
+          .documento {
+            max-width: 850px;
+            margin: auto;
+          }
+
+          .cabecera {
+            background: #172b35;
+            color: white;
+            padding: 35px;
+            border-radius: 16px;
+            margin-bottom: 25px;
+          }
+
+          .marca {
+            font-size: 12px;
+            letter-spacing: 3px;
+            color: #a8c7be;
+            font-weight: bold;
+          }
+
+          h1 {
+            font-size: 32px;
+            margin: 22px 0 8px;
+            text-transform: uppercase;
+          }
+
+          .subtitulo {
+            color: #c0d0ce;
+            font-size: 15px;
+          }
+
+          .resumen {
+            margin-top: 25px;
+            font-size: 11px;
+            letter-spacing: 1px;
+            color: #a8c7be;
+          }
+
+          .domingo-card {
+            background: white;
+            border: 1px solid #e3e9e4;
+            border-radius: 12px;
+            padding: 22px;
+            margin-bottom: 16px;
+            break-inside: avoid;
+          }
+
+          .domingo-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+          }
+
+          .fecha {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+          }
+
+          .numero {
+            background: #e5eeea;
+            color: #244b43;
+            font-size: 24px;
+            font-weight: bold;
+            padding: 12px;
+            border-radius: 9px;
+          }
+
+          .etiqueta {
+            font-size: 10px;
+            color: #84918a;
+            font-weight: bold;
+            letter-spacing: 1px;
+          }
+
+          .fecha-completa {
+            font-weight: bold;
+            margin-top: 4px;
+          }
+
+          .numero-servicio {
+            color: #718078;
+            font-size: 10px;
+            letter-spacing: 1px;
+          }
+
+          .separador {
+            height: 1px;
+            background: #e8ece8;
+            margin: 17px 0;
+          }
+
+          ol {
+            padding-left: 25px;
+            margin: 0;
+          }
+
+          li {
+            padding: 5px 0 5px 5px;
+            font-size: 14px;
+          }
+
+          li::marker {
+            color: #6c9587;
+            font-weight: bold;
+          }
+
+          .cantante {
+            margin-top: 18px;
+            padding-top: 12px;
+            border-top: 1px solid #edf0ed;
+            font-size: 12px;
+            color: #718078;
+          }
+
+          .cantante strong {
+            color: #263a34;
+          }
+
+          .sin-canciones {
+            color: #89938d;
+            font-style: italic;
+            font-size: 13px;
+          }
+
+          .pie {
+            text-align: center;
+            padding: 20px;
+            color: #87938b;
+            font-size: 10px;
+            letter-spacing: 2px;
+          }
+
+          @page {
+            size: A4;
+            margin: 12mm;
+          }
+
+          @media print {
+
+            body {
+              background: white;
+              padding: 0;
+              -webkit-print-color-adjust: exact;
+              print-color-adjust: exact;
+            }
+
+            .cabecera {
+              break-inside: avoid;
+            }
+
+            .domingo-card {
+              break-inside: avoid;
+            }
+
+          }
+
+        </style>
+
+      </head>
+
+      <body>
+
+        <main class="documento">
+
+          <header class="cabecera">
+
+            <div class="marca">
+              REPERTORIO
+            </div>
+
+            <h1>
+              ${escaparHTML(nombreMes)}
+            </h1>
+
+            <div class="subtitulo">
+              Canciones para nuestros domingos
+            </div>
+
+            <div class="resumen">
+              ${domingos.length} DOMINGOS ·
+              PLANIFICACIÓN MUSICAL
+            </div>
+
+          </header>
+
+          ${tarjetas}
+
+          <footer class="pie">
+            REPERTORIO MENSUAL
+          </footer>
+
+        </main>
+
+      </body>
+
+      </html>
+
+    `);
+
+    ventana.document.close();
+
+    // Esperar a que el documento esté preparado
+    ventana.onload = () => {
+      ventana.focus();
+      ventana.print();
+    };
+
+  }
+
+  catch(error) {
+
+    console.error(
+      "Error exportando listado mensual:",
+      error
+    );
+
+    ventana.close();
+
+    alert("No se pudo generar el PDF.");
+
+  }
+
+};
 
 /* =====================================================
    💾 GUARDAR LISTADO MENSUAL
